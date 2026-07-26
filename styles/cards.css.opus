@@ -1,0 +1,271 @@
+/* ==========================================================================
+   Dragon Ball Clash Action TCG — Card Component, Fan Hand & Overlay Badges
+   ========================================================================== */
+
+/* ── Card Base ────────────────────────────────────────────────────────────── */
+.card {
+  width: 120px;
+  aspect-ratio: 5 / 7;
+  border-radius: var(--r-sm);
+  position: relative;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.1);
+  cursor: grab;
+  user-select: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);
+  transition: transform 0.2s var(--ease-snap), box-shadow 0.2s var(--ease-out), border-color 0.15s;
+  touch-action: none;
+  will-change: transform;
+  flex-shrink: 0;
+  background: #0a0c14;
+}
+
+.card:hover {
+  transform: translateY(-16px) scale(1.08) !important;
+  z-index: 60;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.9), 0 0 16px rgba(255, 215, 0, 0.3);
+}
+
+.card:active, .card.dragging {
+  cursor: grabbing;
+  transform: scale(1.1) !important;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.95), 0 0 24px rgba(255, 215, 0, 0.4);
+  z-index: 100;
+  transition: none;
+}
+
+/* ── Playable Card Glow ───────────────────────────────────────────────────── */
+.card.playable {
+  border-color: var(--ki-yellow) !important;
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.35), 0 4px 14px rgba(0, 0, 0, 0.6) !important;
+  animation: playGlow 1.8s infinite alternate ease-in-out;
+}
+
+@keyframes playGlow {
+  0% { box-shadow: 0 0 12px rgba(255, 215, 0, 0.3), 0 4px 12px rgba(0,0,0,0.5); }
+  100% { box-shadow: 0 0 22px rgba(255, 140, 0, 0.5), 0 4px 18px rgba(0,0,0,0.6); }
+}
+
+.card.playable::before {
+  content: '⚡';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  background: var(--ki-gradient);
+  color: #000;
+  font-size: 0.5rem;
+  font-weight: 900;
+  padding: 1px 4px;
+  border-radius: 3px;
+  z-index: 15;
+  pointer-events: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.7);
+}
+
+/* ── Type Tag Badge ───────────────────────────────────────────────────────── */
+.card-type-tag {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  font-size: 0.48rem;
+  font-weight: 900;
+  padding: 1px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  z-index: 12;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.7);
+}
+
+.tag-attack  { background: var(--c-attack); }
+.tag-defense { background: var(--c-defense); color: #000; }
+.tag-evade   { background: var(--c-evade); color: #000; }
+.tag-counter { background: var(--c-counter); color: #000; }
+.tag-tech    { background: var(--c-tech); }
+
+/* ── Reason Badge (Unplayable) ────────────────────────────────────────────── */
+.card-reason-badge {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  background: rgba(239, 68, 68, 0.85);
+  color: #fff;
+  font-size: 0.45rem;
+  font-weight: 900;
+  padding: 1px 4px;
+  border-radius: 3px;
+  z-index: 15;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+
+/* ── Full Art Image ───────────────────────────────────────────────────────── */
+.card-full-art-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: calc(var(--r-sm) - 2px);
+  z-index: 1;
+  display: block;
+}
+
+/* ── Description Overlay ──────────────────────────────────────────────────── */
+.card-desc-overlay {
+  position: absolute;
+  bottom: 22px;
+  left: 4px;
+  right: 4px;
+  background: rgba(6, 8, 16, 0.88);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 3px;
+  padding: 3px 5px;
+  font-size: 0.5rem;
+  color: #e2e8f0;
+  z-index: 8;
+  line-height: 1.2;
+  pointer-events: none;
+  max-height: 56px;
+  overflow: hidden;
+}
+
+.card-title-text {
+  font-weight: 900;
+  color: var(--ki-yellow);
+  font-size: 0.55rem;
+  margin-bottom: 1px;
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+}
+
+/* ── Ki Cost Badge ────────────────────────────────────────────────────────── */
+.card-header {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.card-ki-cost {
+  width: 22px;
+  height: 22px;
+  background: var(--ki-gradient);
+  color: #000;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.72rem;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.7), 0 1px 4px rgba(0,0,0,0.7);
+  border: 1.5px solid rgba(255,255,255,0.8);
+}
+
+/* ── Power Badge ──────────────────────────────────────────────────────────── */
+.card-power-badge {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  background: rgba(6, 8, 16, 0.85);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+  z-index: 12;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.7);
+}
+
+/* ── Type Border Colors ───────────────────────────────────────────────────── */
+.card.type-attack  { border-color: rgba(239, 68, 68, 0.5); }
+.card.type-defense { border-color: rgba(34, 211, 238, 0.5); }
+.card.type-evade   { border-color: rgba(45, 212, 191, 0.5); }
+.card.type-counter { border-color: rgba(251, 191, 36, 0.5); }
+.card.type-tech    { border-color: rgba(167, 139, 250, 0.5); }
+
+/* ── Super Rare Foil ──────────────────────────────────────────────────────── */
+.card.super-rare::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.35) 48%, rgba(255,215,0,0.5) 50%, rgba(34,211,238,0.35) 52%, transparent 70%);
+  transform: rotate(25deg);
+  animation: foilShine 3.5s infinite linear;
+  pointer-events: none;
+  z-index: 5;
+}
+
+@keyframes foilShine {
+  0% { transform: translateY(-100%) rotate(25deg); }
+  100% { transform: translateY(100%) rotate(25deg); }
+}
+
+/* ── Unplayable State ─────────────────────────────────────────────────────── */
+.card.unplayable {
+  opacity: 0.4;
+  filter: grayscale(0.7) brightness(0.7);
+  cursor: not-allowed;
+}
+
+.card.unplayable:hover {
+  transform: none !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+/* ── Fan Hand Distribution ────────────────────────────────────────────────── */
+.hand-zone .card {
+  margin: 0 -14px;
+  transition: transform 0.2s var(--ease-snap), box-shadow 0.2s var(--ease-out), border-color 0.15s, margin 0.15s;
+}
+
+.hand-zone .card:first-child { margin-left: 0; }
+.hand-zone .card:last-child { margin-right: 0; }
+
+/* ── Responsive Cards ─────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .card {
+    width: 95px;
+  }
+
+  .card-ki-cost {
+    width: 18px;
+    height: 18px;
+    font-size: 0.6rem;
+  }
+
+  .card-power-badge {
+    font-size: 0.6rem;
+    padding: 1px 4px;
+  }
+
+  .card-desc-overlay {
+    font-size: 0.42rem;
+    bottom: 18px;
+    padding: 2px 3px;
+    max-height: 40px;
+  }
+
+  .card-title-text { font-size: 0.48rem; }
+  .card-type-tag { font-size: 0.4rem; padding: 1px 3px; }
+  .card-reason-badge { font-size: 0.38rem; }
+
+  .hand-zone .card {
+    margin: 0 -18px;
+  }
+}
+
+@media (max-width: 420px) {
+  .card { width: 82px; }
+  .hand-zone .card { margin: 0 -22px; }
+}

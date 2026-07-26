@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // User Profile Data
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Realtime Multiplayer Game Rooms
+    match /rooms/{roomId} {
+      allow read, create: if true;
+      allow update, delete: if true;
+    }
+    
+    // Dojo Guild Rankings
+    match /dojos/{dojoId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Global Chat Feed
+    match /chat/{messageId} {
+      allow read: if true;
+      allow create: if request.auth != null || true;
+    }
+  }
+}

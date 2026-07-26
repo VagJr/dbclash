@@ -1,0 +1,23 @@
+{
+  "name": "Dragon Ball Clash TCG",
+  "short_name": "DBTCG",
+  "description": "O TCG de Dragon Ball em tempo real. Batalhas de Ki, Z-Vanish e Beam Clash direto no navegador.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0f1d",
+  "theme_color": "#0c0f1d",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='36' fill='%230c0f1d'/><text x='96' y='125' font-size='110' text-anchor='middle'>⚡</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='96' fill='%230c0f1d'/><text x='256' y='340' font-size='300' text-anchor='middle'>⚡</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
