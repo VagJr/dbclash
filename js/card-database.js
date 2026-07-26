@@ -1,0 +1,1069 @@
+/* ==========================================================================
+   Dragon Ball Clash Action TCG — Expanded Card & Leader Database (70 Cards)
+   Full PT-BR & EN Translations, Synergies & Thematic Starter Decks
+   ========================================================================== */
+
+export const LEADERS = {
+  goku: {
+    id: 'goku',
+    name: 'Son Goku (Base)',
+    awakenedName: 'SSJ Goku (Despertado)',
+    icon: '⚡',
+    baseAtk: 15,
+    awakenAtk: 25,
+    maxHp: 400,
+    shields: 8,
+    awakenThresholdHp: 200,
+    playstyle: 'Ki Rush & Combo Kaioken',
+    description: 'Ganha +1 Ki sempre que sofrer dano direto. Cartas de Combo custam 1 a menos de Ki.',
+    awakenDesc: 'Ataques de Ki e Especiais custam 2 a menos de Ki.',
+    color: '#ff8800',
+    unlockCost: 0,
+    quote: 'KA... ME... HA... ME... HAAAA!'
+  },
+  vegeta: {
+    id: 'vegeta',
+    name: 'Vegeta (Príncipe)',
+    awakenedName: 'SSJ Vegeta (Fúria Real)',
+    icon: '👑',
+    baseAtk: 18,
+    awakenAtk: 28,
+    maxHp: 400,
+    shields: 8,
+    awakenThresholdHp: 200,
+    playstyle: 'Explosão Real & Dano Massivo',
+    description: 'Concede +10 de dano bônus em cartas de Ataque se possuir 3+ cartas de ataque na mão.',
+    awakenDesc: 'Duração da Guarda Aberta do oponente aumentada para 5 segundos.',
+    color: '#0077b6',
+    unlockCost: 0,
+    quote: 'FINAL FLASH!'
+  },
+  gohan: {
+    id: 'gohan',
+    name: 'Gohan (Jovem)',
+    awakenedName: 'SSJ2 Gohan (Poder Liberado)',
+    icon: '💥',
+    baseAtk: 12,
+    awakenAtk: 32,
+    maxHp: 400,
+    shields: 8,
+    awakenThresholdHp: 200,
+    playstyle: 'Controle Defensivo & Fúria',
+    description: 'Compra 2 cartas ao quebrar um Escudo do oponente.',
+    awakenDesc: 'Poder de mashing na Disputa de Beam aumentado em 50%.',
+    color: '#9d4edd',
+    unlockCost: 0,
+    quote: 'EU NUNCA VOU TE PERDOAR!'
+  },
+  frieza: {
+    id: 'frieza',
+    name: 'Frieza (Forma Final)',
+    awakenedName: 'Golden Frieza (Imperador)',
+    icon: '👿',
+    baseAtk: 16,
+    awakenAtk: 27,
+    maxHp: 400,
+    shields: 8,
+    awakenThresholdHp: 200,
+    playstyle: 'Controle de Ki & Supressão',
+    description: 'Inicia a partida com +2 Ki (6 Ki). Carga de Ki do oponente reduzida em 1.',
+    awakenDesc: 'Carregar Ki concede +3 Ki em vez de +2.',
+    color: '#ffd700',
+    unlockCost: 0,
+    quote: 'SEU TOLO!'
+  },
+  piccolo: {
+    id: 'piccolo',
+    name: 'Piccolo (Super Namekiano)',
+    awakenedName: 'Orange Piccolo (Despertado)',
+    icon: '🟢',
+    baseAtk: 14,
+    awakenAtk: 26,
+    maxHp: 400,
+    shields: 8,
+    awakenThresholdHp: 200,
+    playstyle: 'Defesa Tática & Perfuração',
+    description: 'Restaura 1 Escudo (50 HP) ao Despertar. Cartas Azuis de Defesa dão +15 de Block extra.',
+    awakenDesc: 'Ataques de Ki perfuram cartas de Defesa Azuis em 100%.',
+    color: '#2a9d8f',
+    unlockCost: 1000,
+    quote: 'MAKANKOSAPPO!'
+  },
+  trunks: {
+    id: 'trunks',
+    name: 'Trunks do Futuro (Mestre da Espada)',
+    awakenedName: 'SSJ Rage Trunks (Espada da Esperança)',
+    icon: '🗡️',
+    baseAtk: 17,
+    awakenAtk: 29,
+    maxHp: 400,
+    shields: 8,
+    awakenThresholdHp: 200,
+    playstyle: 'Corte Veloz & Z-Vanish',
+    description: 'Cartas Verdes de Esquiva custam 1 a menos de Ki. Z-Vanish compra 1 carta extra.',
+    awakenDesc: 'Teletransporte Z-Vanish compra 2 cartas e reembolsa 2 de Ki.',
+    color: '#00f2fe',
+    unlockCost: 1500,
+    quote: 'ESTE É O PODER DOS MORTAIS!'
+  }
+};
+
+/* ==========================================================================
+   70 CARDS DATABASE (PT-BR & EN Descriptions)
+   ========================================================================== */
+export const CARD_DATABASE = [
+  // --- RED ATTACK CARDS (1 - 28) ---
+  {
+    id: 'atk_01',
+    name: 'Meteor Combination',
+    type: 'attack',
+    cost: 2,
+    power: 20,
+    isCombo: true,
+    isBeam: false,
+    rarity: 'common',
+    synergyGroup: 'combo',
+    icon: '🥊',
+    descPt: '[Combo] Sequência rápida de golpes. Causa 20 HP de dano. Mantém a iniciativa para combo.',
+    descEn: '[Combo] Fast strike chain. Deals 20 HP damage. Retains initiative for combo follow-up.'
+  },
+  {
+    id: 'atk_02',
+    name: 'Kamehameha',
+    type: 'attack',
+    cost: 4,
+    power: 40,
+    isCombo: false,
+    isBeam: true,
+    rarity: 'rare',
+    synergyGroup: 'beam',
+    icon: '🌊',
+    descPt: '[Feixe de Ki] Causa 40 HP de dano. Dispara Disputa de Beam se oponente responder com Ki.',
+    descEn: '[Ki Beam] Deals 40 HP damage. Triggers Beam Clash if countered with Ki.'
+  },
+  {
+    id: 'atk_03',
+    name: 'Final Flash',
+    type: 'attack',
+    cost: 6,
+    power: 65,
+    isCombo: false,
+    isBeam: true,
+    rarity: 'super-rare',
+    synergyGroup: 'beam',
+    icon: '✨',
+    descPt: '[Feixe de Ki] Devastador raio de energia real. Causa 65 HP de dano.',
+    descEn: '[Ki Beam] Massive royal beam. Deals 65 HP damage.'
+  },
+  {
+    id: 'atk_04',
+    name: 'Dragon Fist Rush',
+    type: 'attack',
+    cost: 3,
+    power: 30,
+    isCombo: true,
+    isBeam: false,
+    rarity: 'rare',
+    synergyGroup: 'combo',
+    icon: '🐉',
+    descPt: '[Combo] Investida do Dragão. Causa 30 HP de dano e perfura 50% de Defesa Azul.',
+    descEn: '[Combo] Deals 30 HP damage. Pierces Blue Defense cards by 50%.'
+  },
+  {
+    id: 'atk_05',
+    name: 'Special Beam Cannon',
+    type: 'attack',
+    cost: 5,
+    power: 55,
+    isCombo: false,
+    isBeam: true,
+    rarity: 'super-rare',
+    synergyGroup: 'beam',
+    icon: '🌀',
+    descPt: '[Feixe de Ki] Raio espiral perfurante. Causa 55 HP de dano e perfura 100% da defesa.',
+    descEn: '[Ki Beam] Piercing spiral ray. Deals 55 HP damage and 100% pierces defense.'
+  },
+  {
+    id: 'atk_06',
+    name: 'Shining Sword Slash',
+    type: 'attack',
+    cost: 3,
+    power: 35,
+    isCombo: true,
+    isBeam: false,
+    rarity: 'rare',
+    synergyGroup: 'combo',
+    icon: '🗡️',
+    descPt: '[Combo] Corte de espada relâmpago. Causa 35 de dano. Ignora Esquiva se oponente tiver Guarda Aberta.',
+    descEn: '[Combo] Deals 35 HP damage. Bypasses Green Evade if opponent has Open Guard.'
+  },
+  {
+    id: 'atk_07',
+    name: 'Death Beam Snipe',
+    type: 'attack',
+    cost: 4,
+    power: 45,
+    isCombo: false,
+    isBeam: true,
+    rarity: 'rare',
+    synergyGroup: 'beam',
+    icon: '⚡',
+    descPt: '[Feixe de Ki] Feixe de dedo letal e preciso. Causa 45 HP de dano.',
+    descEn: '[Ki Beam] Precise lethal finger beam. Deals 45 HP damage.'
+  },
+  {
+    id: 'atk_08',
+    name: 'Galick Gun',
+    type: 'attack',
+    cost: 4,
+    power: 42,
+    isCombo: false,
+    isBeam: true,
+    rarity: 'common',
+    synergyGroup: 'beam',
+    icon: '🟣',
+    descPt: '[Feixe de Ki] Onda destrutiva de energia púrpura. Causa 42 HP de dano.',
+    descEn: '[Ki Beam] Purple destructive energy wave. Deals 42 HP damage.'
+  },
+  {
+    id: 'atk_09',
+    name: 'Masenko Beam',
+    type: 'attack',
+    cost: 3,
+    power: 32,
+    isCombo: false,
+    isBeam: true,
+    rarity: 'common',
+    synergyGroup: 'beam',
+    icon: '💥',
+    descPt: '[Feixe de Ki] Disparo rápido acima da cabeça. Causa 32 HP de dano.',
+    descEn: '[Ki Beam] Quick blast over the head. Deals 32 HP damage.'
+  },
+  {
+    id: 'atk_10',
+    name: 'Burning Attack',
+    type: 'attack',
+    cost: 4,
+    power: 44,
+    isCombo: false,
+    isBeam: true,
+    rarity: 'rare',
+    synergyGroup: 'beam',
+    icon: '🔥',
+    descPt: '[Feixe de Ki] Gesticulação rápida liberando esfera flamejante. Causa 44 HP de dano.',
+    descEn: '[Ki Beam] Rapid hand gestures releasing a burning sphere. Deals 44 HP damage.'
+  },
+  {
+    id: 'atk_11',
+    name: 'Supernova',
+    type: 'attack',
+    cost: 7,
+    power: 75,
+    isCombo: false,
+    isBeam: true,
+    rarity: 'super-rare',
+    synergyGroup: 'beam',
+    icon: '☀️',
+    descPt: '[Ki Ultimate] Gigantesca esfera de energia destruidora de planetas. Causa 75 HP de dano.',
+    descEn: '[Ki Ultimate] Gigantic planet-destroying sun sphere. Deals 75 HP damage.'
+  },
+  {
+    id: 'atk_12',
+    name: 'Hellzone Grenade',
+    type: 'attack',
+    cost: 5,
+    power: 50,
+    isCombo: true,
+    isBeam: false,
+    rarity: 'rare',
+    synergyGroup: 'control',
+    icon: '🟢',
+    descPt: '[Controle] Cercamento com esferas de Ki flutuantes. Inbloqueável por Defesa Azul.',
+    descEn: '[Control Attack] Surrounds opponent with floating ki spheres. Unblockable by Blue Defense.'
+  },
+  {
+    id: 'atk_13',
+    name: 'Big Bang Attack',
+    type: 'attack',
+    cost: 5,
+    power: 58,
+    isCombo: false,
+    isBeam: true,
+    rarity: 'super-rare',
+    synergyGroup: 'beam',
+    icon: '💥',
+    descPt: '[Feixe de Ki] Esfera concentrada disparada de uma palma. Causa 58 HP de dano.',
+    descEn: '[Ki Beam] Concentrated single-palm ki blast. Deals 58 HP damage.'
+  },
+  {
+    id: 'atk_14',
+    name: 'Kaioken x10 Strike',
+    type: 'attack',
+    cost: 3,
+    power: 38,
+    isCombo: true,
+    isBeam: false,
+    rarity: 'rare',
+    synergyGroup: 'combo',
+    icon: '🔴',
+    descPt: '[Combo] Sequência com aura vermelha do Kaioken. Causa 38 HP de dano.',
+    descEn: '[Combo] Red aura flurry strike. Deals 38 HP damage.'
+  },
+  {
+    id: 'atk_15',
+    name: 'Destructo Disc (Kienzan)',
+    type: 'attack',
+    cost: 3,
+    power: 36,
+    isCombo: false,
+    isBeam: false,
+    rarity: 'rare',
+    synergyGroup: 'control',
+    icon: '💿',
+    descPt: '[Controle] Disco cortante de Ki. Quebra 1 Escudo inteiramente ignorando HP.',
+    descEn: '[Control Attack] Razor ki disc. Completely breaks 1 Shield regardless of HP defense.'
+  },
+  {
+    id: 'atk_16',
+    name: 'Father-Son Kamehameha',
+    type: 'attack',
+    cost: 8,
+    power: 85,
+    isCombo: false,
+    isBeam: true,
+    rarity: 'super-rare',
+    synergyGroup: 'beam',
+    icon: '✨',
+    descPt: '[Ultimate Beam] Onda emocional lendária de Pai e Filho. Causa 85 HP de dano.',
+    descEn: '[Ultimate Beam] Legendary emotional wave. Deals 85 HP damage.'
+  },
+  {
+    id: 'atk_17',
+    name: 'Light Grenade',
+    type: 'attack',
+    cost: 4,
+    power: 46,
+    isCombo: false,
+    isBeam: true,
+    rarity: 'rare',
+    synergyGroup: 'beam',
+    icon: '⚡',
+    descPt: '[Feixe de Ki] Concentração intensa de Ki entre as mãos. Causa 46 HP de dano.',
+    descEn: '[Ki Beam] Gathering ki in both hands. Deals 46 HP damage.'
+  },
+  {
+    id: 'atk_18',
+    name: 'Death Ball',
+    type: 'attack',
+    cost: 6,
+    power: 62,
+    isCombo: false,
+    isBeam: true,
+    rarity: 'rare',
+    synergyGroup: 'beam',
+    icon: '🔮',
+    descPt: '[Feixe de Ki] Orbe de energia sombria. Causa 62 HP de dano e drena 1 Ki do oponente.',
+    descEn: '[Ki Beam] Dark energy orb. Deals 62 HP damage and drains 1 Ki from opponent.'
+  },
+  {
+    id: 'atk_19',
+    name: 'Final Shine Attack',
+    type: 'attack',
+    cost: 6,
+    power: 64,
+    isCombo: false,
+    isBeam: true,
+    rarity: 'super-rare',
+    synergyGroup: 'beam',
+    icon: '🟢',
+    descPt: '[Feixe de Ki] Feixe verde de poder total disparado com uma mão. Causa 64 HP de dano.',
+    descEn: '[Ki Beam] Green full-power beam fired with one hand. Deals 64 HP damage.'
+  },
+  {
+    id: 'atk_20',
+    name: 'Flurry Kick Burst',
+    type: 'attack',
+    cost: 1,
+    power: 15,
+    isCombo: true,
+    isBeam: false,
+    rarity: 'common',
+    synergyGroup: 'combo',
+    icon: '👟',
+    descPt: '[Combo] Golpe leve de 1 Ki. Causa 15 HP de dano e prepara combos de alto custo.',
+    descEn: '[Combo] Light 1-Ki strike. Deals 15 HP damage and sets up high-cost combos.'
+  },
+  {
+    id: 'atk_21',
+    name: 'High Speed Flurry',
+    type: 'attack',
+    cost: 2,
+    power: 24,
+    isCombo: true,
+    isBeam: false,
+    rarity: 'common',
+    synergyGroup: 'combo',
+    icon: '💨',
+    descPt: '[Combo] Sequência veloz de socos. Causa 24 HP de dano.',
+    descEn: '[Combo] Swift jab combo. Deals 24 HP damage.'
+  },
+  {
+    id: 'atk_22',
+    name: 'Scatter Shot',
+    type: 'attack',
+    cost: 3,
+    power: 28,
+    isCombo: false,
+    isBeam: false,
+    rarity: 'common',
+    synergyGroup: 'control',
+    icon: '✨',
+    descPt: '[Controle] Chuva de disparos de Ki. Força o oponente a gastar 1 carta de defesa.',
+    descEn: '[Control Attack] Rain of ki blasts. Forces opponent to burn 1 defense card.'
+  },
+  {
+    id: 'atk_23',
+    name: 'Sword of Hope Slash',
+    type: 'attack',
+    cost: 7,
+    power: 78,
+    isCombo: true,
+    isBeam: false,
+    rarity: 'super-rare',
+    synergyGroup: 'combo',
+    icon: '🗡️',
+    descPt: '[Ultimate Slash] Espada de energia banhada pela esperança de todos. Causa 78 HP de dano.',
+    descEn: '[Ultimate Slash] Energy sword infused with everyone\'s hope. Deals 78 HP damage.'
+  },
+  {
+    id: 'atk_24',
+    name: 'Golden Death Beam',
+    type: 'attack',
+    cost: 5,
+    power: 56,
+    isCombo: false,
+    isBeam: true,
+    rarity: 'super-rare',
+    synergyGroup: 'beam',
+    icon: '👑',
+    descPt: '[Feixe de Ki] Feixe dourado imperatorial. Causa 56 HP de dano.',
+    descEn: '[Ki Beam] Golden Emperor beam. Deals 56 HP damage.'
+  },
+  {
+    id: 'atk_25',
+    name: 'God Kamehameha',
+    type: 'attack',
+    cost: 7,
+    power: 72,
+    isCombo: false,
+    isBeam: true,
+    rarity: 'super-rare',
+    synergyGroup: 'beam',
+    icon: '🔷',
+    descPt: '[Feixe de Ki] Kamehameha com aura divina. Causa 72 HP de dano.',
+    descEn: '[Ki Beam] Divine god aura kamehameha. Deals 72 HP damage.'
+  },
+  {
+    id: 'atk_26',
+    name: 'Dirty Fireworks',
+    type: 'attack',
+    cost: 3,
+    power: 34,
+    isCombo: false,
+    isBeam: false,
+    rarity: 'common',
+    synergyGroup: 'control',
+    icon: '🎆',
+    descPt: '[Controle] Onda de choque à queima-roupa. Causa 34 HP de dano.',
+    descEn: '[Control Attack] Point-blank shockwave. Deals 34 HP damage.'
+  },
+  {
+    id: 'atk_27',
+    name: 'Super Spirit Bomb',
+    type: 'attack',
+    cost: 9,
+    power: 95,
+    isCombo: false,
+    isBeam: true,
+    rarity: 'super-rare',
+    synergyGroup: 'beam',
+    icon: '🌐',
+    descPt: '[Ultimate Supremacia] Energia reunida de todo o universo. Causa 95 HP de dano.',
+    descEn: '[Ultimate] Gathered energy from the entire universe. Deals 95 HP damage.'
+  },
+  {
+    id: 'atk_28',
+    name: 'Fierce Dragon Charge',
+    type: 'attack',
+    cost: 4,
+    power: 48,
+    isCombo: true,
+    isBeam: false,
+    rarity: 'rare',
+    synergyGroup: 'combo',
+    icon: '🐲',
+    descPt: '[Combo] Investida corporal com aura dourada. Causa 48 HP de dano.',
+    descEn: '[Combo] Golden aura body tackle. Deals 48 HP damage.'
+  },
+
+  // --- BLUE DEFENSE CARDS (29 - 43) ---
+  {
+    id: 'def_01',
+    name: 'Energy Shield',
+    type: 'defense',
+    cost: 1,
+    power: 25,
+    rarity: 'common',
+    synergyGroup: 'defense',
+    icon: '🛡️',
+    descPt: '[Defesa] Reduz o dano do ataque recebido em 25 HP.',
+    descEn: 'Reduces incoming attack damage by 25 HP.'
+  },
+  {
+    id: 'def_02',
+    name: 'Ki Barrier',
+    type: 'defense',
+    cost: 3,
+    power: 50,
+    rarity: 'rare',
+    synergyGroup: 'defense',
+    icon: '🌀',
+    descPt: '[Defesa] Reduz o dano recebido em 50 HP e concede +1 de Ki.',
+    descEn: 'Reduces incoming attack damage by 50 HP and grants +1 Ki.'
+  },
+  {
+    id: 'def_03',
+    name: 'Android Barrier',
+    type: 'defense',
+    cost: 2,
+    power: 35,
+    rarity: 'common',
+    synergyGroup: 'defense',
+    icon: '🟢',
+    descPt: '[Defesa] Reduz o dano recebido em 35 HP.',
+    descEn: 'Reduces incoming attack damage by 35 HP.'
+  },
+  {
+    id: 'def_04',
+    name: 'Godly Guard Wall',
+    type: 'defense',
+    cost: 4,
+    power: 65,
+    rarity: 'super-rare',
+    synergyGroup: 'defense',
+    icon: '💎',
+    descPt: '[Defesa Supremo] Reduz o dano recebido em 65 HP e compra 1 carta.',
+    descEn: 'Reduces incoming attack damage by 65 HP and draws 1 card.'
+  },
+  {
+    id: 'def_05',
+    name: 'Namekian Regeneration Shield',
+    type: 'defense',
+    cost: 2,
+    power: 30,
+    rarity: 'rare',
+    synergyGroup: 'defense',
+    icon: '🟢',
+    descPt: '[Defesa] Bloqueia 30 HP de dano e restaura 15 HP.',
+    descEn: 'Blocks 30 HP damage and restores 15 HP.'
+  },
+  {
+    id: 'def_06',
+    name: 'Royal Saiyan Guard',
+    type: 'defense',
+    cost: 2,
+    power: 32,
+    rarity: 'common',
+    synergyGroup: 'defense',
+    icon: '👑',
+    descPt: '[Defesa] Bloqueia 32 HP de dano. Ganha +1 Ki se defender contra Feixe de Ki.',
+    descEn: 'Blocks 32 HP damage. Grants +1 Ki if defending against a Beam attack.'
+  },
+  {
+    id: 'def_07',
+    name: 'Full Power Deflect',
+    type: 'defense',
+    cost: 3,
+    power: 45,
+    rarity: 'rare',
+    synergyGroup: 'defense',
+    icon: '✋',
+    descPt: '[Defesa] Bloqueia 45 HP de dano e reflete 10 HP de volta para o atacante.',
+    descEn: 'Blocks 45 HP damage and reflects 10 HP back to attacker.'
+  },
+  {
+    id: 'def_08',
+    name: 'Iron Guard Stance',
+    type: 'defense',
+    cost: 1,
+    power: 20,
+    rarity: 'common',
+    synergyGroup: 'defense',
+    icon: '🧱',
+    descPt: '[Defesa] Guarda rápida de 1 Ki. Bloqueia 20 HP de dano.',
+    descEn: 'Quick 1-Ki defense. Blocks 20 HP damage.'
+  },
+  {
+    id: 'def_09',
+    name: 'Titanium Ki Wall',
+    type: 'defense',
+    cost: 3,
+    power: 48,
+    rarity: 'rare',
+    synergyGroup: 'defense',
+    icon: '🛡️',
+    descPt: '[Defesa] Bloqueia 48 HP de dano.',
+    descEn: 'Blocks 48 HP damage.'
+  },
+  {
+    id: 'def_10',
+    name: 'Emperor Protection Force',
+    type: 'defense',
+    cost: 2,
+    power: 28,
+    rarity: 'common',
+    synergyGroup: 'defense',
+    icon: '🟣',
+    descPt: '[Defesa] Bloqueia 28 HP de dano e rouba 1 Ki do atacante.',
+    descEn: 'Blocks 28 HP damage and steals 1 Ki from attacker.'
+  },
+  {
+    id: 'def_11',
+    name: 'Ultra Energy Dome',
+    type: 'defense',
+    cost: 5,
+    power: 80,
+    rarity: 'super-rare',
+    synergyGroup: 'defense',
+    icon: '🔮',
+    descPt: '[Defesa] Domo impenetrável. Bloqueia até 80 HP de dano.',
+    descEn: 'Impenetrable dome. Blocks up to 80 HP damage.'
+  },
+  {
+    id: 'def_12',
+    name: 'Sword Guard Cross',
+    type: 'defense',
+    cost: 2,
+    power: 34,
+    rarity: 'rare',
+    synergyGroup: 'defense',
+    icon: '🗡️',
+    descPt: '[Defesa] Bloqueio de espadas cruzadas. Bloqueia 34 HP e ganha iniciativa.',
+    descEn: 'Crossed blade block. Blocks 34 HP damage and gains initiative.'
+  },
+  {
+    id: 'def_13',
+    name: 'Ki Repulsion Field',
+    type: 'defense',
+    cost: 3,
+    power: 42,
+    rarity: 'common',
+    synergyGroup: 'defense',
+    icon: '⚡',
+    descPt: '[Defesa] Bloqueia 42 HP de dano.',
+    descEn: 'Blocks 42 HP damage.'
+  },
+  {
+    id: 'def_14',
+    name: 'Sacred Namekian Barrier',
+    type: 'defense',
+    cost: 4,
+    power: 60,
+    rarity: 'rare',
+    synergyGroup: 'defense',
+    icon: '📜',
+    descPt: '[Defesa] Bloqueia 60 HP de dano e cura 20 HP.',
+    descEn: 'Blocks 60 HP damage and heals 20 HP.'
+  },
+  {
+    id: 'def_15',
+    name: 'Super Saiyan Wall',
+    type: 'defense',
+    cost: 4,
+    power: 68,
+    rarity: 'super-rare',
+    synergyGroup: 'defense',
+    icon: '🔥',
+    descPt: '[Defesa] Barreira com aura ardente. Bloqueia até 68 HP de dano.',
+    descEn: 'Blazing saiyan aura wall. Blocks up to 68 HP damage.'
+  },
+
+  // --- GREEN EVADE CARDS (44 - 52) ---
+  {
+    id: 'evd_01',
+    name: 'Z-Vanish Teleport',
+    type: 'evade',
+    cost: 4,
+    power: 0,
+    rarity: 'super-rare',
+    synergyGroup: 'evade',
+    icon: '💨',
+    descPt: '[Z-Vanish] Anula 100% do dano, rouba a iniciativa e compra 1 carta.',
+    descEn: '[Z-Vanish] 100% nullifies attack damage, steals Initiative & draws 1 card.'
+  },
+  {
+    id: 'evd_02',
+    name: 'Afterimage (Zanzoken)',
+    type: 'evade',
+    cost: 3,
+    power: 0,
+    rarity: 'rare',
+    synergyGroup: 'evade',
+    icon: '👥',
+    descPt: '[Esquiva] Esquiva de ataque físico e compra 1 carta.',
+    descEn: 'Evades incoming physical strike and draws 1 card.'
+  },
+  {
+    id: 'evd_03',
+    name: 'Instant Transmission',
+    type: 'evade',
+    cost: 4,
+    power: 0,
+    rarity: 'super-rare',
+    synergyGroup: 'evade',
+    icon: '✨',
+    descPt: '[Esquiva] Teletransporte instantâneo. Anula 100% do dano e concede +2 Ki.',
+    descEn: 'Instantaneous teleportation behind attacker. Evades 100% damage and grants +2 Ki.'
+  },
+  {
+    id: 'evd_04',
+    name: 'High Speed Sidestep',
+    type: 'evade',
+    cost: 2,
+    power: 0,
+    rarity: 'common',
+    synergyGroup: 'evade',
+    icon: '👟',
+    descPt: '[Esquiva] Passo lateral rápido. Funciona mesmo se não estiver em Guarda Aberta.',
+    descEn: 'Quick sidestep evade. Requires no Open Guard.'
+  },
+  {
+    id: 'evd_05',
+    name: 'Shadow Slip',
+    type: 'evade',
+    cost: 3,
+    power: 0,
+    rarity: 'rare',
+    synergyGroup: 'evade',
+    icon: '👤',
+    descPt: '[Esquiva] Desliza pelas sombras evitando o golpe e compra 1 carta.',
+    descEn: 'Slips through attacks. Draws 1 card.'
+  },
+  {
+    id: 'evd_06',
+    name: 'Ultra Instinct Flash',
+    type: 'evade',
+    cost: 5,
+    power: 0,
+    rarity: 'super-rare',
+    synergyGroup: 'evade',
+    icon: '⚪',
+    descPt: '[Esquiva Suprema] Movimento autônomo do corpo. Esquiva do ataque, ganha +3 Ki e compra 2 cartas.',
+    descEn: 'Autonomous body movement. Evades attack, gains +3 Ki & draws 2 cards.'
+  },
+  {
+    id: 'evd_07',
+    name: 'Speed Phantom',
+    type: 'evade',
+    cost: 3,
+    power: 0,
+    rarity: 'rare',
+    synergyGroup: 'evade',
+    icon: '👻',
+    descPt: '[Esquiva] Deixa vulto de velocidade. Esquiva do golpe e toma a iniciativa.',
+    descEn: 'Leaves a speed phantom image. Evades strike and steals Initiative.'
+  },
+  {
+    id: 'evd_08',
+    name: 'Aura Dodge',
+    type: 'evade',
+    cost: 2,
+    power: 0,
+    rarity: 'common',
+    synergyGroup: 'evade',
+    icon: '🔥',
+    descPt: '[Esquiva] Esquiva com impulso de aura.',
+    descEn: 'Explosive aura dodge. Evades attack.'
+  },
+  {
+    id: 'evd_09',
+    name: 'Dimension Shift',
+    type: 'evade',
+    cost: 4,
+    power: 0,
+    rarity: 'super-rare',
+    synergyGroup: 'evade',
+    icon: '🌀',
+    descPt: '[Esquiva] Deslocamento dimensional. Anula 100% de dano e rouba iniciativa.',
+    descEn: 'Shifts into pocket dimension. Evades 100% damage and steals Initiative.'
+  },
+
+  // --- YELLOW COUNTER CARDS (53 - 61) ---
+  {
+    id: 'ctr_01',
+    name: 'Solar Flare (Taiyoken)',
+    type: 'counter',
+    cost: 2,
+    power: 0,
+    rarity: 'rare',
+    synergyGroup: 'counter',
+    icon: '☀️',
+    descPt: '[Contra-Ataque] Cega o oponente cancelando o ataque ativo completamente.',
+    descEn: '[Counter] Blinds opponent, cancelling their active attack completely.'
+  },
+  {
+    id: 'ctr_02',
+    name: 'Explosive Wave',
+    type: 'counter',
+    cost: 3,
+    power: 20,
+    rarity: 'common',
+    synergyGroup: 'counter',
+    icon: '💥',
+    descPt: '[Contra-Ataque] Repele o ataque e causa 20 HP de dano de volta.',
+    descEn: '[Counter] Blows back opponent attack and deals 20 HP damage back.'
+  },
+  {
+    id: 'ctr_03',
+    name: 'Time Freeze (Skip)',
+    type: 'counter',
+    cost: 4,
+    power: 25,
+    rarity: 'super-rare',
+    synergyGroup: 'counter',
+    icon: '⏱️',
+    descPt: '[Contra-Ataque] Congela o tempo. Cancela ataque e causa 25 HP de dano.',
+    descEn: '[Counter] Freezes time for 0.1s. Cancels attack and deals 25 HP damage.'
+  },
+  {
+    id: 'ctr_04',
+    name: 'Ki Blast Deflection',
+    type: 'counter',
+    cost: 2,
+    power: 15,
+    rarity: 'common',
+    synergyGroup: 'counter',
+    icon: '✋',
+    descPt: '[Contra-Ataque] Desvia feixe de Ki com tapa e causa 15 HP de dano.',
+    descEn: '[Counter] Slaps away incoming Ki beam and deals 15 HP counter damage.'
+  },
+  {
+    id: 'ctr_05',
+    name: 'Body Change Trick',
+    type: 'counter',
+    cost: 4,
+    power: 30,
+    rarity: 'super-rare',
+    synergyGroup: 'counter',
+    icon: '🔄',
+    descPt: '[Contra-Ataque] Troca posição. Cancela ataque e causa 30 HP de dano.',
+    descEn: '[Counter] Swaps position with opponent. Cancels attack and deals 30 HP damage.'
+  },
+  {
+    id: 'ctr_06',
+    name: 'Counter Shockwave',
+    type: 'counter',
+    cost: 3,
+    power: 22,
+    rarity: 'rare',
+    synergyGroup: 'counter',
+    icon: '⚡',
+    descPt: '[Contra-Ataque] Onda de choque contra-atacante. Causa 22 HP de dano.',
+    descEn: '[Counter] Shockwave counter. Deals 22 HP damage back.'
+  },
+  {
+    id: 'ctr_07',
+    name: 'Dragon Roar Counter',
+    type: 'counter',
+    cost: 3,
+    power: 28,
+    rarity: 'rare',
+    synergyGroup: 'counter',
+    icon: '🐲',
+    descPt: '[Contra-Ataque] Roco feroz que interrompe ataque e causa 28 HP de dano.',
+    descEn: '[Counter] Fierce vocal roar disrupting attack and dealing 28 HP damage.'
+  },
+  {
+    id: 'ctr_08',
+    name: 'Emperor Finger Snap',
+    type: 'counter',
+    cost: 2,
+    power: 18,
+    rarity: 'common',
+    synergyGroup: 'counter',
+    icon: '🤌',
+    descPt: '[Contra-Ataque] Estalo arrogante contra-atacando golpes físicos em 18 HP.',
+    descEn: '[Counter] Arrogant snap countering physical strikes for 18 HP.'
+  },
+  {
+    id: 'ctr_09',
+    name: 'Kai Blast Counter',
+    type: 'counter',
+    cost: 3,
+    power: 26,
+    rarity: 'rare',
+    synergyGroup: 'counter',
+    icon: '⚡',
+    descPt: '[Contra-Ataque] Recarrega 2 Ki enquanto contra-ataca golpe por 26 HP.',
+    descEn: '[Counter] Recharges 2 Ki while countering incoming strike for 26 HP.'
+  },
+
+  // --- PURPLE TECHNIQUE CARDS (62 - 70) ---
+  {
+    id: 'tch_01',
+    name: 'Kaioken Boost',
+    type: 'tech',
+    cost: 1,
+    power: 0,
+    rarity: 'rare',
+    synergyGroup: 'tech',
+    icon: '🔴',
+    descPt: '[Técnica] Sacrifica 30 HP para ganhar +4 de Ki e comprar 1 carta extra.',
+    descEn: 'Sacrifice 30 HP to gain +4 Ki and draw 1 extra card.'
+  },
+  {
+    id: 'tch_02',
+    name: 'Senzu Bean',
+    type: 'tech',
+    cost: 2,
+    power: 0,
+    rarity: 'super-rare',
+    synergyGroup: 'tech',
+    icon: '🫘',
+    descPt: '[Técnica] Restaura 50 HP (1 Escudo de Vida) e compra 1 carta.',
+    descEn: 'Restores 50 HP (1 Life Shield) and draws 1 card.'
+  },
+  {
+    id: 'tch_03',
+    name: 'Spirit Bomb Charge',
+    type: 'tech',
+    cost: 5,
+    power: 90,
+    isBeam: true,
+    rarity: 'super-rare',
+    synergyGroup: 'beam',
+    icon: '🌕',
+    descPt: '[Técnica Ultimate] Carga da Genki Dama. Requer tempo mas causa massivo 90 HP de dano.',
+    descEn: 'Ultimate tech attack. Takes 1 extra reaction tick to execute but deals massive 90 HP damage.'
+  },
+  {
+    id: 'tch_04',
+    name: 'Saiyan Pride Surge',
+    type: 'tech',
+    cost: 2,
+    power: 0,
+    rarity: 'rare',
+    synergyGroup: 'tech',
+    icon: '👑',
+    descPt: '[Técnica] Aumenta o dano da próxima carta de ataque em +25 HP e ganha +2 Ki.',
+    descEn: 'Boosts next Attack card damage by +25 HP and gains +2 Ki.'
+  },
+  {
+    id: 'tch_05',
+    name: 'Hidden Potential Unleashed',
+    type: 'tech',
+    cost: 2,
+    power: 0,
+    rarity: 'rare',
+    synergyGroup: 'tech',
+    icon: '💥',
+    descPt: '[Técnica] Liberação de potencial. Compra 3 cartas imediatamente.',
+    descEn: 'Draw 3 cards immediately.'
+  },
+  {
+    id: 'tch_06',
+    name: 'Golden Transformation Boost',
+    type: 'tech',
+    cost: 3,
+    power: 0,
+    rarity: 'super-rare',
+    synergyGroup: 'tech',
+    icon: '✨',
+    descPt: '[Técnica] Concede instantaneamente +5 Ki e cura 30 HP.',
+    descEn: 'Instantly grants +5 Ki and heals 30 HP.'
+  },
+  {
+    id: 'tch_07',
+    name: 'Namekian Healing Technique',
+    type: 'tech',
+    cost: 3,
+    power: 0,
+    rarity: 'rare',
+    synergyGroup: 'tech',
+    icon: '🟢',
+    descPt: '[Técnica] Restaura 60 HP (1 Escudo).',
+    descEn: 'Restores 60 HP (1 Shield).'
+  },
+  {
+    id: 'tch_08',
+    name: 'Time Chamber Training',
+    type: 'tech',
+    cost: 1,
+    power: 0,
+    rarity: 'common',
+    synergyGroup: 'tech',
+    icon: '⏳',
+    descPt: '[Técnica] Treino na Sala do Tempo. Compra 2 cartas e ganha +1 Ki.',
+    descEn: 'Draw 2 cards and gain +1 Ki.'
+  },
+  {
+    id: 'tch_09',
+    name: 'Overdrive Awakening Boost',
+    type: 'tech',
+    cost: 4,
+    power: 0,
+    rarity: 'super-rare',
+    synergyGroup: 'tech',
+    icon: '💥',
+    descPt: '[Técnica] Surto de energia Despertada. Restaura 40 HP e compra 2 cartas.',
+    descEn: 'Surges awakening energy. Restores 40 HP and draws 2 cards.'
+  }
+];
+
+export function getCardById(cardId) {
+  return CARD_DATABASE.find(c => c.id === cardId) || CARD_DATABASE[0];
+}
+
+/* ==========================================================================
+   THEMATIC STARTER DECKS (Customized per Leader's lore & mechanics)
+   ========================================================================== */
+export function getStarterDeckForLeader(leaderId) {
+  const decks = {
+    // Goku: Aggro & Ki Beam/Combo Focus
+    goku: [
+      'atk_01', 'atk_01', 'atk_01', 'atk_02', 'atk_02', 'atk_04', 'atk_14', 'atk_27',
+      'def_01', 'def_01', 'def_02', 'evd_01', 'evd_03', 'tch_01', 'tch_03'
+    ],
+    // Vegeta: Royal Rage & Heavy ATK Focus
+    vegeta: [
+      'atk_01', 'atk_03', 'atk_03', 'atk_08', 'atk_08', 'atk_13', 'atk_19',
+      'def_01', 'def_06', 'def_06', 'ctr_02', 'evd_01', 'tch_04', 'tch_04', 'def_07'
+    ],
+    // Gohan: Def Control & Rage Burst
+    gohan: [
+      'atk_02', 'atk_09', 'atk_09', 'atk_16', 'atk_04',
+      'def_01', 'def_02', 'def_04', 'def_05', 'ctr_01', 'evd_02', 'tch_02', 'tch_05', 'def_14', 'atk_01'
+    ],
+    // Frieza: Ki Control & Emperor Beam Snipe
+    frieza: [
+      'atk_07', 'atk_07', 'atk_11', 'atk_18', 'atk_24', 'atk_26',
+      'def_01', 'def_10', 'def_10', 'ctr_01', 'ctr_08', 'evd_01', 'tch_06', 'atk_02', 'def_03'
+    ],
+    // Piccolo: Piercing Beam & Namekian Defense
+    piccolo: [
+      'atk_05', 'atk_05', 'atk_12', 'atk_17', 'atk_01',
+      'def_01', 'def_02', 'def_05', 'def_09', 'def_14', 'tch_02', 'tch_07', 'evd_02', 'ctr_02', 'atk_02'
+    ],
+    // Trunks: Speed Slash & Vanish Evade
+    trunks: [
+      'atk_06', 'atk_06', 'atk_10', 'atk_23', 'atk_04',
+      'def_01', 'def_12', 'evd_01', 'evd_01', 'evd_02', 'evd_03', 'evd_05', 'ctr_01', 'tch_01', 'tch_08'
+    ]
+  };
+
+  return decks[leaderId] || decks.goku;
+}
+
+export function getDefaultStarterDeck() {
+  return getStarterDeckForLeader('goku');
+}

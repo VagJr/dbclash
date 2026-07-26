@@ -1,0 +1,792 @@
+/* ==========================================================================
+   Dragon Ball Clash Action TCG — UI Manager (Redesigned Layout Engine)
+   Anime action indicators, opponent played card display, touch gesture popups,
+   Card Inspect Modal & Full PT-BR/EN i18n support
+   ========================================================================== */
+
+import { GameEngine } from './game-engine.js';
+import { MultiplayerManager } from './multiplayer-manager.js';
+import { deckBuilder } from './deck-builder.js';
+import { packOpener } from './pack-opener.js';
+import { chatManager, DOJO_RANKINGS } from './chat-manager.js';
+import { FXEngine } from './fx-engine.js';
+import { TutorialManager } from './tutorial-manager.js';
+import { characterUnlocks } from './character-unlocks.js';
+import { assetLoader } from './asset-loader.js';
+import { cutsceneEngine } from './cutscene-engine.js';
+import { soundEngine } from './audio.js';
+import { getCardById, LEADERS, getStarterDeckForLeader, CARD_DATABASE } from './card-database.js';
+import { authDatabase } from './auth-database.js';
+import { i18n } from './i18n.js';
+
+export class UIManager {
+  constructor() {
+    this.fx = new FXEngine('fx-canvas');
+
+    this.gameEngine = new GameEngine(
+      this.renderArena.bind(this),
+      this.handleFXEvent.bind(this)
+    );
+
+    this.gameEngine.onTimerTick = (secondsLeft, maxSec = 3.0) => {
+      if (this.timerBarFill) {
+        const pct = (secondsLeft / maxSec) * 100;
+        this.timerBarFill.style.width = `${Math.max(0, pct)}%`;
+      }
+    };
+
+    this.multiplayer = new MultiplayerManager(this.gameEngine);
+    this.tutorial = new TutorialManager(this);
+
+    this.selectedLeader = 'goku';
+    this.draggedCardIndex = null;
+    this.actionBannerTimer = null;
+
+    this.initDOM();
+    this.initCardInspectModal();
+    this.bindNavigation();
+    this.bindEvents();
+    this.updateUserSessionUI();
+    this.applyTranslations();
+    this.renderLeaderSelectionRoster();
+  }
+
+  /* ── Anime Action Splash Banner ────────────────────────────────────── */
+  triggerActionBanner(text, actClass = 'act-attack') {
+    let banner = document.getElementById('anime-action-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'anime-action-banner';
+      banner.className = 'anime-action-banner';
+      document.getElementById('arena-screen')?.appendChild(banner);
+    }
+    banner.textContent = text;
+    banner.className = `anime-action-banner ${actClass} active`;
+    if (this.actionBannerTimer) clearTimeout(this.actionBannerTimer);
+    this.actionBannerTimer = setTimeout(() => {
+      banner.classList.remove('active');
+    }, 1100);
+  }
+
+  /* ── FX Event Handler ──────────────────────────────────────────────── */
+  handleFXEvent(type, data) {
+    if (!this.fx) return;
+    if (type === 'kiAura') {
+      this.triggerActionBanner('⚡ CARREGAR KI! (+2 KI)', 'act-charge');
+      this.fx.spawnKiAura(data.x, data.y, data.color);
+    } else if (type === 'kamehameha') {
+      this.triggerActionBanner('🔥 DISPARO DE BEAM!', 'act-attack');
+      const attackerKey = this.gameEngine.pendingAttack ? this.gameEngine.pendingAttack.attackerKey : 'player';
+      const leader = attackerKey === 'player' ? this.gameEngine.player.leader : this.gameEngine.opponent.leader;
+      cutsceneEngine.triggerCutscene(leader.icon, 'BEAM BLAST!', leader.quote, leader.color, 1000);
+      this.fx.fireKamehameha(data.fromX, data.fromY, data.toX, data.toY, data.isGolden);
+    } else if (type === 'punch') {
+      this.triggerActionBanner('💥 GOLPE DE IMPACTO!', 'act-attack');
+      this.fx.triggerImpactHit(data.x, data.y);
+    } else if (type === 'zvanish') {
+      this.triggerActionBanner('💨 Z-VANISH TELEPORT!', 'act-evade');
+      this.fx.triggerZVanish(data.x, data.y, data.color);
+    } else if (type === 'awaken') {
+      this.triggerActionBanner('🔥 AWAKEN TRANSFORMAÇÃO!', 'act-charge');
+      cutsceneEngine.triggerCutscene('🔥', 'AWAKEN TRANSFORMATION!', 'THIS IS MY TRUE POWER!', '#ffd700', 1000);
+      this.fx.triggerAwakenBurst(data.x, data.color);
+    }
+  }
+
+  /* ── Card Inspect Modal Handler ────────────────────────────────────── */
+  initCardInspectModal() {
+    this.cardInspectModal = document.getElementById('card-inspect-modal');
+    this.cardInspectClose = document.getElementById('card-inspect-close');
+    
+    if (this.cardInspectClose) {
+      this.cardInspectClose.addEventListener('click', () => {
+        this.cardInspectModal?.classList.remove('active');
+      });
+    }
+    this.cardInspectModal?.addEventListener('click', (e) => {
+      if (e.target === this.cardInspectModal) {
+        this.cardInspectModal.classList.remove('active');
+      }
+    });
+  }
+
+  openCardInspectModal(card) {
+    if (!card || !this.cardInspectModal) return;
+    soundEngine.playClick();
+    
+    const preview = document.getElementById('card-inspect-preview');
+    const nameEl = document.getElementById('inspect-card-name');
+    const typeEl = document.getElementById('inspect-card-type');
+    const descEl = document.getElementById('inspect-card-desc');
+    const costEl = document.getElementById('inspect-card-cost');
+    const powerEl = document.getElementById('inspect-card-power');
+
+    if (preview) {
+      preview.innerHTML = `
+        <div class="card type-${card.type}${card.rarity === 'super-rare' ? ' super-rare' : ''}">
+          ${assetLoader.renderCardArtHTML(card)}
+          <div class="card-header"><div class="card-ki-cost">${card.cost}</div></div>
+          <div class="card-type-tag tag-${card.type}">${card.type.toUpperCase()}</div>
+          ${card.power > 0 ? `<div class="card-power-badge">${card.power} ATK</div>` : ''}
+        </div>
+      `;
+    }
+
+    if (nameEl) nameEl.textContent = card.name;
+    if (typeEl) {
+      typeEl.textContent = `${card.rarity.toUpperCase()} — ${card.type.toUpperCase()}`;
+      typeEl.className = `inspect-type-badge tag-${card.type}`;
+    }
+    if (descEl) descEl.textContent = i18n.lang === 'pt' ? (card.descPt || card.description) : (card.descEn || card.description);
+    if (costEl) costEl.textContent = `⚡ Ki Cost: ${card.cost}`;
+    if (powerEl) powerEl.textContent = card.power > 0 ? `💥 Power: ${card.power} ATK` : '🛡️ Special Skill';
+
+    this.cardInspectModal.classList.add('active');
+  }
+
+  /* ── DOM References ────────────────────────────────────────────────── */
+  initDOM() {
+    // Navigation
+    this.sidebarItems = document.querySelectorAll('#sidebar .nav-item');
+    this.bottomTabs = document.querySelectorAll('#bottom-bar .btab');
+    this.screens = document.querySelectorAll('.screen');
+
+    // Header
+    this.langSwitchBtn = document.getElementById('lang-switch-btn');
+    this.authBtn = document.getElementById('auth-btn');
+    this.zeniDisplay = document.getElementById('user-zeni');
+    this.dustDisplay = document.getElementById('user-dust');
+
+    // Auth Modal
+    this.authModal = document.getElementById('auth-modal');
+    this.authUserInput = document.getElementById('auth-user-input');
+    this.authPassInput = document.getElementById('auth-pass-input');
+    this.authLoginSubmit = document.getElementById('auth-login-submit');
+    this.authRegisterSubmit = document.getElementById('auth-register-submit');
+    this.authCloseBtn = document.getElementById('auth-close-btn');
+
+    // Arena — Phase Banner
+    this.turnPhaseBar = document.getElementById('turn-phase-bar');
+    this.turnPhaseIcon = document.getElementById('turn-phase-icon');
+    this.turnPhaseText = document.getElementById('turn-phase-text');
+
+    // Arena — Player HUD
+    this.p1Portrait = document.getElementById('p1-portrait');
+    this.p1Name = document.getElementById('p1-name');
+    this.p1HpFill = document.getElementById('p1-hp-fill');
+    this.p1HpText = document.getElementById('p1-hp-text');
+    this.p1Shields = document.getElementById('p1-shields');
+    this.p1KiSlots = document.getElementById('p1-ki-slots');
+    this.p1KiText = document.getElementById('p1-ki-text');
+    this.p1LeaderBox = document.getElementById('p1-leader-box');
+    this.p1HandContainer = document.getElementById('p1-hand');
+
+    // Arena — Opponent HUD
+    this.p2Portrait = document.getElementById('p2-portrait');
+    this.p2Name = document.getElementById('p2-name');
+    this.p2HpFill = document.getElementById('p2-hp-fill');
+    this.p2HpText = document.getElementById('p2-hp-text');
+    this.p2Shields = document.getElementById('p2-shields');
+    this.p2KiSlots = document.getElementById('p2-ki-slots');
+    this.p2KiText = document.getElementById('p2-ki-text');
+    this.p2LeaderBox = document.getElementById('p2-leader-box');
+
+    // Arena — Actions
+    this.chargeKiBtn = document.getElementById('charge-ki-btn');
+    this.passTurnBtn = document.getElementById('pass-turn-btn');
+    this.dropZone = document.getElementById('drop-zone');
+    this.reactionBanner = document.getElementById('reaction-banner');
+    this.timerBarFill = document.getElementById('timer-bar-fill');
+    this.reactionText = document.getElementById('reaction-text');
+
+    // Arena — Beam Clash
+    this.beamClashOverlay = document.getElementById('beam-clash-overlay');
+    this.beamClashFill = document.getElementById('beam-clash-fill');
+    this.clashMashBtn = document.getElementById('clash-mash-btn');
+
+    // Arena — Log & KO
+    this.battleLogContainer = document.getElementById('battle-log-container');
+    this.koModal = document.getElementById('ko-modal');
+    this.koText = document.getElementById('ko-text');
+
+    // Other screens
+    this.deckListContainer = document.getElementById('deck-list-container');
+    this.collectionGrid = document.getElementById('collection-grid');
+    this.dojoListContainer = document.getElementById('dojo-list-container');
+    this.chatFeed = document.getElementById('chat-feed');
+    this.chatInput = document.getElementById('chat-input');
+    this.packRevealContainer = document.getElementById('pack-reveal-container');
+  }
+
+  /* ── Navigation (Sidebar + Bottom Bar) ──────────────────────────────── */
+  bindNavigation() {
+    const switchTo = (tabId) => {
+      soundEngine.playClick();
+      this.switchTab(tabId);
+    };
+
+    this.sidebarItems.forEach(btn => {
+      btn.addEventListener('click', () => switchTo(btn.dataset.tab));
+    });
+
+    this.bottomTabs.forEach(btn => {
+      btn.addEventListener('click', () => switchTo(btn.dataset.tab));
+    });
+  }
+
+  switchTab(tabId) {
+    this.sidebarItems.forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+    this.bottomTabs.forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+    this.screens.forEach(s => {
+      s.classList.toggle('active', s.id === `${tabId}-screen`);
+    });
+
+    if (tabId === 'deck') this.renderDeckBuilder();
+    if (tabId === 'arena' && this.fx) this.fx.resizeCanvas();
+  }
+
+  /* ── Event Bindings ─────────────────────────────────────────────────── */
+  bindEvents() {
+    if (this.langSwitchBtn) {
+      this.langSwitchBtn.addEventListener('click', () => {
+        soundEngine.playClick();
+        i18n.setLanguage(i18n.lang === 'pt' ? 'en' : 'pt');
+        this.applyTranslations();
+      });
+    }
+
+    document.getElementById('landing-enter-arena-btn')?.addEventListener('click', () => {
+      soundEngine.playClick();
+      this.switchTab('lobby');
+    });
+    document.getElementById('landing-guest-btn')?.addEventListener('click', () => {
+      soundEngine.playClick();
+      authDatabase.loginAsGuest();
+      this.updateUserSessionUI();
+      this.switchTab('lobby');
+    });
+    document.getElementById('landing-auth-btn')?.addEventListener('click', () => {
+      soundEngine.playClick();
+      this.authModal?.classList.add('active');
+    });
+
+    this.authBtn?.addEventListener('click', () => {
+      soundEngine.playClick();
+      if (authDatabase.isLoggedIn() && !authDatabase.getCurrentUser().isGuest) {
+        authDatabase.logout();
+        this.updateUserSessionUI();
+      } else {
+        this.authModal?.classList.add('active');
+      }
+    });
+    this.authCloseBtn?.addEventListener('click', () => this.authModal?.classList.remove('active'));
+    this.authLoginSubmit?.addEventListener('click', () => {
+      const res = authDatabase.login(this.authUserInput?.value || '', this.authPassInput?.value || '');
+      alert(res.msg);
+      if (res.success) { this.authModal?.classList.remove('active'); this.updateUserSessionUI(); }
+    });
+    this.authRegisterSubmit?.addEventListener('click', () => {
+      const res = authDatabase.register(this.authUserInput?.value || '', this.authPassInput?.value || '');
+      alert(res.msg);
+      if (res.success) { this.authModal?.classList.remove('active'); this.updateUserSessionUI(); }
+    });
+
+    document.getElementById('start-tutorial-btn')?.addEventListener('click', () => this.tutorial.startTutorial());
+    document.getElementById('start-vs-ai-btn')?.addEventListener('click', () => {
+      soundEngine.playClick();
+      this.multiplayer.startAiMatch(this.selectedLeader, 'vegeta', getStarterDeckForLeader(this.selectedLeader));
+      this.switchTab('arena');
+    });
+    document.getElementById('create-room-btn')?.addEventListener('click', () => {
+      soundEngine.playClick();
+      const code = this.multiplayer.createRoom(this.selectedLeader, getStarterDeckForLeader(this.selectedLeader));
+      alert(`Room Created! Share Code: ${code}`);
+      this.switchTab('arena');
+    });
+    document.getElementById('join-room-btn')?.addEventListener('click', () => {
+      const code = prompt("Enter 4-Digit Room Code:");
+      if (code) {
+        soundEngine.playClick();
+        this.multiplayer.joinRoom(code, this.selectedLeader, getStarterDeckForLeader(this.selectedLeader));
+        this.switchTab('arena');
+      }
+    });
+
+    this.chargeKiBtn?.addEventListener('click', () => this.gameEngine.chargeKi('player'));
+    this.passTurnBtn?.addEventListener('click', () => {
+      soundEngine.playClick();
+      this.gameEngine.passTurn('player');
+    });
+    this.clashMashBtn?.addEventListener('click', () => this.gameEngine.mashBeamClash());
+
+    if (this.dropZone) {
+      this.dropZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        this.dropZone.classList.add('drag-over');
+      });
+      this.dropZone.addEventListener('dragleave', () => this.dropZone.classList.remove('drag-over'));
+      this.dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        this.dropZone.classList.remove('drag-over');
+        if (this.draggedCardIndex !== null) {
+          this.gameEngine.playCard('player', this.draggedCardIndex);
+          this.draggedCardIndex = null;
+        }
+      });
+    }
+
+    document.getElementById('buy-pack-btn')?.addEventListener('click', () => {
+      const cards = packOpener.openPack();
+      if (cards) { this.renderPackReveal(cards); this.updateCurrencies(); this.renderDeckBuilder(); }
+    });
+
+    const sendChatMsg = () => {
+      if (this.chatInput?.value.trim()) {
+        chatManager.addMessage(authDatabase.getCurrentUser().username, this.chatInput.value.trim());
+        this.chatInput.value = '';
+        this.renderChat();
+      }
+    };
+    document.getElementById('send-chat-btn')?.addEventListener('click', sendChatMsg);
+    this.chatInput?.addEventListener('keydown', e => { if (e.key === 'Enter') sendChatMsg(); });
+
+    document.getElementById('close-ko-btn')?.addEventListener('click', () => {
+      this.koModal?.classList.remove('active');
+      this.switchTab('lobby');
+    });
+
+    this.renderDeckBuilder();
+    this.renderDojos();
+    this.renderChat();
+  }
+
+  /* ── User Session ───────────────────────────────────────────────────── */
+  updateUserSessionUI() {
+    const user = authDatabase.getCurrentUser();
+    deckBuilder.zeni = user.zeni;
+    deckBuilder.dust = user.dust;
+    this.updateCurrencies();
+    if (this.authBtn) {
+      this.authBtn.textContent = user.isGuest ? '🔑 Entrar' : `👤 ${user.username}`;
+    }
+  }
+
+  updateCurrencies() {
+    if (this.zeniDisplay) this.zeniDisplay.textContent = deckBuilder.zeni;
+    if (this.dustDisplay) this.dustDisplay.textContent = deckBuilder.dust;
+  }
+
+  /* ── i18n Translations ──────────────────────────────────────────────── */
+  applyTranslations() {
+    if (this.langSwitchBtn) this.langSwitchBtn.textContent = i18n.lang === 'pt' ? '🇧🇷 PT-BR' : '🇺🇸 EN';
+
+    const $ = id => document.getElementById(id);
+    const t = key => i18n.t(key);
+
+    $('landing-title') && ($('landing-title').textContent = t('landingHeroTitle'));
+    $('landing-subtitle') && ($('landing-subtitle').textContent = t('landingHeroSubtitle'));
+    $('landing-guest-btn') && ($('landing-guest-btn').textContent = t('btnPlayGuest'));
+    $('landing-auth-btn') && ($('landing-auth-btn').textContent = t('btnAuthModal'));
+    $('landing-enter-arena-btn') && ($('landing-enter-arena-btn').textContent = t('btnEnterArena'));
+    $('feat1-title') && ($('feat1-title').textContent = t('feature1Title'));
+    $('feat1-desc') && ($('feat1-desc').textContent = t('feature1Desc'));
+    $('feat2-title') && ($('feat2-title').textContent = t('feature2Title'));
+    $('feat2-desc') && ($('feat2-desc').textContent = t('feature2Desc'));
+    $('feat3-title') && ($('feat3-title').textContent = t('feature3Title'));
+    $('feat3-desc') && ($('feat3-desc').textContent = t('feature3Desc'));
+
+    $('select-leader-title') && ($('select-leader-title').textContent = t('selectLeaderTitle'));
+    $('select-leader-sub') && ($('select-leader-sub').textContent = t('selectLeaderSub'));
+
+    if (this.passTurnBtn) this.passTurnBtn.textContent = t('passTurnBtn');
+
+    this.renderArena(this.gameEngine);
+  }
+
+  /* ── Leader Selection Roster ────────────────────────────────────────── */
+  renderLeaderSelectionRoster() {
+    const picks = document.querySelectorAll('.leader-pick');
+    picks.forEach(card => {
+      const leaderId = card.dataset.leader;
+      const leader = LEADERS[leaderId];
+      if (!leader) return;
+
+      const avatar = card.querySelector('.lp-avatar');
+      if (avatar) avatar.innerHTML = assetLoader.renderLeaderPortraitHTML(leader);
+
+      const unlocked = characterUnlocks.isUnlocked(leaderId);
+      card.classList.toggle('locked', !unlocked);
+      let lockBadge = card.querySelector('.lock-badge');
+      if (!unlocked && !lockBadge) {
+        lockBadge = document.createElement('div');
+        lockBadge.className = 'lock-badge';
+        lockBadge.style.cssText = 'font-size:0.6rem; color:#ef4444; font-weight:900; margin-top:4px;';
+        lockBadge.textContent = `🔒 ${leader.unlockCost} Zeni`;
+        card.appendChild(lockBadge);
+      } else if (unlocked && lockBadge) {
+        lockBadge.remove();
+      }
+
+      card.onclick = () => {
+        soundEngine.playClick();
+        if (!characterUnlocks.isUnlocked(leaderId)) {
+          if (confirm(`Unlock ${leader.name} for ${leader.unlockCost} Zeni?`)) {
+            characterUnlocks.unlockCharacter(leaderId, leader.unlockCost, deckBuilder.zeni, cost => {
+              deckBuilder.zeni -= cost;
+              authDatabase.updateProfileStats({ zeni: deckBuilder.zeni });
+              this.updateCurrencies();
+              this.renderLeaderSelectionRoster();
+            });
+          }
+          return;
+        }
+        picks.forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        this.selectedLeader = leaderId;
+        deckBuilder.activeDeck = getStarterDeckForLeader(leaderId);
+        this.renderDeckBuilder();
+      };
+    });
+  }
+
+  /* ── Arena Renderer & Active Played Card Display ────────────────────── */
+  renderArena(engine) {
+    const p = engine.player;
+    const opp = engine.opponent;
+
+    // Phase Banner
+    if (this.turnPhaseBar) {
+      this.turnPhaseBar.className = 'phase-banner';
+      if (engine.state === 'ATTACK_PENDING') {
+        const defending = engine.pendingAttack?.attackerKey === 'opponent';
+        const hasDef = engine.hasDefensiveResponse('player');
+        this.turnPhaseBar.classList.add('phase-reaction');
+        if (this.turnPhaseIcon) this.turnPhaseIcon.textContent = '⚠️';
+        if (this.turnPhaseText) {
+          this.turnPhaseText.textContent = defending
+            ? (hasDef ? i18n.t('reactionBannerDefending') : i18n.t('reactionBannerNoDef'))
+            : i18n.t('reactionBannerInFlight');
+        }
+      } else if (engine.initiative === 'player') {
+        this.turnPhaseBar.classList.add('phase-player');
+        if (this.turnPhaseIcon) this.turnPhaseIcon.textContent = '⚔️';
+        if (this.turnPhaseText) this.turnPhaseText.textContent = i18n.t('yourTurnBanner');
+      } else {
+        this.turnPhaseBar.classList.add('phase-opponent');
+        if (this.turnPhaseIcon) this.turnPhaseIcon.textContent = '🛡️';
+        if (this.turnPhaseText) this.turnPhaseText.textContent = i18n.t('opponentTurnBanner');
+      }
+    }
+
+    // Player HUD
+    this.renderFighterHUD('p1', p);
+    // Opponent HUD
+    this.renderFighterHUD('p2', opp);
+
+    // Action buttons
+    const canAct = engine.state === 'FREE_ACTION' && engine.initiative === 'player';
+    if (this.chargeKiBtn) {
+      this.chargeKiBtn.disabled = !canAct;
+      this.chargeKiBtn.classList.toggle('overcharge', p.ki >= 10);
+      this.chargeKiBtn.innerHTML = p.ki >= 10 ? i18n.t('overchargeKiBtn') : i18n.t('chargeKiBtn');
+    }
+    if (this.passTurnBtn) {
+      this.passTurnBtn.disabled = !canAct;
+      this.passTurnBtn.textContent = i18n.t('passTurnBtn');
+    }
+
+    // Central Drop Zone — Render Active Played Cards!
+    if (this.dropZone) {
+      if (engine.pendingAttack) {
+        const attackerName = engine.pendingAttack.attackerKey === 'player' ? p.name : opp.name;
+        const attackCard = engine.pendingAttack.card;
+
+        this.dropZone.innerHTML = `
+          <div class="drop-zone-cards">
+            <div class="played-card-slot">
+              <span class="played-card-label">⚔️ ${attackerName.toUpperCase()} EM ATAQUE</span>
+              <div class="card type-${attackCard.type}${attackCard.rarity === 'super-rare' ? ' super-rare' : ''}">
+                ${assetLoader.renderCardArtHTML(attackCard)}
+                <div class="card-header"><div class="card-ki-cost">${attackCard.cost}</div></div>
+                <div class="card-type-tag tag-${attackCard.type}">${attackCard.type.toUpperCase()}</div>
+                ${attackCard.power > 0 ? `<div class="card-power-badge">${attackCard.power} ATK</div>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        this.dropZone.innerHTML = `<div class="dz-label" id="drop-zone-label">${i18n.t('dropZoneText')}</div>`;
+      }
+    }
+
+    // Reaction banner
+    if (engine.state === 'ATTACK_PENDING') {
+      this.reactionBanner?.classList.add('active');
+    } else {
+      this.reactionBanner?.classList.remove('active');
+    }
+
+    // Beam Clash
+    if (engine.state === 'BEAM_CLASH' && engine.beamClash.active) {
+      this.beamClashOverlay?.classList.add('active');
+      if (this.beamClashFill) this.beamClashFill.style.width = `${engine.beamClash.playerClicks}%`;
+    } else {
+      this.beamClashOverlay?.classList.remove('active');
+    }
+
+    // Hand
+    this.renderPlayerHand(p.hand, p.ki, engine.state, engine.initiative, engine.pendingAttack, p.isOpenGuard);
+
+    // Logs
+    this.renderLogs(engine.battleLogs);
+
+    // Game Over
+    if (engine.state === 'GAME_OVER') {
+      this.koModal?.classList.add('active');
+      if (this.koText) {
+        if (engine.winner === 'player') {
+          soundEngine.playAwaken();
+          this.koText.textContent = i18n.t('victoryTitle');
+        } else {
+          this.koText.textContent = i18n.t('defeatTitle');
+        }
+      }
+    }
+  }
+
+  renderFighterHUD(prefix, fighter) {
+    const portrait = document.getElementById(`${prefix}-portrait`);
+    const name = document.getElementById(`${prefix}-name`);
+    const hpFill = document.getElementById(`${prefix}-hp-fill`);
+    const hpText = document.getElementById(`${prefix}-hp-text`);
+    const shields = document.getElementById(`${prefix}-shields`);
+    const kiSlots = document.getElementById(`${prefix}-ki-slots`);
+    const kiText = document.getElementById(`${prefix}-ki-text`);
+    const leaderBox = document.getElementById(`${prefix}-leader-box`);
+
+    if (name) name.innerHTML = `${fighter.isAwakened ? fighter.leader.awakenedName : fighter.leader.name} <span class="awaken-badge">AWAKENED</span>`;
+
+    if (hpFill) {
+      const pct = Math.max(0, (fighter.hp / fighter.maxHp) * 100);
+      hpFill.style.width = `${pct}%`;
+      hpFill.className = 'hp-bar-fill';
+      if (pct <= 25) hpFill.classList.add('hp-low');
+      else if (pct <= 50) hpFill.classList.add('hp-mid');
+    }
+    if (hpText) hpText.textContent = `${fighter.hp}/${fighter.maxHp} HP`;
+
+    if (portrait) {
+      portrait.innerHTML = assetLoader.renderLeaderPortraitHTML(fighter.leader);
+      portrait.classList.toggle('awakened', fighter.isAwakened);
+    }
+
+    this.renderShields(shields, fighter.shields);
+    this.renderKiGauge(kiSlots, kiText, fighter.ki);
+    if (leaderBox) leaderBox.classList.toggle('open-guard', fighter.isOpenGuard);
+  }
+
+  renderShields(container, count) {
+    if (!container) return;
+    container.innerHTML = '';
+    for (let i = 0; i < 8; i++) {
+      const pip = document.createElement('div');
+      pip.className = `shield-pip${i >= count ? ' broken' : ''}`;
+      container.appendChild(pip);
+    }
+  }
+
+  renderKiGauge(container, textEl, ki) {
+    if (container) {
+      container.innerHTML = '';
+      for (let i = 0; i < 10; i++) {
+        const pip = document.createElement('div');
+        pip.className = `ki-pip${i < ki ? ' filled' : ''}`;
+        container.appendChild(pip);
+      }
+    }
+    if (textEl) textEl.textContent = `${ki}/10 KI`;
+  }
+
+  /* ── Player Hand & Touch Gesture Slide Pop-up ──────────────────────── */
+  renderPlayerHand(hand, playerKi, gameState, initiative, pendingAttack, isOpenGuard) {
+    if (!this.p1HandContainer) return;
+    this.p1HandContainer.innerHTML = '';
+
+    hand.forEach((card, index) => {
+      const el = document.createElement('div');
+
+      let isPlayable = false;
+      let reasonText = '';
+
+      if (playerKi < card.cost) {
+        reasonText = i18n.t('reasonNeedKi');
+      } else if (card.type === 'evade' && isOpenGuard) {
+        reasonText = i18n.t('reasonOpenGuard');
+      } else if (gameState === 'FREE_ACTION' && initiative === 'player') {
+        if (card.type === 'attack' || card.type === 'tech') isPlayable = true;
+        else reasonText = i18n.t('reasonDefenseOnly');
+      } else if (gameState === 'ATTACK_PENDING' && pendingAttack) {
+        if (pendingAttack.attackerKey === 'opponent') {
+          if (['defense', 'evade', 'counter'].includes(card.type) || card.isBeam) isPlayable = true;
+          else reasonText = i18n.t('reasonReactionOnly');
+        } else {
+          reasonText = i18n.t('reasonInFlight');
+        }
+      } else if (initiative !== 'player') {
+        reasonText = i18n.t('reasonOpponentTurn');
+      }
+
+      el.className = `card type-${card.type}${card.rarity === 'super-rare' ? ' super-rare' : ''} ${isPlayable ? 'playable' : 'unplayable'}`;
+
+      el.innerHTML = `
+        ${assetLoader.renderCardArtHTML(card)}
+        <div class="card-header"><div class="card-ki-cost">${card.cost}</div></div>
+        <div class="card-type-tag tag-${card.type}">${card.type.toUpperCase()}</div>
+        ${!isPlayable && reasonText ? `<div class="card-reason-badge">${reasonText}</div>` : ''}
+        ${card.power > 0 ? `<div class="card-power-badge">${card.power} ATK</div>` : ''}
+      `;
+
+      el.draggable = isPlayable;
+      el.addEventListener('dragstart', () => { this.draggedCardIndex = index; });
+
+      // Touchscreen Mobile Slide Pop-up Gesture
+      el.addEventListener('touchstart', () => {
+        if (isPlayable) this.draggedCardIndex = index;
+        el.classList.add('touch-hover');
+      }, { passive: true });
+
+      el.addEventListener('touchmove', (e) => {
+        if (e.touches && e.touches[0]) {
+          const touch = e.touches[0];
+          const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+          const parentCard = targetEl ? targetEl.closest('.card') : null;
+          
+          this.p1HandContainer.querySelectorAll('.card').forEach(c => {
+            if (c === parentCard) c.classList.add('touch-hover');
+            else c.classList.remove('touch-hover');
+          });
+        }
+      }, { passive: true });
+
+      const clearTouchHover = () => {
+        this.p1HandContainer.querySelectorAll('.card').forEach(c => c.classList.remove('touch-hover'));
+      };
+      el.addEventListener('touchend', clearTouchHover);
+      el.addEventListener('touchcancel', clearTouchHover);
+
+      el.addEventListener('click', () => {
+        if (isPlayable) {
+          soundEngine.playClick();
+          this.gameEngine.playCard('player', index);
+        }
+      });
+
+      this.p1HandContainer.appendChild(el);
+    });
+  }
+
+  /* ── Battle Log ─────────────────────────────────────────────────────── */
+  renderLogs(logs) {
+    if (!this.battleLogContainer) return;
+    this.battleLogContainer.innerHTML = '';
+    logs.forEach(log => {
+      const line = document.createElement('div');
+      line.className = `log-line ${log.type || ''}`;
+      line.textContent = `[${log.time}] ${log.msg}`;
+      this.battleLogContainer.appendChild(line);
+    });
+  }
+
+  /* ── Deck Builder & Card Inspect Trigger ───────────────────────────── */
+  renderDeckBuilder() {
+    if (this.deckListContainer) {
+      this.deckListContainer.innerHTML = '';
+      const deck = deckBuilder.activeDeck || getStarterDeckForLeader(this.selectedLeader);
+      deck.forEach((cardId, index) => {
+        const card = getCardById(cardId);
+        const row = document.createElement('div');
+        row.className = 'deck-entry';
+        row.style.cursor = 'pointer';
+        row.innerHTML = `
+          <span class="de-title">🔍 ${card.name} (${card.cost} Ki)</span>
+          <button class="de-remove">✕</button>
+        `;
+        row.querySelector('.de-title').onclick = () => this.openCardInspectModal(card);
+        row.querySelector('.de-remove').onclick = (e) => {
+          e.stopPropagation();
+          deckBuilder.removeCardFromDeck(index);
+          this.renderDeckBuilder();
+        };
+        this.deckListContainer.appendChild(row);
+      });
+    }
+
+    if (this.collectionGrid) {
+      this.collectionGrid.innerHTML = '';
+      CARD_DATABASE.forEach(card => {
+        const el = document.createElement('div');
+        el.className = `card type-${card.type}${card.rarity === 'super-rare' ? ' super-rare' : ''}`;
+        el.style.cursor = 'pointer';
+        el.innerHTML = `
+          ${assetLoader.renderCardArtHTML(card)}
+          <div class="card-header"><div class="card-ki-cost">${card.cost}</div></div>
+          <div class="card-type-tag tag-${card.type}">${card.type.toUpperCase()}</div>
+          ${card.power > 0 ? `<div class="card-power-badge">${card.power} ATK</div>` : ''}
+        `;
+        el.onclick = () => this.openCardInspectModal(card);
+        this.collectionGrid.appendChild(el);
+      });
+    }
+  }
+
+  /* ── Dojos Ranking ──────────────────────────────────────────────────── */
+  renderDojos() {
+    if (!this.dojoListContainer) return;
+    this.dojoListContainer.innerHTML = '';
+    const medals = ['🥇', '🥈', '🥉'];
+    DOJO_RANKINGS.forEach((dojo, i) => {
+      const row = document.createElement('div');
+      row.className = 'dojo-row';
+      row.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="dojo-rank">${medals[i] || `#${i + 1}`}</span>
+          <span>${dojo.icon} ${dojo.name} <span style="color:var(--text-dim)">(${dojo.leader})</span></span>
+        </div>
+        <span class="dojo-power">${dojo.power} PWR</span>
+      `;
+      this.dojoListContainer.appendChild(row);
+    });
+  }
+
+  /* ── Chat ────────────────────────────────────────────────────────────── */
+  renderChat() {
+    if (!this.chatFeed) return;
+    this.chatFeed.innerHTML = '';
+    chatManager.messages.forEach(msg => {
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-bubble';
+      bubble.innerHTML = `<span class="cb-user">${msg.user}</span><span class="cb-time">${msg.time}</span><br>${msg.text}`;
+      this.chatFeed.appendChild(bubble);
+    });
+    this.chatFeed.scrollTop = this.chatFeed.scrollHeight;
+  }
+
+  /* ── Pack Reveal ────────────────────────────────────────────────────── */
+  renderPackReveal(cards) {
+    if (!this.packRevealContainer) return;
+    this.packRevealContainer.innerHTML = '';
+    cards.forEach(card => {
+      const el = document.createElement('div');
+      el.className = `card type-${card.type}${card.rarity === 'super-rare' ? ' super-rare' : ''}`;
+      el.style.cursor = 'pointer';
+      el.innerHTML = `
+        ${assetLoader.renderCardArtHTML(card)}
+        <div class="card-header"><div class="card-ki-cost">${card.cost}</div></div>
+        <div class="card-type-tag tag-${card.type}">${card.type.toUpperCase()}</div>
+        ${card.power > 0 ? `<div class="card-power-badge">${card.power} ATK</div>` : ''}
+      `;
+      el.onclick = () => this.openCardInspectModal(card);
+      this.packRevealContainer.appendChild(el);
+    });
+  }
+}

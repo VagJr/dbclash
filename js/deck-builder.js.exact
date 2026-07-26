@@ -1,0 +1,69 @@
+/* ==========================================================================
+   Dragon Ball Clash Action TCG - Deck Builder & Card Crafting Engine
+   ========================================================================== */
+
+import { CARD_DATABASE, getCardById, getDefaultStarterDeck } from './card-database.js';
+import { soundEngine } from './audio.js';
+
+export class DeckBuilder {
+  constructor() {
+    this.currentDeck = this.loadDeck();
+    this.zeni = parseInt(localStorage.getItem('dbtcg_zeni') || '1500', 10);
+    this.dust = parseInt(localStorage.getItem('dbtcg_dust') || '300', 10);
+  }
+
+  loadDeck() {
+    const saved = localStorage.getItem('dbtcg_saved_deck');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return getDefaultStarterDeck();
+  }
+
+  saveDeck(deckList) {
+    this.currentDeck = [...deckList];
+    localStorage.setItem('dbtcg_saved_deck', JSON.stringify(this.currentDeck));
+    localStorage.setItem('dbtcg_zeni', this.zeni.toString());
+    localStorage.setItem('dbtcg_dust', this.dust.toString());
+  }
+
+  addCardToDeck(cardId) {
+    if (this.currentDeck.length >= 20) {
+      alert("Deck size limit is 20 cards!");
+      return false;
+    }
+    this.currentDeck.push(cardId);
+    this.saveDeck(this.currentDeck);
+    soundEngine.playClick();
+    return true;
+  }
+
+  removeCardFromDeck(index) {
+    if (this.currentDeck.length <= 10) {
+      alert("Minimum deck size is 10 cards!");
+      return false;
+    }
+    this.currentDeck.splice(index, 1);
+    this.saveDeck(this.currentDeck);
+    soundEngine.playClick();
+    return true;
+  }
+
+  craftCard(cardId) {
+    const card = getCardById(cardId);
+    const costMap = { 'common': 50, 'rare': 150, 'super-rare': 400 };
+    const craftCost = costMap[card.rarity] || 100;
+
+    if (this.dust < craftCost) {
+      alert(`Not enough Card Dust! Required: ${craftCost} Dust.`);
+      return false;
+    }
+
+    this.dust -= craftCost;
+    this.addCardToDeck(cardId);
+    soundEngine.playAwaken();
+    return true;
+  }
+}
+
+export const deckBuilder = new DeckBuilder();
