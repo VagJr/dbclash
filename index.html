@@ -525,29 +525,22 @@
     }
   </script>
 
-  <!-- PWA Install Support -->
+  <!-- Auto fullscreen on first tap/click (mobile) -->
   <script>
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      // You could show a custom install button here if desired
-      console.log('PWA is ready to be installed!');
-      // Prompt automatically after 3 seconds for better UX, or wait for user interaction
-      setTimeout(() => {
-        if (deferredPrompt) {
-          deferredPrompt.prompt();
-          deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-              console.log('User accepted the PWA prompt');
-            } else {
-              console.log('User dismissed the PWA prompt');
-            }
-            deferredPrompt = null;
-          });
+    (function() {
+      var fsTimer = null;
+      function goFS() {
+        var el = document.documentElement;
+        var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+        if (fn && !document.fullscreenElement && !document.webkitFullscreenElement) {
+          try { fn.call(el); } catch(e) {}
         }
-      }, 3000);
-    });
+        document.removeEventListener('click', goFS);
+        document.removeEventListener('touchstart', goFS);
+      }
+      document.addEventListener('click', goFS, { once: true });
+      document.addEventListener('touchstart', goFS, { once: true });
+    })();
   </script>
 </body>
 </html>

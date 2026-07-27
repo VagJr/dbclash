@@ -43,9 +43,8 @@ export class GameEngine {
         uiManager.triggerActionBanner(bannerTitle, bannerClass, bannerSub);
         
         setTimeout(() => {
-          alert(isPlayerWinner ? '🎉 Você venceu a batalha! (+25 RP)' : '💀 Você foi derrotado! (-10 RP)');
-          sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
-        }, 3500);
+          uiManager.showGameResult(isPlayerWinner);
+        }, 1800);
       }
       return true;
     }

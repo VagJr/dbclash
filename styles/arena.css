@@ -1809,7 +1809,7 @@
     overflow: hidden !important;
   }
   
-  .arena-zone-top, .arena-zone-bottom {
+  .arena-zone-top, .arena-zone-bot {
     flex-shrink: 0 !important;
     padding: 4px 8px !important;
   }
@@ -1819,13 +1819,16 @@
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
-    min-height: 0 !important; /* Prevents overflow */
+    min-height: 0 !important;
   }
   
   .dokkan-scouter-hud {
-    transform: scale(0.85) !important;
-    transform-origin: center center !important;
-    margin: -10px auto !important; /* Pull them closer together */
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 2px auto !important;
+    padding: 6px 10px !important;
+    border-radius: 16px 4px 16px 4px !important;
+    gap: 10px !important;
   }
   
   .dbz-hand-container {
@@ -1858,4 +1861,129 @@
     object-fit: contain !important;
     filter: drop-shadow(0 6px 18px rgba(0,0,0,0.9)) drop-shadow(0 0 10px rgba(255,215,0,0.7)) !important;
   }
+}
+
+/* ── Game Result (KO/Victory/Defeat) Modal ──────────────────────── */
+.game-result-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  backdrop-filter: blur(6px);
+}
+.game-result-overlay.active {
+  opacity: 1;
+}
+
+.game-result-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.game-result-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 48px;
+  background: linear-gradient(135deg, rgba(10, 14, 26, 0.98), rgba(6, 9, 18, 0.98));
+  border: 2px solid #ffd700;
+  border-radius: 16px;
+  box-shadow: 0 0 60px rgba(255, 215, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  animation: resultPopIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  max-width: 90vw;
+}
+
+@keyframes resultPopIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.result-ko {
+  font-family: 'Outfit', 'Impact', sans-serif;
+  font-size: 4.5rem;
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  text-shadow: 0 0 30px currentColor, 0 4px 0 #000;
+  letter-spacing: 6px;
+}
+.ko-win {
+  color: #00ff41;
+}
+.ko-lose {
+  color: #ff0055;
+}
+
+.result-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+.title-win {
+  color: #ffd700;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+}
+.title-lose {
+  color: #94a3b8;
+  text-shadow: 0 0 20px rgba(148, 163, 184, 0.3);
+}
+
+.result-divider {
+  width: 80px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #ffd700, transparent);
+  margin: 4px 0;
+}
+
+.result-rp {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.rp-gain {
+  color: #00ff41;
+  text-shadow: 0 0 12px rgba(0, 255, 65, 0.5);
+}
+.rp-loss {
+  color: #ef4444;
+  text-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+}
+
+.result-btn {
+  font-family: 'Outfit', 'Impact', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  padding: 14px 40px;
+  border: 2px solid #ffd700;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #000;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+  transition: all 0.2s;
+}
+.result-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+}
+
+@media (max-width: 480px) {
+  .result-ko { font-size: 3rem; }
+  .result-title { font-size: 1.3rem; }
+  .game-result-content { padding: 30px 32px; }
+  .result-btn { font-size: 0.85rem; padding: 12px 30px; }
 }

@@ -157,6 +157,38 @@ export class UIManager {
     }
   }
 
+  showGameResult(isPlayerWinner) {
+    const existing = document.getElementById('game-result-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'game-result-overlay';
+    overlay.className = 'game-result-overlay';
+
+    const rpText = isPlayerWinner ? '+25 RP' : '-10 RP';
+    const rpClass = isPlayerWinner ? 'rp-gain' : 'rp-loss';
+
+    overlay.innerHTML = `
+      <div class="game-result-bg"></div>
+      <div class="game-result-content">
+        <div class="result-ko ${isPlayerWinner ? 'ko-win' : 'ko-lose'}">K.O.</div>
+        <div class="result-title ${isPlayerWinner ? 'title-win' : 'title-lose'}">${isPlayerWinner ? 'VITÓRIA' : 'DERROTA'}</div>
+        <div class="result-divider"></div>
+        <div class="result-rp ${rpClass}">${rpText}</div>
+        <button class="result-btn" id="result-btn-menu">VOLTAR AO MENU</button>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    setTimeout(() => overlay.classList.add('active'), 50);
+
+    document.getElementById('result-btn-menu').addEventListener('click', () => {
+      overlay.remove();
+      sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
+    });
+  }
+
   _getBannerCategoryLabel(actClass) {
     switch (actClass) {
       case 'act-charge': return 'CARGA DE KI';

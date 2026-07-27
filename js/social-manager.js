@@ -446,8 +446,8 @@ class SocialManager {
       <div class="pwa-banner-content">
         <span class="pwa-icon">📱</span>
         <div class="pwa-text">
-          <strong>Baixar App DBTCG para Celular Android!</strong>
-          <span>Instale o aplicativo em tela cheia e jogue como um App nativo.</span>
+          <strong>Instalar Dragon Clash TCG</strong>
+          <span>Adicione à tela inicial e jogue em tela cheia como um App nativo.</span>
         </div>
         <button class="btn btn-gold btn-sm" id="btn-install-pwa">Instalar App</button>
         <button class="pwa-close-btn" onclick="this.closest('#pwa-install-banner').remove()">✕</button>
