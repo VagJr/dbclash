@@ -14,17 +14,12 @@ export class AssetLoader {
   }
 
   getCardImagePath(cardId) {
-<<<<<<< HEAD
     try {
       if (typeof localStorage !== 'undefined') {
         const custom = localStorage.getItem(`dbtcg_custom_card_${cardId}`);
         if (custom) return custom;
       }
     } catch (e) {}
-=======
-    const custom = localStorage.getItem(`dbtcg_custom_card_${cardId}`);
-    if (custom) return custom;
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
     return `assets/cards/${cardId}.png`;
   }
 
@@ -49,12 +44,14 @@ export class AssetLoader {
     `;
   }
 
-  // Generate Leader Portrait HTML
-  renderLeaderPortraitHTML(leader) {
-    const leaderId = typeof leader === 'string' ? leader : leader.id;
+  // Generate Leader Portrait HTML (Supports Base & Awakened form PNGs)
+  renderLeaderPortraitHTML(leader, isAwakened = false) {
+    const leaderId = typeof leader === 'string' ? leader : (leader?.id || 'goku');
+    const imageId = isAwakened ? `${leaderId}_awaken` : leaderId;
+    const fallbackImageId = isAwakened ? `${leaderId}_awk` : leaderId;
+
     return `
-      <img src="assets/leaders/${leaderId}.png" alt="${leaderId}" class="leader-portrait-img" style="width:100%; height:100%; object-fit:cover; object-position:top center; border-radius:50%;" onerror="this.style.display='none'; if (this.nextElementSibling) this.nextElementSibling.style.display='flex';">
-      <span class="leader-portrait-fallback" style="display:none;">⚡</span>
+      <img src="assets/leaders/${imageId}.png" alt="${leaderId}" class="leader-portrait-img" style="width:100%; height:100%; object-fit:cover; object-position:top center; border-radius:50%;" onerror="this.onerror=null; this.src='assets/leaders/${fallbackImageId}.png';">
     `;
   }
 }

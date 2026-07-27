@@ -11,18 +11,14 @@ export class FXEngine {
     this.activeBeams = [];
     this.activePillars = [];
     this.afterimages = [];
-<<<<<<< HEAD
     this.activeOrbs = [];
-=======
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
     this.activeClash = null;
-    this.lightningArcs = [];
 
-    this.resizeCanvas();
-    window.addEventListener('resize', () => this.resizeCanvas());
-
-    this.animating = false;
-    this.startLoop();
+    if (this.canvas) {
+      this.resizeCanvas();
+      window.addEventListener('resize', () => this.resizeCanvas());
+      this.startLoop();
+    }
   }
 
   resizeCanvas() {
@@ -32,8 +28,6 @@ export class FXEngine {
   }
 
   startLoop() {
-    if (this.animating) return;
-    this.animating = true;
     const loop = () => {
       this.updateAndRender();
       requestAnimationFrame(loop);
@@ -43,61 +37,8 @@ export class FXEngine {
 
   updateAndRender() {
     if (!this.ctx || !this.canvas) return;
-    const w = this.canvas.width;
-    const h = this.canvas.height;
-    this.ctx.clearRect(0, 0, w, h);
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // 1. Render Z-Vanish Afterimage Ghosts
-    for (let i = this.afterimages.length - 1; i >= 0; i--) {
-      const img = this.afterimages[i];
-      img.alpha -= 0.04;
-      if (img.alpha <= 0) {
-        this.afterimages.splice(i, 1);
-      } else {
-        this.ctx.save();
-        this.ctx.globalAlpha = img.alpha * 0.6;
-        this.ctx.fillStyle = img.color || '#00f2fe';
-        this.ctx.beginPath();
-        this.ctx.arc(img.x, img.y, img.radius, 0, Math.PI * 2);
-        this.ctx.fill();
-
-        // Speed trailing lines
-        this.ctx.strokeStyle = img.color;
-        this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
-        this.ctx.moveTo(img.x - 40, img.y);
-        this.ctx.lineTo(img.x + 40, img.y);
-        this.ctx.stroke();
-        this.ctx.restore();
-      }
-    }
-
-    // 2. Render Ki Aura Flame Pillars
-    for (let i = this.activePillars.length - 1; i >= 0; i--) {
-      const p = this.activePillars[i];
-      p.alpha -= 0.025;
-      p.height += 10;
-      p.width += 3;
-      if (p.alpha <= 0) {
-        this.activePillars.splice(i, 1);
-      } else {
-        this.ctx.save();
-        this.ctx.globalAlpha = p.alpha;
-        const grad = this.ctx.createLinearGradient(p.x, p.y, p.x, p.y - p.height);
-        grad.addColorStop(0, p.color);
-        grad.addColorStop(0.5, 'rgba(255, 215, 0, 0.4)');
-        grad.addColorStop(1, 'transparent');
-        this.ctx.fillStyle = grad;
-        this.ctx.fillRect(p.x - p.width / 2, p.y - p.height, p.width, p.height);
-        this.ctx.restore();
-      }
-    }
-
-<<<<<<< HEAD
-    // 3. Render Active Energy Beams
-=======
-    // 3. Render Active Energy Beams (Kamehameha / Final Flash / Death Beam)
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
     for (let i = this.activeBeams.length - 1; i >= 0; i--) {
       const b = this.activeBeams[i];
       b.life -= 0.035;
@@ -108,7 +49,6 @@ export class FXEngine {
       }
     }
 
-<<<<<<< HEAD
     // 4. Render Active Moving Orbs / Projectiles / Discs (Genki Dama, Supernova, Kienzan, etc.)
     for (let i = this.activeOrbs.length - 1; i >= 0; i--) {
       const orb = this.activeOrbs[i];
@@ -190,19 +130,12 @@ export class FXEngine {
     }
 
     // 5. Render Active Beam Clash Tug-of-War
-=======
-    // 4. Render Active Beam Clash Tug-of-War
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
     if (this.activeClash && this.activeClash.life > 0) {
       this.renderClashTugOfWar(this.activeClash);
       this.activeClash.life -= 0.016;
     }
 
-<<<<<<< HEAD
     // 6. Render Shockwave & Particle Explosions
-=======
-    // 5. Render Shockwave & Particle Explosions
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const pt = this.particles[i];
       pt.x += pt.vx;
@@ -239,28 +172,17 @@ export class FXEngine {
     this.ctx.lineTo(b.toX, b.toY);
     this.ctx.stroke();
 
-<<<<<<< HEAD
     // Inner Secondary Core
     this.ctx.strokeStyle = b.secondaryColor;
-=======
-    // Secondary Energy Layer
-    this.ctx.strokeStyle = b.secondaryColor || '#00f2fe';
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
     this.ctx.lineWidth = b.thickness + 12;
     this.ctx.beginPath();
     this.ctx.moveTo(b.fromX, b.fromY);
     this.ctx.lineTo(b.toX, b.toY);
     this.ctx.stroke();
 
-<<<<<<< HEAD
     // Intense White Inner Beam
     this.ctx.strokeStyle = '#ffffff';
     this.ctx.lineWidth = Math.max(4, b.thickness - 12);
-=======
-    // Inner Blinding White Core
-    this.ctx.strokeStyle = '#ffffff';
-    this.ctx.lineWidth = b.thickness;
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
     this.ctx.beginPath();
     this.ctx.moveTo(b.fromX, b.fromY);
     this.ctx.lineTo(b.toX, b.toY);
@@ -299,16 +221,11 @@ export class FXEngine {
     this.ctx.restore();
   }
 
-<<<<<<< HEAD
   // ── Render Dynamic Vertical Beam Clash Tug-of-War ─────────────────────────
-=======
-  // ── Render Dynamic Beam Clash Tug-of-War ───────────────────────────────
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
   renderClashTugOfWar(clash) {
     const w = this.canvas.width;
     const h = this.canvas.height;
 
-<<<<<<< HEAD
     // Player 1 (Bottom HUD) to Player 2 (Top HUD) vertical vector
     const p1X = w / 2;
     const p1Y = h - 140;
@@ -318,16 +235,6 @@ export class FXEngine {
     // Calculate dynamic clash point based on player mashing percentage (0 - 100%)
     const pct = Math.max(0, Math.min(100, clash.p1Progress)) / 100;
     const clashX = w / 2;
-=======
-    const p1X = 120;
-    const p1Y = h * 0.75;
-    const p2X = w - 120;
-    const p2Y = h * 0.25;
-
-    // Calculate dynamic clash point based on player mashing percentage (0 - 100%)
-    const pct = Math.max(0, Math.min(100, clash.p1Progress)) / 100;
-    const clashX = p1X + (p2X - p1X) * pct;
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
     const clashY = p1Y + (p2Y - p1Y) * pct;
 
     this.ctx.save();
@@ -391,22 +298,14 @@ export class FXEngine {
   }
 
   // ── Public Anime Visual Triggers ───────────────────────────────────────
-<<<<<<< HEAD
-  // ── Public Anime Visual Triggers ───────────────────────────────────────
-=======
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
-  fireKamehameha(fromX, fromY, toX, toY, isGolden = false, color = '#00f2fe') {
+  fireKamehameha(fromX, fromY, toX, toY, isGolden = false) {
     const glowColor = isGolden ? 'rgba(255, 215, 0, 0.9)' : 'rgba(0, 242, 254, 0.9)';
-    const secondaryColor = isGolden ? '#ff8800' : '#00b4d8';
-    const helixColor = '#ffffff';
+    const secondaryColor = isGolden ? '#ff8c00' : '#00bfff';
+    const helixColor = isGolden ? '#ffffff' : '#e0f7fa';
 
     this.activeBeams.push({
       fromX, fromY, toX, toY,
-<<<<<<< HEAD
-      thickness: 34,
-=======
-      thickness: 32,
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
+      thickness: isGolden ? 45 : 32,
       glowColor,
       secondaryColor,
       helixColor,
@@ -428,7 +327,6 @@ export class FXEngine {
     }
   }
 
-<<<<<<< HEAD
   fireFinalFlash(fromX, fromY, toX, toY) {
     // Massive Double-Wide Golden Beam with Electrical Discharges
     this.activeBeams.push({
@@ -666,8 +564,6 @@ export class FXEngine {
     this.triggerZVanish(x, y, '#a78bfa');
   }
 
-=======
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
   triggerBeamClash(p1Progress, p1Color = '#00f2fe', p2Color = '#ffd700') {
     this.activeClash = {
       p1Progress,

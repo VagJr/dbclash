@@ -1,21 +1,22 @@
 /* ==========================================================================
-   Dragon Ball Clash Action TCG - Web Audio API Sound Synthesizer
-   Zero-dependency real-time audio generation for instant DBZ sound effects
+   Dragon Ball Clash Action TCG - Sound Engine (High Definition DBZ SFX & BGM)
+   Manages high quality audio files from /music with intelligent trimming,
+   seek/fast-forward, auto-stop cuts, and WebAudio synth fallbacks.
    ========================================================================== */
 
 class SoundEngine {
   constructor() {
     this.ctx = null;
     this.isMuted = false;
-<<<<<<< HEAD
     this.bgmAudio = null;
+    this.activeKamehameha = null;
+    this.activePunchClash = null;
+
     if (typeof window !== 'undefined') {
       this.bgmAudio = new Audio();
       this.bgmAudio.loop = true;
-      this.bgmAudio.volume = 0.4;
-    }
+      this.bgmAudio.volume = 0.35;
 
-    if (typeof window !== 'undefined') {
       const unlockAudio = () => {
         this.init();
         if (this.bgmAudio && this.bgmAudio.src && this.bgmAudio.paused) {
@@ -39,17 +40,33 @@ class SoundEngine {
     }
     if (this.ctx && this.ctx.state === 'suspended') {
       this.ctx.resume().catch(() => {});
-=======
+    }
   }
 
-  init() {
-    if (!this.ctx) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      this.ctx = new AudioCtx();
-    }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
+  /**
+   * Helper to play an MP3/WAV file from music/ folder with options.
+   */
+  _playFile(src, volume = 0.7, startTime = 0, autoStopMs = 0) {
+    if (this.isMuted || typeof window === 'undefined') return null;
+    try {
+      const audio = new Audio(`music/${src}`);
+      audio.volume = volume;
+      if (startTime > 0) {
+        audio.currentTime = startTime;
+      }
+      audio.play().catch(() => {});
+
+      if (autoStopMs > 0) {
+        setTimeout(() => {
+          try {
+            audio.pause();
+            audio.currentTime = 0;
+          } catch(e) {}
+        }, autoStopMs);
+      }
+      return audio;
+    } catch (e) {
+      return null;
     }
   }
 
@@ -57,203 +74,107 @@ class SoundEngine {
   playClick() {
     if (this.isMuted) return;
     this.init();
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.05);
-
-    gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.05);
+    if (this.ctx) {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.05);
+      gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.05);
+    }
   }
 
   // Card Play Chime
   playCardPlay() {
     if (this.isMuted) return;
     this.init();
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(523.25, this.ctx.currentTime); // C5
-    osc.frequency.setValueAtTime(659.25, this.ctx.currentTime + 0.04); // E5
-    osc.frequency.setValueAtTime(783.99, this.ctx.currentTime + 0.08); // G5
-
-    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.15);
-  }
-
-  // Ki Charge Aura Hum & Rise
-  playKiCharge() {
-    if (this.isMuted) return;
-    this.init();
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(120, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(480, this.ctx.currentTime + 0.4);
-
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(400, this.ctx.currentTime);
-    filter.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.4);
-
-    gain.gain.setValueAtTime(0.01, this.ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.25, this.ctx.currentTime + 0.15);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.45);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.45);
-  }
-
-  // Z-Vanish Teleport Whistle (Fast Pitch Sweep)
-  playZVanish() {
-    if (this.isMuted) return;
-    this.init();
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(300, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(1800, this.ctx.currentTime + 0.08);
-
-    gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.12);
-  }
-
-  // Heavy Physical Punch Impact
-  playPunch() {
-    if (this.isMuted) return;
-    this.init();
-    
-    const bufferSize = this.ctx.sampleRate * 0.1;
-    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const output = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      output[i] = Math.random() * 2 - 1;
+    if (this.ctx) {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(523.25, this.ctx.currentTime);
+      osc.frequency.setValueAtTime(659.25, this.ctx.currentTime + 0.04);
+      osc.frequency.setValueAtTime(783.99, this.ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.15);
     }
-
-    const whiteNoise = this.ctx.createBufferSource();
-    whiteNoise.buffer = buffer;
-
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(800, this.ctx.currentTime);
-    filter.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime + 0.1);
-
-    const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
-
-    whiteNoise.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    whiteNoise.start();
-    whiteNoise.stop(this.ctx.currentTime + 0.1);
   }
 
-  // Kamehameha / Energy Beam Blast Explosion
+  // Ki Charge (music/carregar_ki.mp3)
+  playKiCharge() {
+    this._playFile('carregar_ki.mp3', 0.8, 0, 1800);
+  }
+
+  // Z-Vanish Teleport (music/teleport_vanish.wav)
+  playZVanish() {
+    this._playFile('teleport_vanish.wav', 0.85);
+  }
+
+  // Heavy Physical Punch Impact (music/dragonball-z-heavy-kick-fx.wav)
+  playPunch() {
+    this._playFile('dragonball-z-heavy-kick-fx.wav', 0.85);
+  }
+
+  // Rapid Punch Melee Clash (music/clash_punchs.mp3) — plays fast burst and cuts quickly
+  playClashPunches(durationMs = 700) {
+    if (this.activePunchClash) {
+      try { this.activePunchClash.pause(); } catch(e){}
+    }
+    this.activePunchClash = this._playFile('clash_punchs.mp3', 0.85, 0, durationMs);
+  }
+
+  // Kamehameha Charge Phase (music/kamehameha.mp3 from 0s)
+  playKamehamehaCharge() {
+    if (this.activeKamehameha) {
+      try { this.activeKamehameha.pause(); } catch(e){}
+    }
+    this.activeKamehameha = this._playFile('kamehameha.mp3', 0.9, 0);
+  }
+
+  // Kamehameha Launch & Impact Phase (Advances active track to impact section or plays beam damage SFX)
+  playKamehamehaImpact() {
+    if (this.activeKamehameha) {
+      try {
+        // Fast-forward track to the beam launch/impact section (~7.5 seconds)
+        this.activeKamehameha.currentTime = 7.5;
+      } catch (e) {
+        this._playFile('dano_do_beam.mp3', 0.9);
+      }
+    } else {
+      this._playFile('dano_do_beam.mp3', 0.9);
+    }
+    this._playFile('dano_do_beam.mp3', 0.7);
+  }
+
+  // Ki Beam Blast (music/dbz-beam-fx.wav)
   playBeamBlast() {
-    if (this.isMuted) return;
-    this.init();
-    
-    const subOsc = this.ctx.createOscillator();
-    subOsc.type = 'sine';
-    subOsc.frequency.setValueAtTime(150, this.ctx.currentTime);
-    subOsc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.5);
-
-    const subGain = this.ctx.createGain();
-    subGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
-    subGain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.5);
-
-    subOsc.connect(subGain);
-    subGain.connect(this.ctx.destination);
-
-    subOsc.start();
-    subOsc.stop(this.ctx.currentTime + 0.5);
-
-    this.playPunch();
+    this._playFile('dbz-beam-fx.wav', 0.85);
   }
 
-  // Shield Break Shatter SFX
-  playShieldBreak() {
-    if (this.isMuted) return;
-    this.init();
-
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(1200, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 0.25);
-
-    gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.25);
+  // Energy Beam Impact Damage (music/dano_do_beam.mp3)
+  playBeamDamage() {
+    this._playFile('dano_do_beam.mp3', 0.85);
   }
 
-  // Awaken Transformation Roar
+  // Awaken Transformation Roar (music/awakening.mp3)
   playAwaken() {
-    if (this.isMuted) return;
-    this.init();
-
-    const osc1 = this.ctx.createOscillator();
-    const osc2 = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc1.type = 'sawtooth';
-    osc2.type = 'square';
-
-    osc1.frequency.setValueAtTime(100, this.ctx.currentTime);
-    osc1.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.8);
-
-    osc2.frequency.setValueAtTime(105, this.ctx.currentTime);
-    osc2.frequency.linearRampToValueAtTime(610, this.ctx.currentTime + 0.8);
-
-    gain.gain.setValueAtTime(0.01, this.ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.35, this.ctx.currentTime + 0.4);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 1.0);
-
-    osc1.connect(gain);
-    osc2.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc1.start();
-    osc2.start();
-    osc1.stop(this.ctx.currentTime + 1.0);
-    osc2.stop(this.ctx.currentTime + 1.0);
+    this._playFile('awakening.mp3', 0.9);
   }
-<<<<<<< HEAD
+
+  // Defense / Reaction Card Clash SFX
+  playCardClash() {
+    this.playPunch();
+    this.playClashPunches(650);
+  }
 
   // Menu Theme BGM (music/soundtrack.mp3)
   playMenuTheme() {
@@ -275,11 +196,9 @@ class SoundEngine {
   playAttack() { this.playPunch(); }
   hit() { this.playPunch(); }
   kamehameha() { this.playBeamBlast(); }
-  genkidama() { this.playBeamBlast(); }
-  kiBlast() { this.playPunch(); }
-  counter() { this.playShieldBreak(); }
-=======
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
+  genkidama() { this.playBeamDamage(); }
+  kiBlast() { this.playBeamBlast(); }
+  counter() { this.playCardClash(); }
 }
 
 export const soundEngine = new SoundEngine();

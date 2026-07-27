@@ -212,6 +212,22 @@ export class GameEngine {
         this.pendingAttack = { attackerKey: actorKey, card };
         this.state = 'ATTACK_PENDING';
         this.log(`${actor.name} jogou ${card.name}!`, 'damage');
+
+        const cardNameLower = (card.name || '').toLowerCase();
+        const isBeamAttack = card.isBeam || 
+                             cardNameLower.includes('kamehameha') || 
+                             cardNameLower.includes('flash') || 
+                             cardNameLower.includes('beam') || 
+                             cardNameLower.includes('genki') || 
+                             cardNameLower.includes('masenko') || 
+                             cardNameLower.includes('bang') || 
+                             cardNameLower.includes('supernova') ||
+                             cardNameLower.includes('galick');
+
+        if (isBeamAttack) {
+          this.fx('attackCharging', { card, attackerKey: actorKey });
+        }
+
         this.startReactionTimer();
       }
     } else if (this.state === 'ATTACK_PENDING' && this.pendingAttack) {
@@ -254,7 +270,6 @@ export class GameEngine {
     defender.hp = Math.max(0, defender.hp - dmg);
     defender.shields = Math.ceil(defender.hp / 50);
 
-<<<<<<< HEAD
     const cardNameLower = (card.name || '').toLowerCase();
     const cardIdLower = (card.id || '').toLowerCase();
 
@@ -294,12 +309,6 @@ export class GameEngine {
       this.fx('kiBlast', { card, attackerKey, damage: dmg });
     } else {
       this.fx('punch', { card, attackerKey, damage: dmg });
-=======
-    if (card.isBeam) {
-      this.fx('kamehameha', { card, attackerKey, isGolden: attacker.isAwakened });
-    } else {
-      this.fx('punch', { attackerKey });
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
     }
 
     this.log(`${attacker.name} acertou ${card.name} causando ${dmg} de dano em ${defender.name}!`, 'damage');
@@ -318,31 +327,26 @@ export class GameEngine {
   }
 
   resolveReaction(defenderKey, card) {
-    const { attackerKey, card: atkCard } = this.pendingAttack;
+    const { attackerKey, card: atkCard } = this.pendingAttack || {};
     const attacker = attackerKey === 'player' ? this.player : this.opponent;
     const defender = defenderKey === 'player' ? this.player : this.opponent;
 
     if (card.type === 'evade') {
-      this.fx('zvanish', { actorKey: defenderKey, color: defender.leader.color });
+      this.fx('cardClash', { atkCard, defCard: card, attackerKey, defenderKey, mode: 'evade' });
       this.log(`${defender.name} realizou Z-VANISH e esquivou do ataque de ${attacker.name}!`, 'evade');
       defender.isOpenGuard = true;
-<<<<<<< HEAD
     } else if (card.type === 'counter') {
-      this.fx('counter', { actorKey: defenderKey });
+      this.fx('cardClash', { atkCard, defCard: card, attackerKey, defenderKey, mode: 'counter' });
       this.log(`${defender.name} realizou Z-COUNTER e contra-atacou!`, 'evade');
       defender.isOpenGuard = false;
-=======
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
-    } else if (card.type === 'defense') {
-      let dmg = Math.max(0, atkCard.power - (card.power || 20));
-      defender.hp = Math.max(0, defender.hp - dmg);
+    } else if (card.type === 'defense' || card.type === 'block') {
+      this.fx('cardClash', { atkCard, defCard: card, attackerKey, defenderKey, mode: 'defense' });
+      const blockAmount = card.block || Math.floor((atkCard?.power || 20) * 0.5);
+      const netDamage = Math.max(0, (atkCard?.power || 20) - blockAmount);
+      defender.hp = Math.max(0, defender.hp - netDamage);
       defender.shields = Math.ceil(defender.hp / 50);
-<<<<<<< HEAD
-      this.fx('defense', { actorKey: defenderKey });
-=======
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
-      this.log(`${defender.name} defendeu. Dano reduzido para ${dmg}.`, 'info');
-    } else if (card.isBeam && atkCard.isBeam) {
+      this.log(`${defender.name} usou ${card.name} e bloqueou ${blockAmount} de dano! (Dano resultante: ${netDamage})`, 'evade');
+    } else if (card.isBeam && atkCard && atkCard.isBeam) {
       this.startBeamClashLoop();
       return;
     }

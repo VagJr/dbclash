@@ -18,15 +18,11 @@ export class PackOpener {
     }
 
     deckBuilder.zeni -= this.packCost;
-<<<<<<< HEAD
     if (typeof deckBuilder.saveDeck === 'function') {
       deckBuilder.saveDeck();
     } else if (typeof deckBuilder.saveDeckForLeader === 'function') {
       deckBuilder.saveDeckForLeader(deckBuilder.activeLeader || 'goku', deckBuilder.getDeckForLeader ? deckBuilder.getDeckForLeader() : []);
     }
-=======
-    deckBuilder.saveDeck(deckBuilder.currentDeck);
->>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
 
     soundEngine.playKiCharge();
 
