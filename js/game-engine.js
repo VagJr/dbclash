@@ -233,6 +233,7 @@ export class GameEngine {
     } else {
       this.log(`${actor.name} já está com Ki máximo (10/10 Ki).`, 'info');
     }
+    this.notifyState();
     if (this.state === 'FREE_ACTION' && this.initiative === actorKey) {
       this.passTurn(actorKey);
     }
@@ -251,6 +252,7 @@ export class GameEngine {
     this.drawCard(currentHolder, 1);
     this.log(`Turno passado. Iniciativa agora é de ${currentHolder.name}.`, 'info');
     
+    this.notifyState();
     if (this.isAiMatch && this.initiative === 'opponent') {
       setTimeout(() => this.executeAiTurn(), 1000);
     }
@@ -342,6 +344,8 @@ export class GameEngine {
     defender.hp = Math.max(0, defender.hp - dmg);
     defender.shields = Math.ceil(defender.hp / 50);
     this.checkGameOver();
+
+    this.notifyState();
 
     // Leader Passive: Goku gains +1 Ki on taking direct damage
     if (defender.leader && defender.leader.id === 'goku' && defender.ki < 10) {
@@ -443,6 +447,7 @@ export class GameEngine {
       defender.hp = Math.max(0, defender.hp - netDamage);
       defender.shields = Math.ceil(defender.hp / 50);
       this.log(`${defender.name} usou ${card.name} e bloqueou ${blockAmount} de dano! (Dano resultante: ${netDamage})`, 'evade');
+      this.notifyState();
     } else if (card.isBeam && atkCard && atkCard.isBeam) {
       this.startBeamClashLoop();
       return;
