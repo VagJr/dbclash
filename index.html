@@ -528,18 +528,25 @@
   <!-- Auto fullscreen on first tap/click (mobile) -->
   <script>
     (function() {
-      var fsTimer = null;
       function goFS() {
         var el = document.documentElement;
         var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
         if (fn && !document.fullscreenElement && !document.webkitFullscreenElement) {
           try { fn.call(el); } catch(e) {}
         }
-        document.removeEventListener('click', goFS);
-        document.removeEventListener('touchstart', goFS);
       }
       document.addEventListener('click', goFS, { once: true });
       document.addEventListener('touchstart', goFS, { once: true });
+      // Retry when arena becomes active
+      document.addEventListener('dbtcg:sceneChange', function onScene(e) {
+        if (e.detail && e.detail.sceneId === 'scene-arena') {
+          setTimeout(goFS, 500);
+          setTimeout(goFS, 1500);
+        }
+      });
+      // Also retry on any user gesture after page loads
+      document.addEventListener('click', goFS);
+      document.addEventListener('touchstart', goFS);
     })();
   </script>
 </body>

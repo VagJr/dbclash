@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dragon Ball Clash — Action TCG Online | Site Oficial</title>
+  <meta name="description" content="O TCG definitivo de Dragon Ball em tempo real! Batalhas 1v1 multiplayer online, disputa de Kamehameha, montagem de decks e líderes lendários. Jogável direto no navegador!">
+  <meta name="keywords" content="Dragon Ball, TCG, Card Game, Game Online, Firebase, Multiplayer, Goku, Vegeta, Anime TCG">
+  <meta property="og:title" content="Dragon Ball Clash — Action TCG Online">
+  <meta property="og:description" content="Desafie guerreiros em tempo real no novo TCG oficial de Dragon Ball! Monte seu deck e desperte o Super Saiyajin!">
+  <meta property="og:image" content="imagens/logo.png">
+  <link rel="icon" type="image/png" href="assets/ui/dragonball_4star.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Montserrat:wght@400;600;700;800;900&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* ==========================================================================
+       DRAGON BALL CLASH - OFFICIAL WEBSITE DESIGN SYSTEM
+       ========================================================================== */
+    :root {
+      --bg-dark: #060814;
+      --bg-card: rgba(15, 20, 40, 0.75);
+      --bg-glass: rgba(20, 26, 52, 0.65);
+      
+      --primary-orange: #ff7700;
+      --primary-orange-glow: #ff9900;
+      --primary-gold: #ffd700;
+      --primary-cyan: #00e5ff;
+      --primary-blue: #0088ff;
+      --primary-purple: #9d4edd;
+      --primary-red: #ff2a2a;
+      
+      --text-main: #f0f4f8;
+      --text-muted: #a0aec0;
+      --text-gold: #fff3a0;
+      
+      --border-gold: linear-gradient(135deg, #ffd700, #ff7700);
+      --border-cyan: linear-gradient(135deg, #00e5ff, #0055ff);
+      
+      --radius-sm: 8px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-full: 9999px;
+      
+      --shadow-aura-orange: 0 0 25px rgba(255, 119, 0, 0.45);
+      --shadow-aura-gold: 0 0 30px rgba(255, 215, 0, 0.5);
+      --shadow-aura-cyan: 0 0 25px rgba(0, 229, 255, 0.45);
+      
+      --transition-fast: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-bounce: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    /* Reset & Core */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      font-family: 'Outfit', 'Montserrat', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow-x: hidden;
+    }
+
+    body {
+      min-height: 100vh;
+      position: relative;
+      line-height: 1.6;
+    }
+
+    /* Canvas Background Overlay */
+    #bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Background Gradient Layer */
+    .bg-gradient-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 15% 20%, rgba(255, 119, 0, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 85% 60%, rgba(0, 229, 255, 0.10) 0%, transparent 50%),
+        radial-gradient(circle at 50% 90%, rgba(157, 78, 221, 0.08) 0%, transparent 45%),
+        linear-gradient(180deg, rgba(6, 8, 20, 0.7) 0%, rgba(6, 8, 20, 0.95) 100%);
+      z-index: -1;
+    }
+
+    /* Typography Utilities */
+    h1, h2, h3, h4 {
+      font-family: 'Cinzel Decorative', 'Outfit', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      line-height: 1.2;
+    }
+
+    .gradient-text-gold {
+      background: linear-gradient(135deg, #fff2a3 0%, #ffd700 50%, #ff8800 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 2px 8px rgba(255, 136, 0, 0.4));
+    }
+
+    .gradient-text-cyan {
+      background: linear-gradient(135deg, #e0ffff 0%, #00e5ff 50%, #0077ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 2px 8px rgba(0, 229, 255, 0.4));
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ==========================================================================
+       HEADER & NAVIGATION
+       ========================================================================== */
+    header.site-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: rgba(6, 8, 20, 0.85);
+      border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+      transition: var(--transition-fast);
+    }
+
+    header.site-header.scrolled {
+      background: rgba(4, 6, 15, 0.96);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 119, 0, 0.3);
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 85px;
+    }
+
+    .brand-logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .brand-logo-img {
+      height: 60px;
+      width: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 0 10px rgba(255, 119, 0, 0.6));
+      transition: transform 0.3s ease;
+    }
+
+    .brand-logo-container:hover .brand-logo-img {
+      transform: scale(1.06) rotate(-2deg);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-link {
+      color: var(--text-main);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      padding: 6px 0;
+      transition: color var(--transition-fast);
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0%;
+      height: 2px;
+      background: linear-gradient(90deg, #ffd700, #ff7700);
+      transition: width 0.3s ease;
+      box-shadow: 0 0 8px #ff7700;
+    }
+
+    .nav-link:hover {
+      color: var(--primary-gold);
+    }
+
+    .nav-link:hover::after {
+      width: 100%;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Buttons */
+    .btn-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border-radius: var(--radius-full);
+      font-weight: 800;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition-bounce);
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, #ffd700 0%, #ff8800 50%, #d45500 100%);
+      color: #060814;
+      box-shadow: var(--shadow-aura-orange);
+      border: 1px solid #ffe680;
+    }
+
+    .btn-gold::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      transform: rotate(45deg) translateY(-100%);
+      transition: transform 0.6s ease;
+    }
+
+    .btn-gold:hover::before {
+      transform: rotate(45deg) translateY(100%);
+    }
+
+    .btn-gold:hover {
+      transform: translateY(-3px) scale(1.04);
+      box-shadow: 0 0 35px rgba(255, 180, 0, 0.85);
+    }
+
+    .btn-outline {
+      background: rgba(15, 20, 40, 0.6);
+      color: var(--text-main);
+      border: 1.5px solid rgba(0, 229, 255, 0.5);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--primary-cyan);
+      box-shadow: var(--shadow-aura-cyan);
+      transform: translateY(-3px);
+      color: #fff;
+    }
+
+    /* Mobile Toggle */
+    .mobile-nav-toggle {
+      display: none;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 1.8rem;
+      cursor: pointer;
+    }
+
+    /* ==========================================================================
+       HERO SECTION
+       ========================================================================== */
+    section.hero {
+      position: relative;
+      padding-top: 150px;
+      padding-bottom: 100px;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 40px;
+      align-items: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 18px;
+      background: rgba(255, 119, 0, 0.15);
+      border: 1px solid rgba(255, 150, 0, 0.4);
+      border-radius: var(--radius-full);
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--primary-gold);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 24px;
+      box-shadow: inset 0 0 12px rgba(255, 119, 0, 0.2);
+    }
+
+    .hero-badge i {
+      color: var(--primary-orange);
+      animation: pulse 1.5s infinite;
+    }
+
+    .hero-title {
+      font-size: 3.6rem;
+      font-weight: 900;
+      margin-bottom: 20px;
+      line-height: 1.1;
+    }
+
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      margin-bottom: 36px;
+      max-width: 580px;
+    }
+
+    .hero-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 48px;
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      padding: 24px;
+      background: var(--bg-glass);
+      border: 1px solid rgba(255, 215, 0, 0.25);
+      border-radius: var(--radius-md);
+      backdrop-filter: blur(12px);
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-family: 'Cinzel Decorative', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--primary-gold);
+      display: block;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 700;
+    }
+
+    /* Hero Visual Showcase */
+    .hero-visual-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .hero-aura-ring {
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,140,0,0.4) 0%, rgba(255,215,0,0.15) 50%, transparent 70%);
+      filter: blur(30px);
+      animation: auraPulse 4s infinite ease-in-out;
+      z-index: 1;
+    }
+
+    .hero-char-img {
+      position: relative;
+      z-index: 2;
+      max-width: 100%;
+      height: auto;
+      max-height: 520px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 25px rgba(255, 119, 0, 0.6));
+      animation: floatChar 6s infinite ease-in-out;
+    }
+
+    .hero-dragonball-badge {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      background: rgba(10, 14, 30, 0.9);
+      border: 1px solid var(--primary-gold);
+      border-radius: var(--radius-md);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      backdrop-filter: blur(10px);
+    }
+
+    .hero-dragonball-badge img {
+      width: 42px;
+      height: 42px;
+      animation: spinOrb 12s linear infinite;
+    }
+
+    /* ==========================================================================
+       SECTION: LEADERS SHOWCASE
+       ========================================================================== */
+    section.leaders-section {
+      padding: 100px 0;
+      position: relative;
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto 60px auto;
+    }
+
+    .section-tag {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--primary-cyan);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .section-title {
+      font-size: 2.6rem;
+      font-weight: 900;
+      margin-bottom: 16px;
+    }
+
+    .section-desc {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    .leaders-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 30px;
+    }
+
+    .leader-card {
+      background: var(--bg-glass);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+      transition: var(--transition-bounce);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .leader-card:hover {
+      transform: translateY(-8px);
+      border-color: var(--primary-gold);
+      box-shadow: 0 15px 35px rgba(255, 119, 0, 0.3), inset 0 0 15px rgba(255, 215, 0, 0.1);
+    }
+
+    .leader-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .leader-name {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--primary-gold);
+    }
+
+    .leader-hp-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: rgba(255, 42, 42, 0.2);
+      border: 1px solid rgba(255, 42, 42, 0.5);
+      border-radius: var(--radius-full);
+      color: #ff6666;
+      font-weight: 800;
+      font-size: 0.85rem;
+    }
+
+    .leader-portrait-frame {
+      position: relative;
+      width: 100%;
+      height: 240px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: radial-gradient(circle, rgba(30,40,80,0.8) 0%, rgba(10,14,30,0.95) 100%);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .leader-img {
+      max-height: 90%;
+      max-width: 90%;
+      object-fit: contain;
+      transition: transform 0.5s ease;
+      filter: drop-shadow(0 0 15px rgba(255, 150, 0, 0.4));
+    }
+
+    .leader-card:hover .leader-img {
+      transform: scale(1.08);
+    }
+
+    .leader-skill-title {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--primary-cyan);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .leader-skill-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      flex-grow: 1;
+    }
+
+    .leader-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .toggle-awakened-btn {
+      background: rgba(255, 215, 0, 0.12);
+      border: 1px solid var(--primary-gold);
+      color: var(--primary-gold);
+      padding: 8px 16px;
+      border-radius: var(--radius-full);
+      font-size: 0.8rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: var(--transition-fast);
+    }
+
+    .toggle-awakened-btn:hover {
+      background: var(--primary-gold);
+      color: #000;
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+    }
+
+    /* ==========================================================================
+       SECTION: CARDS GALLERY
+       ========================================================================== */
+    section.gallery-section {
+      padding: 100px 0;
+      background: rgba(4, 6, 15, 0.5);
+    }
+
+    .filter-tabs {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 48px;
+    }
+
+    .filter-btn {
+      padding: 10px 22px;
+      border-radius: var(--radius-full);
+      background: rgba(20, 26, 52, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: var(--transition-fast);
+    }
+
+    .filter-btn:hover, .filter-btn.active {
+      background: linear-gradient(135deg, #ff7700, #ffd700);
+      color: #000;
+      border-color: #ffd700;
+      box-shadow: 0 0 18px rgba(255, 119, 0, 0.5);
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 24px;
+    }
+
+    .card-item {
+      position: relative;
+      background: rgba(15, 20, 40, 0.8);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1.5px solid rgba(255, 215, 0, 0.2);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+      cursor: pointer;
+    }
+
+    .card-item:hover {
+      transform: translateY(-10px) scale(1.03) rotate(1deg);
+      border-color: var(--primary-gold);
+      box-shadow: 0 20px 40px rgba(255, 119, 0, 0.4), 0 0 20px rgba(0, 229, 255, 0.3);
+      z-index: 10;
+    }
+
+    .card-item img {
+      width: 100%;
+      height: 310px;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+
+    .card-item-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(0deg, rgba(6, 8, 20, 0.95) 0%, transparent 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .card-name {
+      font-weight: 800;
+      font-size: 1rem;
+      color: #fff;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    }
+
+    .card-type-tag {
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--primary-gold);
+    }
+
+    /* ==========================================================================
+       SECTION: GAME MODES & FEATURES
+       ========================================================================== */
+    section.modes-section {
+      padding: 100px 0;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 32px;
+    }
+
+    .feature-card {
+      background: var(--bg-glass);
+      border: 1px solid rgba(0, 229, 255, 0.25);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      position: relative;
+      backdrop-filter: blur(12px);
+      transition: var(--transition-bounce);
+    }
+
+    .feature-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--primary-cyan);
+      box-shadow: var(--shadow-aura-cyan);
+    }
+
+    .feature-icon-wrapper {
+      width: 64px;
+      height: 64px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, rgba(0,229,255,0.2), rgba(0,100,255,0.2));
+      border: 1px solid var(--primary-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      color: var(--primary-cyan);
+      margin-bottom: 24px;
+      box-shadow: inset 0 0 15px rgba(0,229,255,0.3);
+    }
+
+    .feature-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+
+    .feature-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* ==========================================================================
+       SECTION: RANKING & DOJO TIERS
+       ========================================================================== */
+    section.ranking-section {
+      padding: 100px 0;
+      background: radial-gradient(circle at 50% 50%, rgba(20, 26, 60, 0.6) 0%, rgba(6, 8, 20, 0.9) 100%);
+    }
+
+    .tiers-flex {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 40px;
+    }
+
+    .tier-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 20px 24px;
+      background: rgba(15, 20, 40, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius-md);
+      width: 150px;
+      text-align: center;
+      transition: var(--transition-bounce);
+    }
+
+    .tier-badge:hover {
+      transform: scale(1.08);
+      border-color: var(--primary-gold);
+      box-shadow: 0 10px 25px rgba(255, 215, 0, 0.3);
+    }
+
+    .tier-icon {
+      font-size: 2.2rem;
+    }
+
+    .tier-name {
+      font-weight: 800;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      color: var(--text-main);
+    }
+
+    .tier-rp {
+      font-size: 0.75rem;
+      color: var(--primary-gold);
+      font-weight: 700;
+    }
+
+    /* ==========================================================================
+       CTA BANNER & FOOTER
+       ========================================================================== */
+    section.cta-banner {
+      padding: 100px 0;
+      position: relative;
+    }
+
+    .cta-box {
+      background: linear-gradient(135deg, rgba(255, 119, 0, 0.25) 0%, rgba(157, 78, 221, 0.2) 100%);
+      border: 2px solid var(--primary-gold);
+      border-radius: var(--radius-lg);
+      padding: 60px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 30px rgba(255, 215, 0, 0.2);
+    }
+
+    .cta-title {
+      font-size: 3rem;
+      font-weight: 900;
+      margin-bottom: 16px;
+    }
+
+    .cta-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      margin-bottom: 36px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    footer.site-footer {
+      background: #03040a;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 60px 0 30px 0;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+
+    .footer-brand p {
+      margin-top: 16px;
+      max-width: 320px;
+    }
+
+    .footer-heading {
+      font-weight: 800;
+      color: var(--text-main);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+    }
+
+    .footer-links {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--primary-gold);
+    }
+
+    .footer-bottom {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    /* Modal Viewer */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(10px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card-content {
+      position: relative;
+      max-width: 380px;
+      width: 90%;
+      text-align: center;
+      transform: scale(0.8);
+      transition: transform 0.3s var(--transition-bounce);
+    }
+
+    .modal-backdrop.active .modal-card-content {
+      transform: scale(1);
+    }
+
+    .modal-card-content img {
+      width: 100%;
+      border-radius: var(--radius-md);
+      border: 2px solid var(--primary-gold);
+      box-shadow: 0 0 40px rgba(255, 119, 0, 0.8);
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: -15px;
+      right: -15px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary-orange);
+      color: #fff;
+      border: 2px solid #fff;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Animations */
+    @keyframes auraPulse {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.15); opacity: 0.95; }
+    }
+
+    @keyframes floatChar {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+    }
+
+    @keyframes spinOrb {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .hero-grid { grid-template-columns: 1fr; text-align: center; }
+      .hero-subtitle { margin-left: auto; margin-right: auto; }
+      .hero-buttons { justify-content: center; }
+      .hero-stats { grid-template-columns: repeat(2, 1fr); }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .nav-links { display: none; }
+      .mobile-nav-toggle { display: block; }
+    }
+
+    @media (max-width: 600px) {
+      .hero-title { font-size: 2.5rem; }
+      .section-title { font-size: 2rem; }
+      .footer-grid { grid-template-columns: 1fr; }
+      .hero-stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Dynamic Canvas Particles -->
+  <canvas id="bg-canvas"></canvas>
+  <div class="bg-gradient-overlay"></div>
+
+  <!-- Header -->
+  <header class="site-header" id="header">
+    <div class="container">
+      <div class="header-inner">
+        <a href="site.html" class="brand-logo-container">
+          <img src="imagens/logo.png" alt="Dragon Ball Clash Logo" class="brand-logo-img">
+        </a>
+
+        <ul class="nav-links">
+          <li><a href="#hero" class="nav-link">Início</a></li>
+          <li><a href="#leaders" class="nav-link">Líderes</a></li>
+          <li><a href="#gallery" class="nav-link">Galeria</a></li>
+          <li><a href="#modes" class="nav-link">Recursos</a></li>
+          <li><a href="#ranking" class="nav-link">Dojos & RP</a></li>
+        </ul>
+
+        <div class="header-actions">
+          <a href="index.html" class="btn-cta btn-gold" id="header-play-btn">
+            <i class="fa-solid fa-gamepad"></i> JOGAR AGORA
+          </a>
+          <button class="mobile-nav-toggle" id="mobile-toggle" aria-label="Abrir Menu">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero" id="hero">
+    <div class="container">
+      <div class="hero-grid">
+        <div class="hero-content">
+          <div class="hero-badge">
+            <i class="fa-solid fa-bolt"></i> MULTIPLAYER ONLINE EM TEMPO REAL
+          </div>
+          <h1 class="hero-title">
+            DESPERTE SEU <span class="gradient-text-gold">PODER SUPREMO</span> NO NAVEGADOR
+          </h1>
+          <p class="hero-subtitle">
+            Dragon Ball Clash é o Action TCG definitivo! Enfrente guerreiros em tempo real, dispute rajadas de Ki no Beam Clash e monte decks épicos com Goku, Vegeta, Gohan e Frieza.
+          </p>
+
+          <div class="hero-buttons">
+            <a href="index.html" class="btn-cta btn-gold">
+              <i class="fa-solid fa-play"></i> BATALHAR AGORA
+            </a>
+            <a href="#gallery" class="btn-cta btn-outline">
+              <i class="fa-solid fa-cards"></i> VER BARALHOS
+            </a>
+          </div>
+
+          <div class="hero-stats">
+            <div class="stat-item">
+              <span class="stat-number">80+</span>
+              <span class="stat-label">Cartas Únicas</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">6</span>
+              <span class="stat-label">Líderes Z</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">1v1</span>
+              <span class="stat-label">Multiplayer Online</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">100%</span>
+              <span class="stat-label">Grátis & PWA</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-visual-wrapper">
+          <div class="hero-aura-ring"></div>
+          <img src="imagens/Dragon-Ball-PNG-HD-Image.png" alt="Goku Super Saiyan" class="hero-char-img">
+          
+          <div class="hero-dragonball-badge">
+            <img src="assets/ui/dragonball_4star.png" alt="Dragon Ball 4 Stars">
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Esfera Principal</div>
+              <div style="font-weight: 900; color: var(--primary-gold); font-size: 0.95rem;">4 Estrelas (Kaito)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Leaders Section -->
+  <section class="leaders-section" id="leaders">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">GUERREIROS Z & VILÕES</span>
+        <h2 class="section-title">LÍDERES <span class="gradient-text-gold">LENDÁRIOS</span></h2>
+        <p class="section-desc">Cada líder traz atributos de vida únicos, habilidades passivas de combate e uma forma Desperta (Awakened) transformadora.</p>
+      </div>
+
+      <div class="leaders-grid">
+        <!-- Goku -->
+        <div class="leader-card">
+          <div class="leader-card-header">
+            <div class="leader-name">GOKU (SSJ)</div>
+            <div class="leader-hp-badge"><i class="fa-solid fa-heart"></i> 400 HP</div>
+          </div>
+          <div class="leader-portrait-frame">
+            <img src="assets/leaders/goku.png" alt="Goku Leader" class="leader-img" id="leader-img-goku">
+          </div>
+          <div class="leader-skill-title">Habilidade Passiva</div>
+          <p class="leader-skill-desc">Instinto de Batalha: Ganha +1 de Ki e +20 de Poder no próximo ataque sempre que sofrer dano direto de um oponente.</p>
+          <div class="leader-card-footer">
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Forma: Base</span>
+            <button class="toggle-awakened-btn" onclick="toggleAwakened('goku')">Alternar Desperto</button>
+          </div>
+        </div>
+
+        <!-- Vegeta -->
+        <div class="leader-card">
+          <div class="leader-card-header">
+            <div class="leader-name">VEGETA</div>
+            <div class="leader-hp-badge"><i class="fa-solid fa-heart"></i> 380 HP</div>
+          </div>
+          <div class="leader-portrait-frame">
+            <img src="assets/leaders/vegeta.png" alt="Vegeta Leader" class="leader-img" id="leader-img-vegeta">
+          </div>
+          <div class="leader-skill-title">Habilidade Passiva</div>
+          <p class="leader-skill-desc">Orgulho Saiyajin: Quando o HP cair abaixo de 50%, todos os ataques causam +15% de dano adicional e ignora escudos parciais.</p>
+          <div class="leader-card-footer">
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Forma: Príncipe</span>
+            <button class="toggle-awakened-btn" onclick="toggleAwakened('vegeta')">Alternar Desperto</button>
+          </div>
+        </div>
+
+        <!-- Gohan -->
+        <div class="leader-card">
+          <div class="leader-card-header">
+            <div class="leader-name">GOHAN</div>
+            <div class="leader-hp-badge"><i class="fa-solid fa-heart"></i> 420 HP</div>
+          </div>
+          <div class="leader-portrait-frame">
+            <img src="assets/leaders/gohan.png" alt="Gohan Leader" class="leader-img" id="leader-img-gohan">
+          </div>
+          <div class="leader-skill-title">Habilidade Passiva</div>
+          <p class="leader-skill-desc">Fúria Oculta: Ao ser atacado com dano crítico, compra 1 carta adicional e ganha um escudo de Ki temporário.</p>
+          <div class="leader-card-footer">
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Forma: Jovem</span>
+            <button class="toggle-awakened-btn" onclick="toggleAwakened('gohan')">Alternar Desperto</button>
+          </div>
+        </div>
+
+        <!-- Frieza -->
+        <div class="leader-card">
+          <div class="leader-card-header">
+            <div class="leader-name">FRIEZA</div>
+            <div class="leader-hp-badge"><i class="fa-solid fa-heart"></i> 390 HP</div>
+          </div>
+          <div class="leader-portrait-frame">
+            <img src="assets/leaders/frieza.png" alt="Frieza Leader" class="leader-img" id="leader-img-frieza">
+          </div>
+          <div class="leader-skill-title">Habilidade Passiva</div>
+          <p class="leader-skill-desc">Imperador do Universo: Inicia a partida com 5 de Ki e rouba 1 de Ki do inimigo em acertos diretos.</p>
+          <div class="leader-card-footer">
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Forma: Final</span>
+            <button class="toggle-awakened-btn" onclick="toggleAwakened('frieza')">Alternar Desperto</button>
+          </div>
+        </div>
+
+        <!-- Piccolo -->
+        <div class="leader-card">
+          <div class="leader-card-header">
+            <div class="leader-name">PICCOLO</div>
+            <div class="leader-hp-badge"><i class="fa-solid fa-heart"></i> 450 HP</div>
+          </div>
+          <div class="leader-portrait-frame">
+            <img src="assets/leaders/piccolo.png" alt="Piccolo Leader" class="leader-img" id="leader-img-piccolo">
+          </div>
+          <div class="leader-skill-title">Habilidade Passiva</div>
+          <p class="leader-skill-desc">Regeneração Namekiana: Recupera +15 de HP no início do seu turno e fortalece cartas de Guarda e Esquiva.</p>
+          <div class="leader-card-footer">
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Forma: Mestre</span>
+            <button class="toggle-awakened-btn" onclick="toggleAwakened('piccolo')">Alternar Desperto</button>
+          </div>
+        </div>
+
+        <!-- Trunks -->
+        <div class="leader-card">
+          <div class="leader-card-header">
+            <div class="leader-name">TRUNKS</div>
+            <div class="leader-hp-badge"><i class="fa-solid fa-heart"></i> 400 HP</div>
+          </div>
+          <div class="leader-portrait-frame">
+            <img src="assets/leaders/trunks.png" alt="Trunks Leader" class="leader-img" id="leader-img-trunks">
+          </div>
+          <div class="leader-skill-title">Habilidade Passiva</div>
+          <p class="leader-skill-desc">Espada do Futuro: Aumenta a velocidade de cliques na disputa de Beam Clash e reduz custo de técnicas em -1 Ki.</p>
+          <div class="leader-card-footer">
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Forma: Futuro</span>
+            <button class="toggle-awakened-btn" onclick="toggleAwakened('trunks')">Alternar Desperto</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gallery Section -->
+  <section class="gallery-section" id="gallery">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">CATÁLOGO DE CARTAS</span>
+        <h2 class="section-title">EXPLORE SUA <span class="gradient-text-cyan">COLEÇÃO DE COMBATE</span></h2>
+        <p class="section-desc">Combine cartas de Ataque, Defesa, Contra-Gatos e Técnicas Especiais para criar baralhos invencíveis.</p>
+      </div>
+
+      <div class="filter-tabs">
+        <button class="filter-btn active" onclick="filterCards('all', this)">Todas</button>
+        <button class="filter-btn" onclick="filterCards('atk', this)">Ataque (ATK)</button>
+        <button class="filter-btn" onclick="filterCards('def', this)">Defesa (DEF)</button>
+        <button class="filter-btn" onclick="filterCards('ctr', this)">Contra-Ataque (CTR)</button>
+        <button class="filter-btn" onclick="filterCards('tch', this)">Técnica (TCH)</button>
+      </div>
+
+      <div class="cards-grid" id="cards-container">
+        <!-- Cards inserted dynamically -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Game Modes Section -->
+  <section class="modes-section" id="modes">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">FUNCIONALIDADES & RECURSOS</span>
+        <h2 class="section-title">RECURSOS DO <span class="gradient-text-gold">MULTIPLAYER ONLINE</span></h2>
+        <p class="section-desc">Tudo o que você precisa para uma experiência completa de Card Game competitivo.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper"><i class="fa-solid fa-globe"></i></div>
+          <h3 class="feature-title">Pareamento 1v1 Online</h3>
+          <p class="feature-desc">Servidor de busca integrado com Firebase Realtime Database. Encontre adversários em tempo real ou treine contra a IA.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper"><i class="fa-solid fa-burst"></i></div>
+          <h3 class="feature-title">Disputa de Beam Clash</h3>
+          <p class="feature-desc">Mecânica exclusiva! Quando duas rajadas de Ki massivas se colidem, aperte rapidamente na tela para empurrar o feixe inimigo.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper"><i class="fa-solid fa-trophy"></i></div>
+          <h3 class="feature-title">Rankings & Dojos</h3>
+          <p class="feature-desc">Ganhe Pontos de Ranqueada (RP) em vitórias online para progredir entre as ligas de Bronze até Grandmaster Kami.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper"><i class="fa-solid fa-comments"></i></div>
+          <h3 class="feature-title">Chat Global & Sala</h3>
+          <p class="feature-desc">Converse com lutadores no lobby global e envie mensagens táticas ao vivo durante o combate.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper"><i class="fa-solid fa-layer-group"></i></div>
+          <h3 class="feature-title">Deck Builder Avançado</h3>
+          <p class="feature-desc">Personalize totalmente o seu baralho, altere envelopes, adicione sleeves e salve múltiplos decks estratégicos.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper"><i class="fa-solid fa-mobile-screen-button"></i></div>
+          <h3 class="feature-title">Instalável PWA</h3>
+          <p class="feature-desc">Desfrute de performance nativa a 60 FPS no Celular (Android/iOS) ou no PC. Adicione à tela inicial com 1 clique.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ranking Section -->
+  <section class="ranking-section" id="ranking">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">TORNEIO DO PODER</span>
+        <h2 class="section-title">SISTEMA DE <span class="gradient-text-gold">LIGAS & DIVISION</span></h2>
+        <p class="section-desc">Alcance o topo das ligas competitivas acumulando vitórias e demonstrando sua mestria.</p>
+      </div>
+
+      <div class="tiers-flex">
+        <div class="tier-badge">
+          <div class="tier-icon">🥉</div>
+          <div class="tier-name">Bronze I</div>
+          <div class="tier-rp">0 - 1199 RP</div>
+        </div>
+        <div class="tier-badge">
+          <div class="tier-icon">🥈</div>
+          <div class="tier-name">Prata III</div>
+          <div class="tier-rp">1200 - 1499 RP</div>
+        </div>
+        <div class="tier-badge">
+          <div class="tier-icon">🥇</div>
+          <div class="tier-name">Ouro II</div>
+          <div class="tier-rp">1500 - 1799 RP</div>
+        </div>
+        <div class="tier-badge">
+          <div class="tier-icon">💎</div>
+          <div class="tier-name">Platina I</div>
+          <div class="tier-rp">1800 - 2199 RP</div>
+        </div>
+        <div class="tier-badge">
+          <div class="tier-icon">🌌</div>
+          <div class="tier-name">Diamante</div>
+          <div class="tier-rp">2200 - 2699 RP</div>
+        </div>
+        <div class="tier-badge">
+          <div class="tier-icon">⚡</div>
+          <div class="tier-name">Mestre Z</div>
+          <div class="tier-rp">2700 - 3299 RP</div>
+        </div>
+        <div class="tier-badge" style="border-color: var(--primary-gold); background: rgba(255, 215, 0, 0.15);">
+          <div class="tier-icon">🐲</div>
+          <div class="tier-name" style="color: var(--primary-gold);">Kami Master</div>
+          <div class="tier-rp">3300+ RP</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Banner -->
+  <section class="cta-banner">
+    <div class="container">
+      <div class="cta-box">
+        <h2 class="cta-title">SEU PODER DE LUTA ESTÁ ACIMA DE 9000?</h2>
+        <p class="cta-subtitle">Entre agora mesmo na arena, monte seu deck dos sonhos e torne-se o campeão do Torneio do Poder no Dragon Ball Clash!</p>
+        <a href="index.html" class="btn-cta btn-gold" style="font-size: 1.1rem; padding: 18px 40px;">
+          <i class="fa-solid fa-fire-flame-curved"></i> JOGAR GRÁTIS AGORA
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="site.html" class="brand-logo-container">
+            <img src="imagens/logo.png" alt="Dragon Ball Clash Logo" style="height: 50px;">
+          </a>
+          <p>O Action Card Game online inspirado no universo de Dragon Ball. Desenvolvido para entusiastas de jogos táticos e fãs de anime.</p>
+        </div>
+
+        <div>
+          <div class="footer-heading">Navegação</div>
+          <ul class="footer-links">
+            <li><a href="#hero">Início</a></li>
+            <li><a href="#leaders">Líderes</a></li>
+            <li><a href="#gallery">Cartas</a></li>
+            <li><a href="#modes">Recursos</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="footer-heading">Jogo</div>
+          <ul class="footer-links">
+            <li><a href="index.html">Jogar no Navegador</a></li>
+            <li><a href="#modes">Matchmaking 1v1</a></li>
+            <li><a href="#ranking">Ranking Dojos</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="footer-heading">Tecnologia</div>
+          <ul class="footer-links">
+            <li><span style="color: var(--primary-cyan); font-weight: 700;">HTML5 / ES6 Modules</span></li>
+            <li><span style="color: var(--primary-gold); font-weight: 700;">Firebase Realtime DB</span></li>
+            <li><span style="color: var(--primary-orange); font-weight: 700;">PWA Standard 60 FPS</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>&copy; 2026 Dragon Ball Clash Action TCG. Todos os direitos reservados.</div>
+        <div style="font-size: 0.8rem;">Projeto desenvolvido para fãs. Imagens &reg; Akira Toriyama / Shueisha / Toei Animation.</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal Card Inspector -->
+  <div class="modal-backdrop" id="card-modal" onclick="closeCardModal()">
+    <div class="modal-card-content" onclick="event.stopPropagation()">
+      <button class="modal-close-btn" onclick="closeCardModal()">&times;</button>
+      <img src="" alt="Card Expanded" id="modal-card-img">
+      <div id="modal-card-title" style="margin-top: 15px; font-weight: 900; font-size: 1.2rem; color: var(--primary-gold);"></div>
+    </div>
+  </div>
+
+  <script>
+    // Particle Canvas Animation
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let particles = [];
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 2.5 + 0.5;
+        this.speedY = Math.random() * 1.5 + 0.5;
+        this.speedX = (Math.random() - 0.5) * 0.8;
+        this.color = Math.random() > 0.4 ? 'rgba(255, 180, 0, ' : 'rgba(0, 229, 255, ';
+        this.alpha = Math.random() * 0.7 + 0.3;
+      }
+      update() {
+        this.y -= this.speedY;
+        this.x += this.speedX;
+        if (this.y < 0) this.reset();
+      }
+      draw() {
+        ctx.fillStyle = this.color + this.alpha + ')';
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = this.color + '1)';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    for (let i = 0; i < 60; i++) {
+      particles.push(new Particle());
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    // Scroll Navbar Effect
+    window.addEventListener('scroll', () => {
+      const header = document.getElementById('header');
+      if (window.scrollY > 50) {
+        header.classList.add('scrolled');
+      } else {
+        header.classList.remove('scrolled');
+      }
+    });
+
+    // Leaders Awakened Toggle State
+    const leaderState = {
+      goku: false,
+      vegeta: false,
+      gohan: false,
+      frieza: false,
+      piccolo: false,
+      trunks: false
+    };
+
+    function toggleAwakened(leaderKey) {
+      leaderState[leaderKey] = !leaderState[leaderKey];
+      const img = document.getElementById(`leader-img-${leaderKey}`);
+      if (img) {
+        if (leaderState[leaderKey]) {
+          img.src = `assets/leaders/${leaderKey}_awaken.png`;
+          img.style.filter = "drop-shadow(0 0 25px rgba(255, 215, 0, 0.95))";
+        } else {
+          img.src = `assets/leaders/${leaderKey}.png`;
+          img.style.filter = "drop-shadow(0 0 15px rgba(255, 150, 0, 0.4))";
+        }
+      }
+    }
+
+    // Dynamic Cards Catalog Data
+    const cardCatalog = [
+      { id: 'atk_01', type: 'atk', name: 'Kamehameha', img: 'assets/cards/atk_01.png' },
+      { id: 'atk_05', type: 'atk', name: 'Galick Gun', img: 'assets/cards/atk_05.png' },
+      { id: 'atk_10', type: 'atk', name: 'Masenko', img: 'assets/cards/atk_10.png' },
+      { id: 'atk_15', type: 'atk', name: 'Genki Dama', img: 'assets/cards/atk_15.png' },
+      { id: 'atk_20', type: 'atk', name: 'Final Flash', img: 'assets/cards/atk_20.png' },
+      { id: 'def_01', type: 'def', name: 'Escudo de Ki', img: 'assets/cards/def_01.png' },
+      { id: 'def_05', type: 'def', name: 'Barreira Energetica', img: 'assets/cards/def_05.png' },
+      { id: 'ctr_01', type: 'ctr', name: 'Contra-Golpe', img: 'assets/cards/ctr_01.png' },
+      { id: 'ctr_05', type: 'ctr', name: 'Rebater Ki', img: 'assets/cards/ctr_05.png' },
+      { id: 'tch_01', type: 'tch', name: 'Carga de Ki', img: 'assets/cards/tch_01.png' },
+      { id: 'tch_05', type: 'tch', name: 'Senzu Bean', img: 'assets/cards/tch_05.png' }
+    ];
+
+    function renderCards(filter = 'all') {
+      const container = document.getElementById('cards-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const list = filter === 'all' ? cardCatalog : cardCatalog.filter(c => c.type === filter);
+
+      list.forEach(c => {
+        const item = document.createElement('div');
+        item.className = 'card-item';
+        item.onclick = () => openCardModal(c.img, c.name);
+        item.innerHTML = `
+          <img src="${c.img}" alt="${c.name}" loading="lazy">
+          <div class="card-item-overlay">
+            <span class="card-name">${c.name}</span>
+            <span class="card-type-tag">${c.type.toUpperCase()}</span>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+    renderCards();
+
+    function filterCards(type, btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderCards(type);
+    }
+
+    // Modal
+    function openCardModal(imgSrc, name) {
+      document.getElementById('modal-card-img').src = imgSrc;
+      document.getElementById('modal-card-title').textContent = name;
+      document.getElementById('card-modal').classList.add('active');
+    }
+
+    function closeCardModal() {
+      document.getElementById('card-modal').classList.remove('active');
+    }
+  </script>
+</body>
+</html>

@@ -64,6 +64,8 @@ export class MultiplayerManager {
       this.engine._passTurn(actorKey);
     } else if (move.action === 'mashBeamClash') {
       this.engine._mashBeamClash(actorKey);
+    } else if (move.action === 'beamClashEnd') {
+      this.engine.resolveBeamClashWinner(move.data.winnerKey);
     }
   }
 

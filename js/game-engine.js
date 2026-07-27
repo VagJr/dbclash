@@ -460,45 +460,30 @@ export class GameEngine {
 
   startBeamClashLoop() {
     this.state = 'BEAM_CLASH';
-    this.beamClashData = { p1Progress: 50, timer: 6.0 };
+    this.beamClashData = { playerMashCount: 0, opponentMashCount: 0, startTime: Date.now() };
     this.log(`🔥 DISPUTA DE BEAM KAMEHAMEHA! Pressione o botão rapidamente!`, 'info');
-
     this.clearBeamClashLoop();
-    this.beamClashInterval = setInterval(() => {
-      if (this.state !== 'BEAM_CLASH' || !this.beamClashData) {
-        this.clearBeamClashLoop();
-        return;
+    this.fx('beamClash', { p1Progress: 50, p1Color: this.player.leader.color, p2Color: this.opponent.leader.color });
+
+    // Safety timeout to end beam clash after 6.5s if no one reaches 100/0
+    this.beamClashTimer = setTimeout(() => {
+      if (this.state === 'BEAM_CLASH' && this.beamClashData) {
+        const progress = this.getBeamProgress();
+        this.resolveBeamClashWinner(progress >= 50 ? 'player' : 'opponent');
       }
+    }, 6500);
+  }
 
-      this.beamClashData.p1Progress = Math.max(0, this.beamClashData.p1Progress - 1.2);
-      this.beamClashData.timer -= 0.1;
-
-      this.fx('beamClash', {
-        p1Progress: this.beamClashData.p1Progress,
-        p1Color: this.player.leader.color,
-        p2Color: this.opponent.leader.color
-      });
-
-      if (this.beamClashData.p1Progress <= 0) {
-        this.clearBeamClashLoop();
-        this.resolveBeamClashWinner('opponent');
-      } else if (this.beamClashData.p1Progress >= 100) {
-        this.clearBeamClashLoop();
-        this.resolveBeamClashWinner('player');
-      } else if (this.beamClashData.timer <= 0) {
-        this.clearBeamClashLoop();
-        const winnerKey = this.beamClashData.p1Progress >= 50 ? 'player' : 'opponent';
-        this.resolveBeamClashWinner(winnerKey);
-      }
-
-      this.notifyState();
-    }, 100);
+  getBeamProgress() {
+    if (!this.beamClashData) return 50;
+    const net = (this.beamClashData.playerMashCount - this.beamClashData.opponentMashCount) * 7;
+    return Math.max(0, Math.min(100, 50 + net));
   }
 
   clearBeamClashLoop() {
-    if (this.beamClashInterval) {
-      clearInterval(this.beamClashInterval);
-      this.beamClashInterval = null;
+    if (this.beamClashTimer) {
+      clearTimeout(this.beamClashTimer);
+      this.beamClashTimer = null;
     }
   }
 
@@ -509,26 +494,41 @@ export class GameEngine {
 
   _mashBeamClash(actorKey = 'player') {
     if (this.state !== 'BEAM_CLASH' || !this.beamClashData) return;
-    
+
     if (actorKey === 'opponent') {
-       this.beamClashData.p1Progress = Math.max(0, this.beamClashData.p1Progress - 7);
-       this.fx('beamClash', { p1Progress: this.beamClashData.p1Progress, p1Color: this.player.leader.color, p2Color: this.opponent.leader.color });
-       return;
+      this.beamClashData.opponentMashCount++;
+    } else {
+      this.beamClashData.playerMashCount++;
     }
-    this.beamClashData.p1Progress = Math.min(100, this.beamClashData.p1Progress + 7);
+
+    const progress = this.getBeamProgress();
     this.fx('beamClash', {
-      p1Progress: this.beamClashData.p1Progress,
+      p1Progress: progress,
       p1Color: this.player.leader.color,
       p2Color: this.opponent.leader.color
     });
 
-    if (this.beamClashData.p1Progress >= 100) {
-      this.clearBeamClashLoop();
+    if (progress >= 100) {
       this.resolveBeamClashWinner('player');
+    } else if (progress <= 0) {
+      this.resolveBeamClashWinner('opponent');
+    } else if (Date.now() - this.beamClashData.startTime >= 6000) {
+      const winnerKey = progress >= 50 ? 'player' : 'opponent';
+      this.resolveBeamClashWinner(winnerKey);
+    } else {
+      this.notifyState();
     }
   }
 
   resolveBeamClashWinner(winnerKey) {
+    // Idempotent: beam clash already resolved
+    if (!this.beamClashData) return;
+
+    // Broadcast result to sync remote client
+    if (this.onLocalAction && !this.isAiMatch) {
+      this.onLocalAction('beamClashEnd', { winnerKey });
+    }
+
     const originalAttacker = this.pendingAttack ? this.pendingAttack.attackerKey : this.initiative;
     this.clearBeamClashLoop();
     const winner = winnerKey === 'player' ? this.player : this.opponent;
