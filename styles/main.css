@@ -1240,65 +1240,64 @@ body {
 
 /* ── Common Buttons ───────────────────────────────────────────────────────── */
 .btn-ki {
-  background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
-  border: 1px solid #ffe566;
+  background: url('../UI_PACK/Buttons/button_yellow.png') center/100% 100% no-repeat;
+  border: none;
   color: #000000;
   font-weight: 900;
-  font-size: 0.9rem;
-  padding: 13px 30px;
-  border-radius: var(--r-sm);
+  font-size: 0.95rem;
+  padding: 16px 36px;
   cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  box-shadow: 0 4px 18px rgba(255, 140, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  transition: transform var(--t-snap), box-shadow var(--t-snap), filter var(--t-fast);
-  position: relative;
-  overflow: hidden;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+  transition: transform var(--t-snap), filter var(--t-fast);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  min-width: 160px;
 }
-
-.btn-ki::before {
-  content: '';
-  position: absolute;
-  top: 0; left: -100%; width: 60%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  transform: skewX(-20deg);
-  transition: left 0.6s ease;
-  pointer-events: none;
-}
-.btn-ki:hover::before { left: 150%; }
-
 .btn-ki:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 6px 28px rgba(255, 215, 0, 0.5), 0 2px 14px rgba(255, 140, 0, 0.4);
-  filter: brightness(1.08);
+  transform: translateY(-2px) scale(1.03);
+  filter: brightness(1.1) drop-shadow(0 4px 12px rgba(255, 215, 0, 0.5));
+}
+.btn-ki:active {
+  transform: translateY(1px) scale(0.97);
+  filter: brightness(0.9);
 }
 
-.btn-ki:active {
-  transform: translateY(1px) scale(0.98);
-  filter: brightness(0.95);
-}
+
+
+
+
+
+
 
 .btn-ghost {
-  background: linear-gradient(135deg, #161c2d 0%, #0d1220 100%);
-  border: 1px solid rgba(255, 215, 0, 0.35);
-  color: #f8fafc;
+  background: url('../UI_PACK/Buttons/button_blue.png') center/100% 100% no-repeat;
+  border: none;
+  color: #ffffff;
   font-weight: 900;
   font-size: 0.9rem;
-  padding: 13px 30px;
-  border-radius: var(--r-sm);
+  padding: 14px 32px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transition: all var(--t-med);
-  position: relative;
-  overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  transition: transform var(--t-snap), filter var(--t-fast);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  min-width: 140px;
+}
+.btn-ghost:hover {
+  transform: translateY(-2px) scale(1.03);
+  filter: brightness(1.1) drop-shadow(0 4px 12px rgba(0, 150, 255, 0.4));
+}
+.btn-ghost:active {
+  transform: translateY(1px) scale(0.97);
+  filter: brightness(0.9);
 }
 
 .btn-ghost::before {
@@ -1312,12 +1311,7 @@ body {
 }
 .btn-ghost:hover::before { left: 150%; }
 
-.btn-ghost:hover {
-  background: linear-gradient(135deg, #202942 0%, #151d30 100%);
-  border-color: rgba(255, 215, 0, 0.7);
-  color: #ffd700;
-  box-shadow: 0 0 22px rgba(255, 215, 0, 0.25), 0 4px 16px rgba(0,0,0,0.7);
-}
+
 
 .btn-cyan {
   background: linear-gradient(135deg, #00f2fe 0%, #00b4d8 100%);
@@ -2457,15 +2451,10 @@ body {
   transition: opacity var(--t-fast);
 }
 
-.btn-ki:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 24px rgba(255, 215, 0, 0.35);
-}
+
 .btn-ki:hover::after { opacity: 1; }
 
-.btn-ki:active {
-  transform: translateY(0) scale(0.97);
-}
+
 
 .btn-ghost {
   background: rgba(255,255,255,0.06);
@@ -2478,10 +2467,7 @@ body {
   cursor: pointer;
   transition: all var(--t-fast);
 }
-.btn-ghost:hover {
-  background: rgba(255,255,255,0.1);
-  border-color: rgba(255,255,255,0.15);
-}
+
 
 .btn-cyan {
   background: linear-gradient(135deg, #22d3ee, #06b6d4);
@@ -3115,3 +3101,256 @@ body.arena-active #bottom-bar {
   }
 }
 >>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
+
+
+/* Mobile Top Header Single-Row Non-Overlapping Layout Fix */
+@media (max-width: 768px) {
+  .game-hud-top {
+    height: 44px !important;
+    padding: 0 10px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    z-index: 1000 !important;
+  }
+
+  .ghud-profile {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex-shrink: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .ghud-logo-mini {
+    width: 24px !important;
+    height: 24px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .ghud-username {
+    font-size: 0.74rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .ghud-currencies {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  .currency-pill {
+    padding: 2px 6px !important;
+    font-size: 0.68rem !important;
+    height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .auth-pill {
+    padding: 2px 8px !important;
+    font-size: 0.68rem !important;
+    height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+}
+
+
+/* ── DECK LAB REDESIGN (OFFICIAL DBZ IDENTITY) ─────────────── */
+.deck-lab-container {
+  width: 100%;
+  max-width: 1240px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: auto;
+}
+
+.deck-lab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 18px;
+  border-bottom: 2px solid #ffd700;
+  border-radius: var(--r-md);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.dl-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dl-logo-icon {
+  font-size: 1.3rem;
+  color: #ffd700;
+  text-shadow: 0 0 8px #ff8c00;
+}
+
+.dl-header-title {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #ffd700;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+}
+
+.dl-back-btn {
+  padding: 6px 16px !important;
+  font-size: 0.85rem !important;
+  min-width: auto !important;
+}
+
+/* Capsule Entries for Active Deck Cards */
+.deck-entry-capsule {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  background: rgba(10, 15, 30, 0.7);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-left: 4px solid #ffd700;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  transition: all 0.2s ease;
+}
+
+.deck-entry-capsule:hover {
+  background: rgba(255, 215, 0, 0.12);
+  border-color: #ffd700;
+  transform: translateX(2px);
+}
+
+.de-capsule-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.de-ki-badge {
+  background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+  color: #000;
+  font-weight: 900;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.4);
+}
+
+.de-card-name {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+}
+
+.de-remove-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-weight: 900;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: transform 0.15s ease;
+}
+
+.de-remove-btn:hover {
+  transform: scale(1.25);
+  color: #ff6b6b;
+}
+
+/* ── Mobile Specific Adjustments ── */
+@media (max-width: 768px) {
+  #scene-deck-lab.active {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    padding: env(safe-area-inset-top) 8px env(safe-area-inset-bottom) 8px !important;
+  }
+
+  .deck-lab-container {
+    height: 100%;
+    max-height: 100%;
+    gap: 8px;
+  }
+
+  .deck-lab-header {
+    padding: 8px 12px;
+    flex-shrink: 0;
+  }
+
+  .dl-header-title {
+    font-size: 0.9rem;
+  }
+
+  .deck-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1;
+    overflow: hidden;
+    gap: 8px !important;
+  }
+
+  .deck-sidebar {
+    flex-shrink: 0;
+    max-height: 35vh;
+    display: flex;
+    flex-direction: column;
+    padding: 10px !important;
+  }
+
+  .deck-list-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .collection-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 10px !important;
+  }
+
+  .collection-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .collection-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)) !important;
+    gap: 8px !important;
+    justify-items: center;
+  }
+
+  .collection-grid .card {
+    width: 75px !important;
+    height: 105px !important;
+    min-width: unset !important;
+  }
+}

@@ -1,19 +1,9 @@
-const CACHE_NAME = 'dbtcg-v30.0.0';
-const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './styles/main.css',
-  './styles/cards.css',
-  './styles/arena.css'
-];
+// Service Worker — Auto-Purge & Instant Refresh Engine
+const CACHE_NAME = 'dbtcg-v' + Date.now();
 
 self.addEventListener('install', (evt) => {
-  evt.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching core assets v30.0.0');
-      return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
-  );
+  console.log('[Service Worker] Auto-purging stale cache...');
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (evt) => {
@@ -21,33 +11,20 @@ self.addEventListener('activate', (evt) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            console.log('[Service Worker] Purging old cache storage:', key);
-            return caches.delete(key);
-          }
+          console.log('[Service Worker] Deleting cache storage key:', key);
+          return caches.delete(key);
         })
       );
     }).then(() => self.clients.claim())
   );
 });
 
-// Network-First Strategy
+// Network-Only Strategy — Never serve stale cached files!
 self.addEventListener('fetch', (evt) => {
   if (evt.request.method !== 'GET') return;
-  
   evt.respondWith(
-    fetch(evt.request).then((networkResponse) => {
-      if (networkResponse && networkResponse.status === 200) {
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(evt.request, responseToCache);
-        });
-      }
-      return networkResponse;
-    }).catch(() => {
-      return caches.match(evt.request).then((cachedResponse) => {
-        return cachedResponse || caches.match('./index.html');
-      });
+    fetch(evt.request).catch(() => {
+      return caches.match(evt.request);
     })
   );
 });

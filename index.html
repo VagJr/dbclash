@@ -1,20 +1,52 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+        "firebase/database": "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js",
+        "firebase/analytics": "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js"
+      }
+    }
+  </script>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#ffd700">
+    <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="imagens/Dragon-Ball-PNG-HD-Image.png">
+  <link rel="apple-touch-icon" href="imagens/Dragon-Ball-PNG-HD-Image.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Dragon Ball Clash Action TCG — Commercial Game Edition</title>
   <meta name="description" content="O TCG de Dragon Ball em tempo real para PC e Console. Batalhas de Ki, Z-Vanish e Beam Clash.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles/main.css">
-  <link rel="stylesheet" href="styles/cards.css">
-  <link rel="stylesheet" href="styles/arena.css">
-  <link rel="stylesheet" href="styles/animations.css">
-  <link rel="stylesheet" href="styles/atmosphere.css">
+  <link rel="stylesheet" href="styles/main.css?v=realtime_firebase_v3">
+  <link rel="stylesheet" href="styles/cards.css?v=realtime_firebase_v3">
+  <link rel="stylesheet" href="styles/arena.css?v=realtime_firebase_v3">
+  <link rel="stylesheet" href="styles/multiplayer.css?v=realtime_firebase_v3">
+  <link rel="stylesheet" href="styles/animations.css?v=realtime_firebase_v3">
+  <link rel="stylesheet" href="styles/atmosphere.css?v=realtime_firebase_v3">
+  <script>
+    // Automatic Cache Purge Engine — Guarantees immediate delivery of code updates
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (let registration of registrations) {
+          registration.unregister();
+        }
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        for (let name of names) caches.delete(name);
+      });
+    }
+  </script>
 </head>
 <body class="aaa-game-body">
+  <audio id="app-bgm" src="music/soundtrack.mp3" loop preload="auto" playsinline autoplay muted style="display:none;"></audio>
   <div id="impact-frame-overlay"></div>
   <div id="scene-transition-overlay" class="scene-transition-curtain"></div>
 
@@ -86,18 +118,18 @@
     </header>
 
     <div class="menu-hub-arc-layout">
-      <!-- Left Mode Arc Cards -->
+            <!-- Left Mode Arc Cards -->
       <div class="menu-arc-left">
-        <button id="menu-btn-new-game" class="aaa-mode-card active">
-          <div class="amc-badge">HISTÓRIA</div>
-          <div class="amc-title">🔥 NOVO JOGO / PRÓLOGO</div>
-          <div class="amc-sub">Torneio do Poder & Tutorial</div>
+        <button id="menu-btn-ranked-1v1" class="aaa-mode-card active">
+          <div class="amc-badge">ONLINE 1v1</div>
+          <div class="amc-title">⚔️ RANQUEADO 1v1</div>
+          <div class="amc-sub">Duelo Competitivo (Rank Points)</div>
         </button>
 
-        <button id="menu-btn-continue" class="aaa-mode-card">
-          <div class="amc-badge">VS IA</div>
-          <div class="amc-title">⚔️ CONTINUAR COMBATE</div>
-          <div class="amc-sub">Duelo rápido em tempo real</div>
+        <button id="menu-btn-ranked-2v2" class="aaa-mode-card">
+          <div class="amc-badge">DUETO 2v2</div>
+          <div class="amc-title">👥 RANQUEADO 2v2</div>
+          <div class="amc-sub">Batalha em Dupla com Sinergias</div>
         </button>
       </div>
 
@@ -108,18 +140,18 @@
         </div>
       </div>
 
-      <!-- Right Mode Arc Cards -->
+            <!-- Right Mode Arc Cards -->
       <div class="menu-arc-right">
-        <button id="menu-btn-select-fighter" class="aaa-mode-card">
-          <div class="amc-badge">HERÓIS</div>
-          <div class="amc-title">👤 SELEÇÃO DE LUTADOR</div>
-          <div class="amc-sub">Goku, Vegeta, Gohan e mais</div>
+        <button id="menu-btn-coop-raid" class="aaa-mode-card">
+          <div class="amc-badge">RAID CHEFE</div>
+          <div class="amc-title">🐉 RAID COOPERATIVO</div>
+          <div class="amc-sub">3-4 Jogadores vs Cell Max / Broly / Jiren</div>
         </button>
 
-        <button id="menu-btn-deck-lab" class="aaa-mode-card" data-unlock-feature="deckLab">
-          <div class="amc-badge">BARALHOS</div>
-          <div class="amc-title">🎴 COLEÇÃO & DECK LAB</div>
-          <div class="amc-sub">Combinações de 20 cartas</div>
+        <button id="menu-btn-global-ranking" class="aaa-mode-card">
+          <div class="amc-badge">RANKING</div>
+          <div class="amc-title">🏆 RANKING GLOBAL</div>
+          <div class="amc-sub">Top 100 Guerreiros Z do Universo</div>
         </button>
       </div>
     </div>
@@ -132,7 +164,6 @@
       <button id="bnav-shop" class="bnav-item"><span class="bnav-icon">🎁</span> LOJA DE KI</button>
       <button id="bnav-dojos" class="bnav-item"><span class="bnav-icon">🏯</span> DOJOS</button>
       <button id="bnav-chat" class="bnav-item"><span class="bnav-icon">💬</span> CHAT</button>
-      <button id="bnav-ranked" class="bnav-item"><span class="bnav-icon">🏆</span> RANQUEADO</button>
       <button id="bnav-quests" class="bnav-item"><span class="bnav-icon">📜</span> MISSÕES</button>
       <button id="bnav-settings" class="bnav-item"><span class="bnav-icon">⚙️</span> OPÇÕES</button>
     </div>
@@ -304,15 +335,23 @@
 
   <!-- ── 7. DECK LAB SCENE ── -->
   <section id="scene-deck-lab" class="game-scene">
-    <div class="deck-layout">
-      <div class="glass deck-sidebar">
-        <div class="deck-sidebar-title" id="deck-builder-title">Baralho Ativo (20 Cartas)</div>
-        <div id="deck-list-container"></div>
-        <button id="deck-back-btn" class="btn-ghost" style="margin-top:12px;">VOLTAR AO MENU</button>
+    <div class="deck-lab-container">
+      <div class="deck-lab-header glass">
+        <div class="dl-header-left">
+          <span class="dl-logo-icon">⚡</span>
+          <span class="dl-header-title">DOCK DE GUERREIRO Z — DECK LAB</span>
+        </div>
+        <button id="deck-back-btn" class="btn-ghost dl-back-btn">◀ VOLTAR</button>
       </div>
-      <div class="glass collection-panel">
-        <div class="collection-title" id="collection-title">Coleção de Cartas</div>
-        <div id="collection-grid" class="collection-grid"></div>
+      <div class="deck-layout">
+        <div class="glass deck-sidebar">
+          <div class="deck-sidebar-title" id="deck-builder-title">Baralho Ativo (20 Cartas)</div>
+          <div id="deck-list-container" class="deck-list-scroll"></div>
+        </div>
+        <div class="glass collection-panel">
+          <div class="collection-title" id="collection-title">Coleção de Cartas</div>
+          <div class="collection-scroll-area"><div id="collection-grid" class="collection-grid"></div></div>
+        </div>
       </div>
     </div>
   </section>
@@ -344,7 +383,7 @@
       <h2 style="color: #ffd700; font-size: 1.4rem; font-weight: 900; margin-bottom: 12px;">💬 Chat Global dos Guerreiros</h2>
       <div id="chat-feed" class="chat-feed" style="flex: 1; overflow-y: auto; background: rgba(0,0,0,0.35); border-radius: 8px; padding: 14px; margin-bottom: 12px;"></div>
       <div class="chat-input-row" style="display: flex; gap: 8px;">
-        <input type="text" id="chat-input" placeholder="Digite sua mensagem..." class="modal-input" style="margin: 0; flex: 1;">
+        <input type="text" id="chat-input" placeholder="Digite sua mensagem..." class="modal-input" style="font-size: 1.1rem; padding: 12px; background: rgba(0,0,0,0.6); border: 2px solid #ffd700; color: #fff; text-align: center;" style="margin: 0; flex: 1;">
         <button id="send-chat-btn" class="btn-ki">Enviar</button>
       </div>
       <button id="chat-back-btn" class="btn-ghost" style="margin-top: 12px;">VOLTAR AO MENU</button>
@@ -383,17 +422,43 @@
     </div>
   </section>
 
+  
+  <!-- ═══ LEADERBOARD MODAL ═══ -->
+  <div id="leaderboard-modal" class="modal-overlay">
+    <div class="glass modal-box" style="max-width: 600px; width: 90%; max-height: 85vh; padding: 20px;">
+      <div class="modal-title" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ffd700; padding-bottom: 10px; margin-bottom: 10px;">
+        <span style="font-size: 1.4rem; color: #ffd700; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">🏆 RANKING GLOBAL Z</span>
+        <button id="lb-close-btn" class="btn-ghost" style="padding: 4px 10px; font-size: 0.9rem;">✕ Fechar</button>
+      </div>
+      <div style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 15px; font-weight: bold; text-align: center;">Os 100 melhores Guerreiros do Universo</div>
+      <div id="lb-list-container" style="display: flex; flex-direction: column; gap: 8px; max-height: 55vh; overflow-y: auto; padding-right: 8px;">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ Auth Modal ═══ -->
-  <div id="auth-modal" class="modal-overlay">
+  <div id="auth-modal" class="modal-overlay" style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.9)), url('assets/backgrounds/landing_hero.png') center/cover no-repeat; justify-content: center; align-items: center;">
     <div class="glass modal-box">
-      <div class="modal-title" id="auth-modal-title">Conta Dragon Ball Clash</div>
-      <input id="auth-user-input" class="modal-input" type="text" placeholder="Nome de Usuário...">
-      <input id="auth-pass-input" class="modal-input" type="password" placeholder="Senha...">
+      <div class="modal-title" id="auth-modal-title" style="font-size: 1.8rem; text-shadow: 0 0 10px #ff8c00; color: #ffd700; text-align: center; margin-bottom: 25px;">⚡ IDENTIDADE DE GUERREIRO Z</div>
+      <input id="auth-user-input" class="modal-input" style="font-size: 1.1rem; padding: 12px; background: rgba(0,0,0,0.6); border: 2px solid #ffd700; color: #fff; text-align: center;" type="text" placeholder="Nome de Usuário...">
+      <input id="auth-pass-input" class="modal-input" style="font-size: 1.1rem; padding: 12px; background: rgba(0,0,0,0.6); border: 2px solid #ffd700; color: #fff; text-align: center;" type="password" placeholder="Senha...">
       <div class="modal-actions">
         <button id="auth-login-submit" class="btn-ki">Entrar</button>
         <button id="auth-register-submit" class="btn-ghost">Criar Conta</button>
       </div>
       <button id="auth-close-btn" class="modal-cancel">Cancelar</button>
+    </div>
+  </div>
+
+    <!-- ═══ MATCHMAKING MODAL ═══ -->
+  <div id="matchmaking-modal" class="modal-overlay">
+    <div class="glass modal-box" style="text-align: center; max-width: 450px; padding: 30px; border: 2px solid #ffd700;">
+      <div style="font-size: 2.5rem; animation: pulse 1s infinite; margin-bottom: 10px;">⚡</div>
+      <div style="font-size: 1.5rem; font-weight: 900; color: #ffd700; text-shadow: 0 0 10px #ff8c00;">BUSCANDO GUERREIRO Z...</div>
+      <div id="mm-timer" style="font-size: 2.2rem; font-weight: 900; color: #fff; margin: 15px 0;">00:00</div>
+      <div style="color: #cbd5e1; font-size: 0.85rem; margin-bottom: 20px;">Conectando ao Realtime Database do Torneio do Poder...</div>
+      <button id="mm-cancel-btn" class="btn-ghost" style="width: 100%;">CANCELAR BUSCA</button>
     </div>
   </div>
 
@@ -458,6 +523,31 @@
     } else {
       boot();
     }
+  </script>
+
+  <!-- PWA Install Support -->
+  <script>
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      // You could show a custom install button here if desired
+      console.log('PWA is ready to be installed!');
+      // Prompt automatically after 3 seconds for better UX, or wait for user interaction
+      setTimeout(() => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+              console.log('User accepted the PWA prompt');
+            } else {
+              console.log('User dismissed the PWA prompt');
+            }
+            deferredPrompt = null;
+          });
+        }
+      }, 3000);
+    });
   </script>
 </body>
 </html>

@@ -1,3 +1,6 @@
+import { authManager } from './auth-manager.js';
+import { leaderboardManager } from './leaderboard-manager.js';
+import { raidEngine } from './raid-engine.js';
 /* ==========================================================================
    Dragon Ball Clash Action TCG — UI Manager (Redesigned Layout Engine)
    Anime action indicators, opponent played card display, touch gesture popups,
@@ -24,6 +27,13 @@ import { i18n } from './i18n.js';
 import { sceneManager, GAME_SCENES } from './scene-manager.js';
 
 export class UIManager {
+  renderShop() {
+    const zeniEl = document.getElementById('shop-zeni');
+    if (zeniEl && typeof deckBuilder !== 'undefined') {
+      zeniEl.textContent = deckBuilder.zeni || 0;
+    }
+  }
+
   constructor() {
     this.fx = new FXEngine('fx-canvas');
     this.startFighterSpriteLoop();
@@ -55,6 +65,7 @@ export class UIManager {
     this.applyTranslations();
     this.renderLeaderSelectionRoster();
     this.initDevPanel();
+    this.setupAuthAndLeaderboardHandlers();
     this.initSceneSystem();
   }
 
@@ -788,6 +799,20 @@ export class UIManager {
     // 2. Press Start AAA Console Button
     document.getElementById('title-press-start-btn')?.addEventListener('click', () => {
       soundEngine.playClick();
+      const authModal = document.getElementById('auth-modal');
+      const authCloseBtn = document.getElementById('auth-close-btn');
+      const userInput = document.getElementById('auth-user-input');
+
+      if (userInput && typeof authManager !== 'undefined' && authManager.user && authManager.user.displayName) {
+        userInput.value = authManager.user.displayName;
+      }
+
+      if (authModal) {
+        authModal.classList.add('active');
+        if (authCloseBtn) authCloseBtn.style.display = 'none';
+        return; // FORCE LOGIN / SIGNUP SCREEN ON EVERY GAME START
+      }
+
       soundEngine.playAwaken();
       sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
     });
@@ -798,7 +823,28 @@ export class UIManager {
       sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
     });
 
-    // 4. Main Menu Console Options
+    // 4. Main Menu Mode Card Event Listeners
+    document.getElementById('menu-btn-ranked-1v1')?.addEventListener('click', () => {
+      soundEngine.playClick();
+      this.multiplayer.startRanked1v1Matchmaking(this.selectedLeader);
+    });
+
+    document.getElementById('menu-btn-ranked-2v2')?.addEventListener('click', () => {
+      soundEngine.playClick();
+      alert('⚔️ MODO RANQUEADO 2v2 EM BREVE! Duplas online no Torneio do Poder.');
+    });
+
+    document.getElementById('menu-btn-coop-raid')?.addEventListener('click', () => {
+      soundEngine.playClick();
+      this.multiplayer.startCoOpRaid('cell_max', this.selectedLeader);
+      sceneManager.switchScene(GAME_SCENES.ARENA);
+    });
+
+    document.getElementById('menu-btn-global-ranking')?.addEventListener('click', () => {
+      soundEngine.playClick();
+      this.openLeaderboardModal();
+    });
+
     document.getElementById('menu-btn-new-game')?.addEventListener('click', () => {
       soundEngine.playClick();
       sceneManager.switchScene(GAME_SCENES.INTRO);
@@ -819,21 +865,6 @@ export class UIManager {
       soundEngine.playClick();
       this.renderDeckBuilder();
       sceneManager.switchScene(GAME_SCENES.DECK_LAB);
-    });
-
-    document.getElementById('menu-btn-shop')?.addEventListener('click', () => {
-      soundEngine.playClick();
-      sceneManager.switchScene(GAME_SCENES.SHOP);
-    });
-
-    document.getElementById('menu-btn-settings')?.addEventListener('click', () => {
-      soundEngine.playClick();
-      document.getElementById('settings-modal')?.classList.add('active');
-    });
-
-    document.getElementById('menu-btn-credits')?.addEventListener('click', () => {
-      soundEngine.playClick();
-      document.getElementById('credits-modal')?.classList.add('active');
     });
 
     document.getElementById('menu-btn-exit')?.addEventListener('click', () => {
@@ -870,6 +901,12 @@ export class UIManager {
     });
 
     // 6. Bottom Arcade Navigation Bar Bindings
+        document.getElementById('bnav-shop')?.addEventListener('click', () => {
+      soundEngine.playClick();
+      this.renderShop();
+      sceneManager.switchScene(GAME_SCENES.SHOP);
+    });
+
     document.getElementById('bnav-home')?.addEventListener('click', () => {
       soundEngine.playClick();
       sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
@@ -981,14 +1018,34 @@ export class UIManager {
     });
     this.authCloseBtn?.addEventListener('click', () => this.authModal?.classList.remove('active'));
     this.authLoginSubmit?.addEventListener('click', () => {
-      const res = authDatabase.login(this.authUserInput?.value || '', this.authPassInput?.value || '');
-      alert(res.msg);
-      if (res.success) { this.authModal?.classList.remove('active'); this.updateUserSessionUI(); }
+      soundEngine.playClick();
+      const username = this.authUserInput?.value.trim() || 'GuerreiroZ';
+      const email = username + '@dbtcg.local';
+      const res = authManager.login(email, this.authPassInput?.value || '');
+      if (res.success) { 
+        this.authModal?.classList.remove('active'); 
+        soundEngine.playAwaken();
+        sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
+        const nameEl = document.getElementById('display-user-name');
+        if (nameEl) nameEl.textContent = authManager.user.displayName;
+      } else {
+        alert(res.message);
+      }
     });
     this.authRegisterSubmit?.addEventListener('click', () => {
-      const res = authDatabase.register(this.authUserInput?.value || '', this.authPassInput?.value || '');
-      alert(res.msg);
-      if (res.success) { this.authModal?.classList.remove('active'); this.updateUserSessionUI(); }
+      soundEngine.playClick();
+      const username = this.authUserInput?.value.trim() || 'GuerreiroZ';
+      const email = username + '@dbtcg.local';
+      const res = authManager.signUp(username, email, this.authPassInput?.value || '');
+      if (res.success) { 
+        this.authModal?.classList.remove('active');
+        soundEngine.playAwaken();
+        sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
+        const nameEl = document.getElementById('display-user-name');
+        if (nameEl) nameEl.textContent = authManager.user.displayName;
+      } else {
+        alert(res.message);
+      }
     });
 
     this.chargeKiBtn?.addEventListener('click', () => this.gameEngine.chargeKi('player'));
@@ -1458,17 +1515,16 @@ export class UIManager {
         const card = getCardById(cardId);
         if (!card) return;
         const row = document.createElement('div');
-        row.className = 'deck-entry';
-        row.style.cssText = 'cursor:pointer; display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:rgba(255,255,255,0.04); border-radius:6px; margin-bottom:6px; border:1px solid rgba(255,255,255,0.1); color:#fff; font-size:0.8rem; font-weight:700;';
+        row.className = 'deck-entry-capsule';
         row.innerHTML = `
-          <span class="de-title" style="display:flex; align-items:center; gap:6px;">
-            <span style="color:var(--ki-yellow);">${card.cost} Ki</span>
-            <span>${card.name}</span>
-          </span>
-          <button class="de-remove" style="background:none; border:none; color:#ef4444; font-weight:900; font-size:0.9rem; cursor:pointer;">✕</button>
+          <div class="de-capsule-info">
+            <span class="de-ki-badge">⚡ ${card.cost} KI</span>
+            <span class="de-card-name">${card.name}</span>
+          </div>
+          <button class="de-remove-btn" title="Remover carta">✕</button>
         `;
-        row.querySelector('.de-title').onclick = () => this.openCardInspectModal(card);
-        row.querySelector('.de-remove').onclick = (e) => {
+        row.querySelector('.de-capsule-info').onclick = () => this.openCardInspectModal(card);
+        row.querySelector('.de-remove-btn').onclick = (e) => {
           e.stopPropagation();
           deckBuilder.removeCardFromDeck(index, this.selectedLeader);
           this.renderDeckBuilder();
@@ -1684,5 +1740,113 @@ export class UIManager {
       grid.appendChild(cardBox);
     });
   }
-}
 
+  
+  openLeaderboardModal() {
+    const lbModal = document.getElementById('leaderboard-modal');
+    const lbContainer = document.getElementById('lb-list-container');
+    if (lbModal) {
+      const topList = leaderboardManager.getTopRankings();
+      if (lbContainer) {
+        lbContainer.innerHTML = topList.map(item => `
+          <div class="lb-item ${item.isCurrent ? 'is-current' : ''}">
+            <div class="lb-rank">#${item.rank}</div>
+            <div class="lb-user-info">
+              <div class="lb-name">${item.name}</div>
+              <div class="lb-division">${item.division}</div>
+            </div>
+            <div class="lb-rp">⚡ ${item.rp} RP (${item.wins}V)</div>
+          </div>
+        `).join('');
+      }
+      lbModal.classList.add('active');
+    }
+  }
+
+  setupAuthAndLeaderboardHandlers() {
+    // Live Realtime Chat Listener — updates chat-feed in real time
+    if (typeof chatManager !== 'undefined') {
+      chatManager.onMessageCallback = (msg) => {
+        if (this.chatFeed) {
+          const bubble = document.createElement('div');
+          bubble.className = 'chat-bubble';
+          bubble.innerHTML = `<span class="cb-user">${msg.user}</span><span class="cb-time">${msg.time}</span><br>${msg.text}`;
+          this.chatFeed.appendChild(bubble);
+          this.chatFeed.scrollTop = this.chatFeed.scrollHeight;
+        }
+      };
+    }
+    const authBtn = document.getElementById('auth-btn');
+    const authModal = document.getElementById('auth-modal');
+    const authCloseBtn = document.getElementById('auth-close-btn');
+    const authForm = document.getElementById('auth-form');
+
+    const bnavRanked = document.getElementById('bnav-ranked');
+    const lbModal = document.getElementById('leaderboard-modal');
+    const lbCloseBtn = document.getElementById('lb-close-btn');
+    const lbContainer = document.getElementById('lb-list-container');
+
+    if (authModal) {
+      if (!authManager.isLoggedIn) {
+        authModal.classList.add('active');
+      }
+    }
+
+    if (authBtn && authModal) {
+      authBtn.addEventListener('click', () => {
+        authModal.classList.add('active');
+      });
+    }
+
+    if (authCloseBtn && authModal) {
+      authCloseBtn.addEventListener('click', () => {
+        if (!authManager.isLoggedIn) {
+          alert('Atenção: É necessário criar uma conta ou fazer login para acessar o jogo!');
+          authModal.classList.add('active');
+        } else {
+          authModal.classList.remove('active');
+        }
+      });
+    }
+
+    if (authForm) {
+      authForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const username = document.getElementById('auth-username')?.value || 'Guerreiro Z';
+        const email = document.getElementById('auth-email')?.value || 'guerreiro@dbtcg.com';
+        const pass = document.getElementById('auth-password')?.value || '123456';
+        authManager.signUp(username, email, pass);
+        const nameEl = document.getElementById('display-user-name');
+        if (nameEl) nameEl.textContent = authManager.user.displayName;
+        if (authModal) authModal.classList.remove('active');
+        this.triggerActionBanner(`CONTA SALVA: ${authManager.user.displayName}`, 'act-attack', 'ACCOUNT READY');
+      });
+    }
+
+    if (bnavRanked && lbModal) {
+      bnavRanked.addEventListener('click', () => {
+        const topList = leaderboardManager.getTopRankings();
+        if (lbContainer) {
+          lbContainer.innerHTML = topList.map(item => `
+            <div class="lb-item ${item.isCurrent ? 'is-current' : ''}">
+              <div class="lb-rank">#${item.rank}</div>
+              <div class="lb-user-info">
+                <div class="lb-name">${item.name}</div>
+                <div class="lb-division">${item.division}</div>
+              </div>
+              <div class="lb-rp">⚡ ${item.rp} RP (${item.wins}V)</div>
+            </div>
+          `).join('');
+        }
+        lbModal.classList.add('active');
+      });
+    }
+
+    if (lbCloseBtn && lbModal) {
+      lbCloseBtn.addEventListener('click', () => {
+        lbModal.classList.remove('active');
+      });
+    }
+  }
+
+}

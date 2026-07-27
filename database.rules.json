@@ -1,0 +1,55 @@
+{
+  "rules": {
+    "global_chat": {
+      ".read": true,
+      ".indexOn": ["timestamp"],
+      "$messageId": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['user', 'text'])"
+      }
+    },
+    "matchmaking": {
+      ".read": true,
+      "$uid": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['uid'])",
+        "paired": { ".validate": "newData.isBoolean()" },
+        "pairedWith": {
+          ".validate": "newData.hasChildren(['roomCode', 'opponentUid'])"
+        }
+      }
+    },
+    "rooms": {
+      ".read": true,
+      "$roomId": {
+        ".write": true,
+        "players": { ".read": true, ".write": true },
+        "setup": { ".read": true, ".write": true },
+        "gameState": { ".read": true, ".write": true },
+        "turn": { ".read": true, ".write": true },
+        "moves": {
+          ".read": true,
+          "$moveId": { ".write": true }
+        },
+        "chat": {
+          ".read": true,
+          "$messageId": { ".write": true }
+        }
+      }
+    },
+    "users": {
+      ".read": true,
+      "$uid": {
+        ".write": true,
+        "profile": { ".read": true, ".write": true },
+        "inventory": { ".read": true, ".write": true },
+        "stats": { ".read": true, ".write": true }
+      }
+    },
+    "leaderboards": {
+      ".read": true,
+      ".indexOn": ["rp", "wins"],
+      "$entry": { ".write": true }
+    }
+  }
+}

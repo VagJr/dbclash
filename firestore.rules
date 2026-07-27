@@ -2,28 +2,33 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // User Profile Data
+    // User Profile, Level, Inventory & Cloud Save
     match /users/{userId} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null || true;
+      allow update, delete: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Realtime Multiplayer Game Rooms
+    // Realtime Multiplayer Rooms (Ranked 1v1, Ranked 2v2, Co-Op Raid Boss)
     match /rooms/{roomId} {
-      allow read, create: if true;
-      allow update, delete: if true;
+      allow read, create, update, delete: if true;
     }
     
-    // Dojo Guild Rankings
-    match /dojos/{dojoId} {
+    // Global Player Rankings & Leaderboard Entries
+    match /leaderboards/{entry} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create, update: if true;
     }
-    
-    // Global Chat Feed
+
+    // Matchmaking Queues (Ranked 1v1, 2v2 Team, Co-Op Raid)
+    match /matchmaking/{queueId} {
+      allow read, create, update, delete: if true;
+    }
+
+    // Global Chat & Dojo Guild Feeds
     match /chat/{messageId} {
       allow read: if true;
-      allow create: if request.auth != null || true;
+      allow create: if true;
     }
   }
 }

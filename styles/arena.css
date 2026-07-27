@@ -1043,13 +1043,12 @@
 
 .clash-card-wrapper {
   position: absolute;
-  width: 140px;
-  height: 200px;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 215, 0, 0.7);
-  border: 3px solid #ffd700;
-  background: #0a0d16;
+  width: 130px;
+  height: 182px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
 }
 
 .clash-card-wrapper.left {
@@ -1063,24 +1062,13 @@
 .clash-card-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 12px rgba(255, 215, 0, 0.6));
+  border-radius: 8px;
 }
 
 .clash-card-title {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 5px 2px;
-  background: rgba(10, 12, 22, 0.92);
-  color: #ffd700;
-  font-family: var(--font-title, 'Outfit', sans-serif);
-  font-weight: 900;
-  font-size: 0.72rem;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  border-top: 1px solid #ffd700;
+  display: none;
 }
 
 @keyframes clashSlideLeft {
@@ -1792,5 +1780,82 @@
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     flex-shrink: 1 !important;
+  }
+}
+
+
+/* ── ULTRA RESPONSIVE MOBILE FIX ─────────────────────────── */
+@media (max-width: 768px) {
+  #scene-arena.active {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important; /* For iOS Safari */
+    overflow: hidden !important;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0 !important;
+    box-sizing: border-box !important;
+  }
+  
+  /* Scale down the arena content proportionally */
+  .arena-inner, .arena-layout-container {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+  }
+  
+  .arena-zone-top, .arena-zone-bottom {
+    flex-shrink: 0 !important;
+    padding: 4px 8px !important;
+  }
+  
+  .arena-zone-mid {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    min-height: 0 !important; /* Prevents overflow */
+  }
+  
+  .dokkan-scouter-hud {
+    transform: scale(0.85) !important;
+    transform-origin: center center !important;
+    margin: -10px auto !important; /* Pull them closer together */
+  }
+  
+  .dbz-hand-container {
+    transform: scale(0.9) !important;
+    transform-origin: bottom center !important;
+    padding-bottom: 5px !important;
+  }
+
+  .clash-card-img {
+    max-width: 80px !important; /* Prevent huge cards from overlapping */
+    max-height: 120px !important;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .clash-card-wrapper {
+    width: 105px !important;
+    height: 147px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  
+  .clash-card-img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 6px 18px rgba(0,0,0,0.9)) drop-shadow(0 0 10px rgba(255,215,0,0.7)) !important;
   }
 }

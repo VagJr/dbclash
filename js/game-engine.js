@@ -6,6 +6,52 @@
 import { LEADERS, getCardById, getStarterDeckForLeader } from './card-database.js';
 
 export class GameEngine {
+  checkGameOver() {
+    if (this.state === 'GAME_OVER') return true;
+    if (!this.player || !this.opponent) return false;
+    
+    let winner = null;
+    let loser = null;
+
+    if (this.opponent.hp <= 0 && this.player.hp <= 0) {
+      // Draw (tiebreaker goes to P1 for now)
+      winner = 'player';
+      loser = 'opponent';
+    } else if (this.opponent.hp <= 0) {
+      winner = 'player';
+      loser = 'opponent';
+    } else if (this.player.hp <= 0) {
+      winner = 'opponent';
+      loser = 'player';
+    }
+
+    if (winner) {
+      this.state = 'GAME_OVER';
+      this.log(`🔥 K.O.! ${winner === 'player' ? 'VOCÊ VENCEU!' : 'VOCÊ FOI DERROTADO!'} 🔥`, 'info');
+      
+      const isPlayerWinner = winner === 'player';
+      
+      if (typeof authManager !== 'undefined' && authManager.isLoggedIn && !authManager.user.isGuest) {
+        authManager.recordMatchResult(isPlayerWinner, 25);
+      }
+
+      if (typeof uiManager !== 'undefined') {
+        const bannerClass = isPlayerWinner ? 'act-attack' : 'act-charge';
+        const bannerTitle = isPlayerWinner ? 'K.O.! VITÓRIA' : 'K.O.! DERROTA';
+        const bannerSub = isPlayerWinner ? 'K.O. - YOU WIN' : 'K.O. - YOU LOSE';
+        
+        uiManager.triggerActionBanner(bannerTitle, bannerClass, bannerSub);
+        
+        setTimeout(() => {
+          alert(isPlayerWinner ? '🎉 Você venceu a batalha! (+25 RP)' : '💀 Você foi derrotado! (-10 RP)');
+          sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
+        }, 3500);
+      }
+      return true;
+    }
+    return false;
+  }
+
   constructor(renderCallback, fxCallback) {
     this.render = renderCallback || (() => {});
     this.fx = fxCallback || (() => {});
@@ -102,7 +148,7 @@ export class GameEngine {
     return copy;
   }
 
-  startMatch(playerLeaderKey = 'goku', opponentLeaderKey = 'vegeta', playerDeck = [], isAiMatch = true) {
+  startMatch(playerLeaderKey = 'goku', opponentLeaderKey = 'vegeta', playerDeck = [], isAiMatch = true, remoteSetup = null) {
     this.reset();
     this.isAiMatch = isAiMatch;
 
@@ -128,17 +174,23 @@ export class GameEngine {
       : getStarterDeckForLeader(pKey);
     const rawOpponentDeck = getStarterDeckForLeader(oKey);
 
-    this.player.deck = this.secureShuffle(rawPlayerDeck);
-    this.opponent.deck = this.secureShuffle(rawOpponentDeck);
+    if (remoteSetup) {
+      this.player.deck = [...remoteSetup.playerDeck];
+      this.opponent.deck = [...remoteSetup.opponentDeck];
+      this.initiative = remoteSetup.initiative; // For host, player=player. For guest, player=opponent (inverted by multiplayer-manager)
+    } else {
+      this.player.deck = this.secureShuffle(rawPlayerDeck);
+      this.opponent.deck = this.secureShuffle(rawOpponentDeck);
+      
+      const cryptoBuf = new Uint32Array(1);
+      window.crypto.getRandomValues(cryptoBuf);
+      this.initiative = cryptoBuf[0] % 2 === 0 ? 'player' : 'opponent';
+    }
 
     for (let i = 0; i < 5; i++) {
       this.drawCard(this.player);
       this.drawCard(this.opponent);
     }
-
-    const cryptoBuf = new Uint32Array(1);
-    window.crypto.getRandomValues(cryptoBuf);
-    this.initiative = cryptoBuf[0] % 2 === 0 ? 'player' : 'opponent';
     this.state = 'FREE_ACTION';
     
     this.log(`Batalha Iniciada! ${this.initiative === 'player' ? 'Sua' : 'Do Oponente'} Iniciativa!`, 'info');
@@ -169,6 +221,11 @@ export class GameEngine {
   }
 
   chargeKi(actorKey) {
+    if (this.onLocalAction && actorKey === 'player' && !this.isAiMatch) { this.onLocalAction('chargeKi', {}); return; }
+    this._chargeKi(actorKey);
+  }
+
+  _chargeKi(actorKey) {
     const actor = actorKey === 'player' ? this.player : this.opponent;
     if (actor.ki < 10) {
       actor.ki = Math.min(10, actor.ki + 2);
@@ -183,6 +240,11 @@ export class GameEngine {
   }
 
   passTurn(actorKey) {
+    if (this.onLocalAction && actorKey === 'player' && !this.isAiMatch) { this.onLocalAction('passTurn', {}); return; }
+    this._passTurn(actorKey);
+  }
+
+  _passTurn(actorKey) {
     if (this.state !== 'FREE_ACTION' || this.initiative !== actorKey) return;
     this.initiative = actorKey === 'player' ? 'opponent' : 'player';
     const currentHolder = this[this.initiative];
@@ -196,6 +258,15 @@ export class GameEngine {
   }
 
   playCard(actorKey, handIndex) {
+    // Broadcast to opponent in multiplayer
+    if (this.onLocalAction && actorKey === 'player' && !this.isAiMatch) {
+      this.onLocalAction('playCard', { cardIndex: handIndex });
+      return;
+    }
+    this._playCard(actorKey, handIndex);
+  }
+
+  _playCard(actorKey, handIndex) {
     const actor = actorKey === 'player' ? this.player : this.opponent;
 
     if (handIndex < 0 || handIndex >= actor.hand.length) return;
@@ -234,6 +305,7 @@ export class GameEngine {
       this.clearReactionTimer();
       this.resolveReaction(actorKey, card);
     }
+    this.notifyState();
   }
 
   startReactionTimer() {
@@ -267,8 +339,22 @@ export class GameEngine {
     let dmg = card.power || 20;
     if (defender.isOpenGuard) dmg = Math.floor(dmg * 1.5);
 
+    const prevShields = defender.shields;
     defender.hp = Math.max(0, defender.hp - dmg);
     defender.shields = Math.ceil(defender.hp / 50);
+    this.checkGameOver();
+
+    // Leader Passive: Goku gains +1 Ki on taking direct damage
+    if (defender.leader && defender.leader.id === 'goku' && defender.ki < 10) {
+      defender.ki = Math.min(10, defender.ki + 1);
+      this.log(`⚡ Passive Goku: +1 Ki por receber dano!`, 'info');
+    }
+
+    // Leader Passive: Gohan draws 2 cards on Shield Break
+    if (attacker.leader && attacker.leader.id === 'gohan' && prevShields > defender.shields) {
+      this.drawCard(attacker, 2);
+      this.log(`💥 Passive Gohan: Escudo destruído! Comprou 2 cartas.`, 'info');
+    }
 
     const cardNameLower = (card.name || '').toLowerCase();
     const cardIdLower = (card.id || '').toLowerCase();
@@ -335,13 +421,25 @@ export class GameEngine {
       this.fx('cardClash', { atkCard, defCard: card, attackerKey, defenderKey, mode: 'evade' });
       this.log(`${defender.name} realizou Z-VANISH e esquivou do ataque de ${attacker.name}!`, 'evade');
       defender.isOpenGuard = true;
+      // Leader Passive: Trunks Z-Vanish bonus
+      if (defender.leader && defender.leader.id === 'trunks') {
+        const extraDraw = defender.isAwakened ? 2 : 1;
+        const kiRefund = defender.isAwakened ? 2 : 0;
+        this.drawCard(defender, extraDraw);
+        if (kiRefund > 0) defender.ki = Math.min(10, defender.ki + kiRefund);
+        this.log(`🗡️ Passive Trunks: Z-Vanish comprou ${extraDraw} carta(s)!`, 'info');
+      }
     } else if (card.type === 'counter') {
       this.fx('cardClash', { atkCard, defCard: card, attackerKey, defenderKey, mode: 'counter' });
       this.log(`${defender.name} realizou Z-COUNTER e contra-atacou!`, 'evade');
       defender.isOpenGuard = false;
     } else if (card.type === 'defense' || card.type === 'block') {
       this.fx('cardClash', { atkCard, defCard: card, attackerKey, defenderKey, mode: 'defense' });
-      const blockAmount = card.block || Math.floor((atkCard?.power || 20) * 0.5);
+      let blockAmount = card.block || Math.floor((atkCard?.power || 20) * 0.5);
+      // Leader Passive: Piccolo gains +15 Block on Defense cards
+      if (defender.leader && defender.leader.id === 'piccolo') {
+        blockAmount += 15;
+      }
       const netDamage = Math.max(0, (atkCard?.power || 20) - blockAmount);
       defender.hp = Math.max(0, defender.hp - netDamage);
       defender.shields = Math.ceil(defender.hp / 50);
@@ -400,8 +498,19 @@ export class GameEngine {
     }
   }
 
-  mashBeamClash() {
+  mashBeamClash(actorKey = 'player') {
+    if (this.onLocalAction && actorKey === 'player' && !this.isAiMatch) { this.onLocalAction('mashBeamClash', {}); return; }
+    this._mashBeamClash(actorKey);
+  }
+
+  _mashBeamClash(actorKey = 'player') {
     if (this.state !== 'BEAM_CLASH' || !this.beamClashData) return;
+    
+    if (actorKey === 'opponent') {
+       this.beamClashData.p1Progress = Math.max(0, this.beamClashData.p1Progress - 7);
+       this.fx('beamClash', { p1Progress: this.beamClashData.p1Progress, p1Color: this.player.leader.color, p2Color: this.opponent.leader.color });
+       return;
+    }
     this.beamClashData.p1Progress = Math.min(100, this.beamClashData.p1Progress + 7);
     this.fx('beamClash', {
       p1Progress: this.beamClashData.p1Progress,

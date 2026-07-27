@@ -6,6 +6,8 @@ import { CARD_DATABASE } from './card-database.js';
 import { deckBuilder } from './deck-builder.js';
 import { soundEngine } from './audio.js';
 
+import { authManager } from './auth-manager.js';
+
 export class PackOpener {
   constructor() {
     this.packCost = 300; // 300 Zeni per pack
@@ -13,7 +15,7 @@ export class PackOpener {
 
   openPack() {
     if (deckBuilder.zeni < this.packCost) {
-      alert(`Not enough Zeni! You need ${this.packCost} Zeni to open a pack.`);
+      alert(`Zeni insuficiente! Você precisa de ${this.packCost} Zeni para abrir um booster.`);
       return null;
     }
 
@@ -39,7 +41,8 @@ export class PackOpener {
       
       const card = pool[Math.floor(Math.random() * pool.length)];
       pulledCards.push(card);
-      deckBuilder.addCardToDeck(card.id); // Add to player collection deck
+      deckBuilder.addCardToDeck(card.id);
+      authManager.addCardToInventory(card.id);
     }
 
     soundEngine.playAwaken();

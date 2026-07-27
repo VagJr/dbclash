@@ -13,22 +13,44 @@ class SoundEngine {
     this.activePunchClash = null;
 
     if (typeof window !== 'undefined') {
-      this.bgmAudio = new Audio();
-      this.bgmAudio.loop = true;
-      this.bgmAudio.volume = 0.35;
-
-      const unlockAudio = () => {
-        this.init();
-        if (this.bgmAudio && this.bgmAudio.src && this.bgmAudio.paused) {
-          this.bgmAudio.play().catch(() => {});
-        }
-        window.removeEventListener('pointerdown', unlockAudio);
-        window.removeEventListener('keydown', unlockAudio);
-        window.removeEventListener('click', unlockAudio);
+      const getBgm = () => {
+        return document.getElementById('app-bgm') || this.bgmAudio;
       };
-      window.addEventListener('pointerdown', unlockAudio);
-      window.addEventListener('keydown', unlockAudio);
-      window.addEventListener('click', unlockAudio);
+
+      // Try grabbing existing DOM element or fallback
+      this.bgmAudio = document.getElementById('app-bgm') || new Audio('music/soundtrack.mp3');
+      this.bgmAudio.loop = true;
+
+      const unlockAndPlay = () => {
+        this.init();
+        const bgm = getBgm();
+        if (bgm) {
+          bgm.muted = false;
+          bgm.volume = 0.35;
+          if (!bgm.src || bgm.src === '' || bgm.src.endsWith('/')) {
+            bgm.src = 'music/soundtrack.mp3';
+          }
+          if (bgm.paused && !this.isMuted) {
+            bgm.play().catch(() => {});
+          }
+        }
+      };
+
+      // Attempt immediate silent autoplay on load
+      try {
+        this.bgmAudio.volume = 0.35;
+        this.bgmAudio.play().then(() => {
+          // If browser allowed autoplay, unmute immediately
+          this.bgmAudio.muted = false;
+        }).catch(() => {
+          // Autoplay blocked, wait for first touch/click/scroll/hover
+        });
+      } catch (e) {}
+
+      const events = ['pointerdown', 'touchstart', 'touchend', 'click', 'keydown', 'scroll'];
+      events.forEach(evt => {
+        window.addEventListener(evt, unlockAndPlay, { passive: true });
+      });
     }
   }
 
@@ -178,18 +200,26 @@ class SoundEngine {
 
   // Menu Theme BGM (music/soundtrack.mp3)
   playMenuTheme() {
-    if (this.isMuted || !this.bgmAudio) return;
-    if (this.bgmAudio.src.includes('soundtrack.mp3') && !this.bgmAudio.paused) return;
-    this.bgmAudio.src = 'music/soundtrack.mp3';
-    this.bgmAudio.play().catch(() => {});
+    if (this.isMuted) return;
+    const bgm = document.getElementById('app-bgm') || this.bgmAudio;
+    if (!bgm) return;
+    bgm.muted = false;
+    bgm.volume = 0.35;
+    if (bgm.src && bgm.src.includes('soundtrack.mp3') && !bgm.paused) return;
+    bgm.src = 'music/soundtrack.mp3';
+    bgm.play().catch(() => {});
   }
 
   // Battle Theme BGM (music/battle1.mp3 or music/battle2.mp3)
   playBattleTheme() {
-    if (this.isMuted || !this.bgmAudio) return;
+    if (this.isMuted) return;
+    const bgm = document.getElementById('app-bgm') || this.bgmAudio;
+    if (!bgm) return;
+    bgm.muted = false;
+    bgm.volume = 0.35;
     const battleTrack = Math.random() > 0.5 ? 'music/battle1.mp3' : 'music/battle2.mp3';
-    this.bgmAudio.src = battleTrack;
-    this.bgmAudio.play().catch(() => {});
+    bgm.src = battleTrack;
+    bgm.play().catch(() => {});
   }
 
   // Aliases for compatibility
