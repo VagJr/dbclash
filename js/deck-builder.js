@@ -7,6 +7,7 @@ import { CARD_DATABASE, getCardById, getStarterDeckForLeader, LEADERS } from './
 import { soundEngine } from './audio.js';
 import { assetLoader } from './asset-loader.js';
 
+<<<<<<< HEAD
 function safeGetItem(key, fallback = null) {
   try {
     if (typeof localStorage !== 'undefined') {
@@ -33,6 +34,17 @@ export class DeckBuilder {
 
   getDeckForLeader(leaderId = this.activeLeader) {
     const saved = safeGetItem(`dbtcg_deck_${leaderId}`);
+=======
+export class DeckBuilder {
+  constructor() {
+    this.activeLeader = 'goku';
+    this.zeni = parseInt(localStorage.getItem('dbtcg_zeni') || '1500', 10);
+    this.dust = parseInt(localStorage.getItem('dbtcg_dust') || '300', 10);
+  }
+
+  getDeckForLeader(leaderId = this.activeLeader) {
+    const saved = localStorage.getItem(`dbtcg_deck_${leaderId}`);
+>>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -43,6 +55,7 @@ export class DeckBuilder {
   }
 
   saveDeckForLeader(leaderId, deckList) {
+<<<<<<< HEAD
     safeSetItem(`dbtcg_deck_${leaderId}`, JSON.stringify(deckList));
     safeSetItem('dbtcg_zeni', this.zeni.toString());
     safeSetItem('dbtcg_dust', this.dust.toString());
@@ -50,6 +63,11 @@ export class DeckBuilder {
 
   saveDeck(deckList) {
     this.saveDeckForLeader(this.activeLeader, deckList || this.getDeckForLeader());
+=======
+    localStorage.setItem(`dbtcg_deck_${leaderId}`, JSON.stringify(deckList));
+    localStorage.setItem('dbtcg_zeni', this.zeni.toString());
+    localStorage.setItem('dbtcg_dust', this.dust.toString());
+>>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
   }
 
   addCardToDeck(cardId, leaderId = this.activeLeader) {

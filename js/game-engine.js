@@ -254,6 +254,7 @@ export class GameEngine {
     defender.hp = Math.max(0, defender.hp - dmg);
     defender.shields = Math.ceil(defender.hp / 50);
 
+<<<<<<< HEAD
     const cardNameLower = (card.name || '').toLowerCase();
     const cardIdLower = (card.id || '').toLowerCase();
 
@@ -293,6 +294,12 @@ export class GameEngine {
       this.fx('kiBlast', { card, attackerKey, damage: dmg });
     } else {
       this.fx('punch', { card, attackerKey, damage: dmg });
+=======
+    if (card.isBeam) {
+      this.fx('kamehameha', { card, attackerKey, isGolden: attacker.isAwakened });
+    } else {
+      this.fx('punch', { attackerKey });
+>>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
     }
 
     this.log(`${attacker.name} acertou ${card.name} causando ${dmg} de dano em ${defender.name}!`, 'damage');
@@ -319,15 +326,21 @@ export class GameEngine {
       this.fx('zvanish', { actorKey: defenderKey, color: defender.leader.color });
       this.log(`${defender.name} realizou Z-VANISH e esquivou do ataque de ${attacker.name}!`, 'evade');
       defender.isOpenGuard = true;
+<<<<<<< HEAD
     } else if (card.type === 'counter') {
       this.fx('counter', { actorKey: defenderKey });
       this.log(`${defender.name} realizou Z-COUNTER e contra-atacou!`, 'evade');
       defender.isOpenGuard = false;
+=======
+>>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
     } else if (card.type === 'defense') {
       let dmg = Math.max(0, atkCard.power - (card.power || 20));
       defender.hp = Math.max(0, defender.hp - dmg);
       defender.shields = Math.ceil(defender.hp / 50);
+<<<<<<< HEAD
       this.fx('defense', { actorKey: defenderKey });
+=======
+>>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
       this.log(`${defender.name} defendeu. Dano reduzido para ${dmg}.`, 'info');
     } else if (card.isBeam && atkCard.isBeam) {
       this.startBeamClashLoop();

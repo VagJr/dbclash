@@ -14,12 +14,17 @@ export class AssetLoader {
   }
 
   getCardImagePath(cardId) {
+<<<<<<< HEAD
     try {
       if (typeof localStorage !== 'undefined') {
         const custom = localStorage.getItem(`dbtcg_custom_card_${cardId}`);
         if (custom) return custom;
       }
     } catch (e) {}
+=======
+    const custom = localStorage.getItem(`dbtcg_custom_card_${cardId}`);
+    if (custom) return custom;
+>>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
     return `assets/cards/${cardId}.png`;
   }
 

@@ -7,6 +7,7 @@ class SoundEngine {
   constructor() {
     this.ctx = null;
     this.isMuted = false;
+<<<<<<< HEAD
     this.bgmAudio = null;
     if (typeof window !== 'undefined') {
       this.bgmAudio = new Audio();
@@ -38,6 +39,17 @@ class SoundEngine {
     }
     if (this.ctx && this.ctx.state === 'suspended') {
       this.ctx.resume().catch(() => {});
+=======
+  }
+
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+>>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
     }
   }
 
@@ -241,6 +253,7 @@ class SoundEngine {
     osc1.stop(this.ctx.currentTime + 1.0);
     osc2.stop(this.ctx.currentTime + 1.0);
   }
+<<<<<<< HEAD
 
   // Menu Theme BGM (music/soundtrack.mp3)
   playMenuTheme() {
@@ -265,6 +278,8 @@ class SoundEngine {
   genkidama() { this.playBeamBlast(); }
   kiBlast() { this.playPunch(); }
   counter() { this.playShieldBreak(); }
+=======
+>>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
 }
 
 export const soundEngine = new SoundEngine();

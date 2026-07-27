@@ -5,6 +5,7 @@
 export class AuthDatabase {
   constructor() {
     const hasStorage = typeof localStorage !== 'undefined';
+<<<<<<< HEAD
     try {
       this.currentUser = hasStorage ? JSON.parse(localStorage.getItem('dbtcg_user') || 'null') : null;
     } catch (e) {
@@ -17,6 +18,10 @@ export class AuthDatabase {
       console.warn('[AuthDatabase] Failed to parse dbtcg_users_db from localStorage', e);
       this.users = {};
     }
+=======
+    this.currentUser = hasStorage ? (JSON.parse(localStorage.getItem('dbtcg_user') || 'null')) : null;
+    this.users = hasStorage ? (JSON.parse(localStorage.getItem('dbtcg_users_db') || '{}')) : {};
+>>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
   }
 
   isLoggedIn() {

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /* ==========================================================================
    Dragon Ball Clash Action TCG - Core Design System & Landing Page CSS
    ========================================================================== */
@@ -373,3 +374,380 @@ body {
     grid-template-columns: 1fr;
   }
 }
+=======
+/* ==========================================================================
+   Dragon Ball Clash Action TCG - Core Design System & Landing Page CSS
+   ========================================================================== */
+
+:root {
+  /* Curated Harmonious Palette */
+  --bg-dark: #07090e;
+  --bg-panel: rgba(15, 20, 32, 0.85);
+  --border-glass: rgba(255, 255, 255, 0.15);
+  
+  --ki-yellow: #ffd700;
+  --ki-gold: #ff8800;
+  --ki-glow: rgba(255, 215, 0, 0.5);
+
+  --hp-green: #2ec4b6;
+  --hp-red: #e63946;
+  --hp-glow: rgba(230, 57, 70, 0.6);
+
+  --card-attack: #ff3b30;
+  --card-defense: #00b4d8;
+  --card-evade: #2a9d8f;
+  --card-counter: #e9c46a;
+  --card-tech: #9d4edd;
+  
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
+
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-snappy: 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  overflow-x: hidden;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(255, 136, 0, 0.15) 0%, transparent 70%),
+    radial-gradient(circle at 80% 100%, rgba(0, 242, 254, 0.1) 0%, transparent 60%);
+  background-attachment: fixed;
+}
+
+/* Glassmorphism Containers */
+.glass-panel {
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+}
+
+/* Header & Navigation Bar */
+#app-header {
+  height: 60px;
+  background: rgba(10, 14, 23, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-glass);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 100;
+}
+
+.brand-title {
+  font-size: 1.25rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ffd700, #ff8800);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.5px;
+}
+
+.dbz-star {
+  color: var(--ki-yellow);
+  -webkit-text-fill-color: var(--ki-yellow);
+  font-size: 1.1rem;
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.nav-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.nav-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-btn.active {
+  color: var(--ki-yellow);
+  background: rgba(255, 215, 0, 0.1);
+  border-color: rgba(255, 215, 0, 0.3);
+  box-shadow: 0 0 12px var(--ki-glow);
+}
+
+.user-profile-widget {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.currency-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--ki-yellow);
+}
+
+/* Language Toggle Switcher */
+.lang-switch-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.lang-switch-btn:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: var(--ki-yellow);
+}
+
+/* Main Container Screens */
+#app-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.app-screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  overflow-y: auto;
+}
+
+.app-screen.active {
+  display: flex;
+  opacity: 1;
+}
+
+/* ==========================================================================
+   LANDING PAGE STYLING
+   ========================================================================== */
+
+#landing-screen {
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background: radial-gradient(circle at 50% 30%, rgba(15, 23, 42, 0.6) 0%, rgba(5, 7, 12, 0.95) 100%),
+              url('../assets/backgrounds/landing_hero.png') no-repeat center top;
+  background-size: cover;
+  padding: 40px 20px;
+}
+
+.hero-content {
+  max-width: 900px;
+  text-align: center;
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  z-index: 10;
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 900;
+  line-height: 1.1;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #ffffff 0%, #ffd700 50%, #ff8800 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  color: #cbd5e1;
+  max-width: 700px;
+  line-height: 1.5;
+}
+
+.hero-cta-group {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  max-width: 1000px;
+  width: 100%;
+  margin-top: 50px;
+}
+
+.feature-card {
+  padding: 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: transform var(--transition-snappy);
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--ki-yellow);
+}
+
+/* Common Buttons */
+.dbz-btn {
+  background: linear-gradient(135deg, #ffd700, #ff8800);
+  border: 2px solid #fff;
+  color: #000;
+  font-weight: 900;
+  font-size: 1rem;
+  padding: 12px 28px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 0 20px var(--ki-glow);
+  transition: transform var(--transition-snappy), box-shadow var(--transition-snappy);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dbz-btn:hover {
+  transform: scale(1.04);
+  box-shadow: 0 0 30px var(--ki-gold);
+}
+
+.dbz-btn:active {
+  transform: scale(0.96);
+}
+
+.dbz-btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--border-glass);
+  color: #fff;
+  box-shadow: none;
+}
+
+.dbz-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+/* Bottom Description Overlay Panel on Cards */
+.card-desc-overlay {
+  position: absolute;
+  bottom: 24px;
+  left: 6px;
+  right: 6px;
+  background: rgba(8, 10, 16, 0.82);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 0.58rem;
+  color: #e2e8f0;
+  z-index: 8;
+  line-height: 1.25;
+  text-shadow: 0 1px 2px #000;
+  pointer-events: none;
+}
+
+.card-title-text {
+  font-weight: 900;
+  color: var(--ki-yellow);
+  font-size: 0.62rem;
+  margin-bottom: 2px;
+  display: block;
+  text-transform: uppercase;
+}
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal-card {
+  width: 90%;
+  max-width: 440px;
+  padding: 30px;
+  text-align: center;
+}
+
+/* Responsive Touchscreen & Mobile Rules */
+@media (max-width: 768px) {
+  #app-header {
+    padding: 0 10px;
+    height: 54px;
+  }
+  .brand-title {
+    font-size: 1rem;
+  }
+  .nav-btn {
+    padding: 6px 8px;
+    font-size: 0.75rem;
+  }
+  .hero-title {
+    font-size: 1.8rem;
+  }
+  .hero-subtitle {
+    font-size: 0.95rem;
+  }
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+}
+>>>>>>> 75cdb2b5faac518831c31cadd3baa480b065f443
