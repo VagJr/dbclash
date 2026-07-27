@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dragon Ball Clash Action TCG — Commercial Game Edition</title>
+  <meta name="description" content="O TCG de Dragon Ball em tempo real para PC e Console. Batalhas de Ki, Z-Vanish e Beam Clash.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/cards.css">
+  <link rel="stylesheet" href="styles/arena.css">
+  <link rel="stylesheet" href="styles/animations.css">
+  <link rel="stylesheet" href="styles/atmosphere.css">
+</head>
+<body class="aaa-game-body">
+  <div id="impact-frame-overlay"></div>
+  <div id="scene-transition-overlay" class="scene-transition-curtain"></div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- AAA CONSOLE SCENE SYSTEM (No Website Navigation / No Web Headers)       -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <!-- ── 1. SPLASH SCENE (Animated Dragon Ball Loading Screen) ── -->
+  <section id="scene-splash" class="game-scene active">
+    <div class="splash-inner">
+      <div class="splash-db-container">
+        <div class="animated-dragonball-orb">
+          <div class="db-star-cluster">★ ★<br>★ ★</div>
+        </div>
+      </div>
+      <div class="splash-loading-label" id="splash-loading-text">CARREGANDO DADOS DE COMBATE... 0%</div>
+      <div class="splash-loading-bar"><div class="splash-loading-fill" id="splash-loading-fill" style="width: 0%"></div></div>
+    </div>
+  </section>
+
+  <!-- ── 2. TITLE SCENE (Press Start Console Screen) ── -->
+  <section id="scene-title" class="game-scene">
+    <div class="title-scene-bg"></div>
+    <div class="title-inner">
+      <div class="game-brand-hero">
+        <img src="imagens/logo.png" alt="Dragon Ball Clash Logo" class="title-official-logo">
+        <div class="hero-sub-subtitle">ACTION CARD BATTLE EDITION</div>
+      </div>
+
+      <div class="press-start-container">
+        <button id="title-press-start-btn" class="btn-press-start">
+          <span class="ps-glow">▶ PRESS START TO PLAY ◀</span>
+        </button>
+        <div class="press-start-sub">TOUCH SCREEN OR CLICK TO START</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 3. CINEMATIC INTRO SCENE (Lore Presentation) ── -->
+  <section id="scene-intro" class="game-scene">
+    <div class="cinematic-backdrop"></div>
+    <div class="cinematic-box glass">
+      <h2 class="intro-heading">O TORNEIO DO PODER COMEÇOU!</h2>
+      <p class="intro-narrative">
+        Os maiores guerreiros do Universo reuniram-se para disputar a supremacia das esferas do dragão. Carregue seu Ki, domine o teletransporte Z-Vanish e destrua seus oponentes na arena em tempo real.
+      </p>
+      <div class="intro-actions">
+        <button id="intro-skip-btn" class="btn-ki">INICIAR JORNADA ▶</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 4. MAIN MENU SCENE (Console AAA Arc Layout — Reference Image 2) ── -->
+  <section id="scene-main-menu" class="game-scene">
+    <div class="menu-hub-bg"></div>
+    
+    <!-- Top Game Console Bar (In-Game HUD style) -->
+    <header class="game-hud-top">
+      <div class="ghud-profile">
+        <img src="imagens/logo.png" alt="Logo" class="ghud-logo-mini">
+        <span class="ghud-username" id="display-user-name">Guerreiro Z</span>
+      </div>
+
+      <div class="ghud-currencies">
+        <div class="currency-pill zeni-pill">💰 <span id="user-zeni">1500</span></div>
+        <div class="currency-pill dust-pill">✨ <span id="user-dust">300</span></div>
+        <button id="auth-btn" class="auth-pill" title="Perfil / Conta">🔑</button>
+      </div>
+    </header>
+
+    <div class="menu-hub-arc-layout">
+      <!-- Left Mode Arc Cards -->
+      <div class="menu-arc-left">
+        <button id="menu-btn-new-game" class="aaa-mode-card active">
+          <div class="amc-badge">HISTÓRIA</div>
+          <div class="amc-title">🔥 NOVO JOGO / PRÓLOGO</div>
+          <div class="amc-sub">Torneio do Poder & Tutorial</div>
+        </button>
+
+        <button id="menu-btn-continue" class="aaa-mode-card">
+          <div class="amc-badge">VS IA</div>
+          <div class="amc-title">⚔️ CONTINUAR COMBATE</div>
+          <div class="amc-sub">Duelo rápido em tempo real</div>
+        </button>
+      </div>
+
+      <!-- Center Featured Leader TCG Card Frame -->
+      <div class="menu-hero-card-container" id="menu-leader-card-slot">
+        <div class="leader-official-card-frame">
+          <img src="assets/leaders/goku.png" alt="Leader Card" class="leader-official-card-img" id="menu-leader-card-img">
+        </div>
+      </div>
+
+      <!-- Right Mode Arc Cards -->
+      <div class="menu-arc-right">
+        <button id="menu-btn-select-fighter" class="aaa-mode-card">
+          <div class="amc-badge">HERÓIS</div>
+          <div class="amc-title">👤 SELEÇÃO DE LUTADOR</div>
+          <div class="amc-sub">Goku, Vegeta, Gohan e mais</div>
+        </button>
+
+        <button id="menu-btn-deck-lab" class="aaa-mode-card" data-unlock-feature="deckLab">
+          <div class="amc-badge">BARALHOS</div>
+          <div class="amc-title">🎴 COLEÇÃO & DECK LAB</div>
+          <div class="amc-sub">Combinações de 20 cartas</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom Arcade Navigation Bar -->
+    <div class="menu-bottom-nav">
+      <button id="bnav-home" class="bnav-item active"><span class="bnav-icon">🏠</span> INÍCIO</button>
+      <button id="bnav-fighters" class="bnav-item"><span class="bnav-icon">👤</span> LUTADORES</button>
+      <button id="bnav-deck" class="bnav-item"><span class="bnav-icon">🎴</span> DECK LAB</button>
+      <button id="bnav-shop" class="bnav-item"><span class="bnav-icon">🎁</span> LOJA DE KI</button>
+      <button id="bnav-dojos" class="bnav-item"><span class="bnav-icon">🏯</span> DOJOS</button>
+      <button id="bnav-chat" class="bnav-item"><span class="bnav-icon">💬</span> CHAT</button>
+      <button id="bnav-ranked" class="bnav-item"><span class="bnav-icon">🏆</span> RANQUEADO</button>
+      <button id="bnav-quests" class="bnav-item"><span class="bnav-icon">📜</span> MISSÕES</button>
+      <button id="bnav-settings" class="bnav-item"><span class="bnav-icon">⚙️</span> OPÇÕES</button>
+    </div>
+  </section>
+
+  <!-- ── 5. FIGHTER SELECT SCENE ── -->
+  <section id="scene-fighter-select" class="game-scene">
+    <div class="fighter-select-inner glass">
+      <div class="fs-header">
+        <h2 class="fs-title">SELEÇÃO DE LUTADOR LÍDER</h2>
+        <p class="fs-sub">Selecione seu herói para carregar baralhos e forma Despertada única</p>
+      </div>
+
+      <div class="leader-grid" id="leader-selection-grid">
+        <div class="glass leader-pick selected" data-leader="goku">
+          <div class="lp-avatar leader-avatar-icon">⚡</div>
+          <div class="lp-name">Son Goku</div>
+          <div class="lp-style">Combo Rush</div>
+        </div>
+        <div class="glass leader-pick" data-leader="vegeta">
+          <div class="lp-avatar leader-avatar-icon">👑</div>
+          <div class="lp-name">Vegeta</div>
+          <div class="lp-style" style="color:#22d3ee;">Royal Burst</div>
+        </div>
+        <div class="glass leader-pick" data-leader="gohan">
+          <div class="lp-avatar leader-avatar-icon">💥</div>
+          <div class="lp-name">Gohan</div>
+          <div class="lp-style" style="color:#a78bfa;">Rage Control</div>
+        </div>
+        <div class="glass leader-pick" data-leader="frieza">
+          <div class="lp-avatar leader-avatar-icon">👿</div>
+          <div class="lp-name">Frieza</div>
+          <div class="lp-style">Ki Control</div>
+        </div>
+        <div class="glass leader-pick" data-leader="piccolo">
+          <div class="lp-avatar leader-avatar-icon">🟢</div>
+          <div class="lp-name">Piccolo</div>
+          <div class="lp-style" style="color:#2dd4bf;">Pierce Defense</div>
+        </div>
+        <div class="glass leader-pick" data-leader="trunks">
+          <div class="lp-avatar leader-avatar-icon">🗡️</div>
+          <div class="lp-name">Future Trunks</div>
+          <div class="lp-style" style="color:#22d3ee;">Speed Vanish</div>
+        </div>
+      </div>
+
+      <div class="fs-actions">
+        <button id="fs-confirm-btn" class="btn-ki">CONFIRMAR SELEÇÃO ▶</button>
+        <button id="fs-back-btn" class="btn-ghost">VOLTAR AO MENU</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 6. ARENA BATTLE SCENE (In-Game Duelo Canvas & HUD) ── -->
+  <section id="scene-arena" class="game-scene">
+    <canvas id="fx-canvas"></canvas>
+
+    <!-- Zone Top: Phase Banner + Opponent HUD -->
+    <div class="arena-zone-top">
+      <div id="turn-phase-bar" class="phase-banner phase-player">
+        <span id="turn-phase-icon">⚔️</span>
+        <span id="turn-phase-text">SEU TURNO — FASE DE ATAQUE</span>
+      </div>
+
+      <div id="p2-leader-box" class="glass fighter-hud hud-opponent">
+        <div id="p2-portrait" class="hud-portrait">👑</div>
+        <div class="hud-info">
+          <div id="p2-name" class="hud-name">Vegeta <span class="awaken-badge">AWAKENED</span></div>
+          <div class="hp-bar-container">
+            <div class="hp-bar-track"><div id="p2-hp-fill" class="hp-bar-fill" style="width:100%"></div></div>
+            <span id="p2-hp-text" class="hp-text">400/400</span>
+          </div>
+          <div id="p2-shields" class="shields-row"></div>
+          <div class="ki-row">
+            <div id="p2-ki-slots" class="ki-pips"></div>
+            <span id="p2-ki-text" class="ki-label">4/10 KI</span>
+          </div>
+        </div>
+        <div class="guard-warn">OPEN GUARD</div>
+      </div>
+    </div>
+
+    <!-- Zone Mid: Battlefield Drop Zone -->
+    <div class="arena-zone-mid">
+      <div id="reaction-banner" class="reaction-strip">
+        <div id="reaction-text" class="reaction-label">REACTION WINDOW!</div>
+        <div class="timer-track"><div id="timer-bar-fill" class="timer-fill"></div></div>
+      </div>
+
+      <div id="drop-zone" class="drop-zone">
+        <div class="dz-label" id="drop-zone-label">Arraste ou Clique na Carta de Ataque Aqui</div>
+      </div>
+    </div>
+
+    <!-- Zone Bot: Player HUD + Actions + Hand -->
+    <div class="arena-zone-bot">
+      <div id="p1-leader-box" class="glass fighter-hud hud-player">
+        <div id="p1-portrait" class="hud-portrait">⚡</div>
+        <div class="hud-info">
+          <div id="p1-name" class="hud-name">Son Goku <span class="awaken-badge">AWAKENED</span></div>
+          <div class="hp-bar-container">
+            <div class="hp-bar-track"><div id="p1-hp-fill" class="hp-bar-fill" style="width:100%"></div></div>
+            <span id="p1-hp-text" class="hp-text">400/400</span>
+          </div>
+          <div id="p1-shields" class="shields-row"></div>
+          <div class="ki-row">
+            <div id="p1-ki-slots" class="ki-pips"></div>
+            <span id="p1-ki-text" class="ki-label">4/10 KI</span>
+          </div>
+        </div>
+        <div class="guard-warn">OPEN GUARD</div>
+      </div>
+
+      <div class="action-row">
+        <button id="charge-ki-btn" class="btn-charge">⚡ CARREGAR KI (+2 KI)</button>
+        <button id="pass-turn-btn" class="btn-pass">PASSAR TURNO ⏩</button>
+      </div>
+
+      <div id="p1-hand" class="hand-zone"></div>
+    </div>
+
+    <!-- Battle Log -->
+    <div id="battle-log-container" class="battle-log"></div>
+
+    <!-- Beam Clash Overlay -->
+    <div id="beam-clash-overlay" class="beam-overlay">
+      <div class="beam-title">🔥 DISPUTA DE BEAM 🔥</div>
+      <p style="color:#ddd; font-weight:800; font-size:1rem;">APERTE RAPIDAMENTE PARA VENCER!</p>
+      <div class="beam-bar-track"><div id="beam-clash-fill" class="beam-bar-fill"></div></div>
+      <button id="clash-mash-btn" class="btn-mash">EMPURRAR BEAM!</button>
+    </div>
+  </section>
+
+  <!-- ── 7. DECK LAB SCENE ── -->
+  <section id="scene-deck-lab" class="game-scene">
+    <div class="deck-layout">
+      <div class="glass deck-sidebar">
+        <div class="deck-sidebar-title" id="deck-builder-title">Baralho Ativo (20 Cartas)</div>
+        <div id="deck-list-container"></div>
+        <button id="deck-back-btn" class="btn-ghost" style="margin-top:12px;">VOLTAR AO MENU</button>
+      </div>
+      <div class="glass collection-panel">
+        <div class="collection-title" id="collection-title">Coleção de Cartas</div>
+        <div id="collection-grid" class="collection-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 8. SHOP SCENE ── -->
+  <section id="scene-shop" class="game-scene">
+    <div class="glass store-inner">
+      <div class="store-title" id="store-title">Loja de Pacotes Booster</div>
+      <div class="store-sub" id="store-sub">Desbloqueie ataques Super Saiyajin, Z-Vanish e Kaioken!</div>
+      <button id="buy-pack-btn" class="btn-ki" style="font-size:1.1rem; padding:16px 36px;">Abrir Pacote Booster (300 Zeni)</button>
+      <button id="shop-back-btn" class="btn-ghost" style="margin-left:12px;">VOLTAR AO MENU</button>
+      <div id="pack-reveal-container" class="pack-reveal"></div>
+    </div>
+  </section>
+
+  <!-- ── 9. DOJOS SCENE ── -->
+  <section id="scene-dojos" class="game-scene">
+    <div class="dojos-inner glass" style="max-width: 800px; width: 100%; padding: 28px; text-align: center;">
+      <h2 style="color: #ffd700; font-size: 1.6rem; font-weight: 900; margin-bottom: 8px;">🏯 Dojos & Rankings de Clãs</h2>
+      <p style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 20px;">Junte-se a um Dojo para ganhar bônus de Ki e disputar o ranking de clãs.</p>
+      <div id="dojo-list-container" class="dojos-list"></div>
+      <button id="dojos-back-btn" class="btn-ghost" style="margin-top: 20px;">VOLTAR AO MENU</button>
+    </div>
+  </section>
+
+  <!-- ── 10. CHAT SCENE ── -->
+  <section id="scene-chat" class="game-scene">
+    <div class="chat-inner glass" style="max-width: 800px; width: 100%; padding: 24px; display: flex; flex-direction: column; height: 78vh;">
+      <h2 style="color: #ffd700; font-size: 1.4rem; font-weight: 900; margin-bottom: 12px;">💬 Chat Global dos Guerreiros</h2>
+      <div id="chat-feed" class="chat-feed" style="flex: 1; overflow-y: auto; background: rgba(0,0,0,0.35); border-radius: 8px; padding: 14px; margin-bottom: 12px;"></div>
+      <div class="chat-input-row" style="display: flex; gap: 8px;">
+        <input type="text" id="chat-input" placeholder="Digite sua mensagem..." class="modal-input" style="margin: 0; flex: 1;">
+        <button id="send-chat-btn" class="btn-ki">Enviar</button>
+      </div>
+      <button id="chat-back-btn" class="btn-ghost" style="margin-top: 12px;">VOLTAR AO MENU</button>
+    </div>
+  </section>
+
+  <!-- ── 11. RANKED SCENE ── -->
+  <section id="scene-ranked" class="game-scene">
+    <div class="glass" style="max-width: 800px; width: 100%; padding: 32px; text-align: center;">
+      <h2 style="color: #ffd700; font-size: 1.6rem; font-weight: 900; margin-bottom: 8px;">🏆 Modo Ranqueado & Torneio</h2>
+      <p style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 24px;">Dispute pontos de Rank e suba do Prata ao Rank Deus da Destruição!</p>
+      <div id="ranked-view-content" style="display: flex; flex-direction: column; gap: 12px; font-size: 0.95rem; color: #fff;">
+        <div style="padding: 16px; background: rgba(255,215,0,0.08); border-radius: 8px; border: 1px solid rgba(255,215,0,0.3);">
+          🥇 <strong>Seu Rank Atual:</strong> Guerreiro Prata (1250 RP)
+        </div>
+      </div>
+      <button id="ranked-back-btn" class="btn-ghost" style="margin-top: 24px;">VOLTAR AO MENU</button>
+    </div>
+  </section>
+
+  <!-- ── 12. QUESTS SCENE ── -->
+  <section id="scene-quests" class="game-scene">
+    <div class="glass" style="max-width: 800px; width: 100%; padding: 32px; text-align: center;">
+      <h2 style="color: #ffd700; font-size: 1.6rem; font-weight: 900; margin-bottom: 8px;">📜 Missões Diárias</h2>
+      <p style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 24px;">Cumpra desafios de combate para resgatar Zeni e Poeira de Ki.</p>
+      <div id="quests-view-content" style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="padding: 14px; background: rgba(255,255,255,0.04); border-radius: 8px; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="color: #fff; font-weight: 800;">⚡ Execute 3 Disputas de Beam</div>
+            <div style="color: #888; font-size: 0.8rem;">Recompensa: +300 Zeni</div>
+          </div>
+          <button class="btn-ki" style="padding: 6px 12px; font-size: 0.8rem;">Resgatar</button>
+        </div>
+      </div>
+      <button id="quests-back-btn" class="btn-ghost" style="margin-top: 24px;">VOLTAR AO MENU</button>
+    </div>
+  </section>
+
+  <!-- ═══ Auth Modal ═══ -->
+  <div id="auth-modal" class="modal-overlay">
+    <div class="glass modal-box">
+      <div class="modal-title" id="auth-modal-title">Conta Dragon Ball Clash</div>
+      <input id="auth-user-input" class="modal-input" type="text" placeholder="Nome de Usuário...">
+      <input id="auth-pass-input" class="modal-input" type="password" placeholder="Senha...">
+      <div class="modal-actions">
+        <button id="auth-login-submit" class="btn-ki">Entrar</button>
+        <button id="auth-register-submit" class="btn-ghost">Criar Conta</button>
+      </div>
+      <button id="auth-close-btn" class="modal-cancel">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- ═══ DEV ADMIN PANEL MODAL ═══ -->
+  <div id="dev-panel-modal" class="modal-overlay">
+    <div class="glass modal-box" style="max-width: 980px; width: 92%; max-height: 88vh; overflow-y: auto; text-align: left; padding: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,215,0,0.3); padding-bottom: 12px; margin-bottom: 16px;">
+        <h2 style="color: #ffd700; font-size: 1.3rem; font-weight: 900; margin: 0; display: flex; align-items: center; gap: 8px;">
+          <span>🛠️</span> <span>Painel Dev — Upload & Injeção de Cartas TCG</span>
+        </h2>
+        <button id="close-dev-modal-btn" class="btn-ghost" style="padding: 4px 14px; font-size: 0.9rem; color: #ef4444; border-color: #ef4444;">✕ Fechar</button>
+      </div>
+      
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+        <button id="dev-export-btn" class="btn-ki" style="font-size: 0.78rem; padding: 8px 14px;">📥 Exportar Backup (JSON)</button>
+        <button id="dev-import-btn" class="btn-ghost" style="font-size: 0.78rem; padding: 8px 14px; border-color: #3b82f6; color: #3b82f6;">📤 Importar Backup (JSON)</button>
+        <button id="dev-reset-all-btn" class="btn-ghost" style="font-size: 0.78rem; padding: 8px 14px; border-color: #ef4444; color: #ef4444;">🔄 Restaurar Imagens Padrão</button>
+        <input type="file" id="dev-import-file-input" accept="application/json" style="display: none;">
+      </div>
+
+      <div id="dev-card-list-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px;"></div>
+    </div>
+  </div>
+
+  <!-- ═══ Settings Modal ═══ -->
+  <div id="settings-modal" class="modal-overlay">
+    <div class="glass modal-box">
+      <div class="modal-title">⚙️ CONFIGURAÇÕES DE JOGO</div>
+      <div style="display:flex; flex-direction:column; gap:14px; margin:16px 0; text-align:left;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="color:#ddd; font-size:0.9rem; font-weight:800;">Efeitos Sonoros & Música</span>
+          <button id="toggle-audio-btn" class="btn-ghost" style="padding:6px 14px; font-size:0.8rem;">🔊 LIGADO</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="color:#ddd; font-size:0.9rem; font-weight:800;">Idioma da Interface</span>
+          <button id="toggle-settings-lang-btn" class="btn-ghost" style="padding:6px 14px; font-size:0.8rem;">🇧🇷 PT-BR</button>
+        </div>
+      </div>
+      <button id="close-settings-btn" class="btn-ki" style="width:100%;">SALVAR & VOLTAR</button>
+    </div>
+  </div>
+
+  <!-- ═══ Credits Modal ═══ -->
+  <div id="credits-modal" class="modal-overlay">
+    <div class="glass modal-box" style="text-align:center;">
+      <div class="modal-title" style="color:#ffd700;">🏆 CRÉDITOS DO ESTÚDIO</div>
+      <div style="color:#cbd5e1; font-size:0.88rem; line-height:1.6; margin:16px 0;">
+        <p><strong>DRAGON BALL CLASH ACTION TCG</strong></p>
+        <p style="color:#00f2fe; margin-top:8px;">Desenvolvido com Antigravity Engine</p>
+        <p>Design de UX & Arte: DBTCG Studios</p>
+        <p>Sprite Sheets Originais: Legendary Super Warriors</p>
+      </div>
+      <button id="close-credits-btn" class="btn-ki" style="width:100%;">VOLTAR</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { UIManager } from './js/ui-manager.js';
+    function boot() { window.uiManager = new UIManager(); }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else {
+      boot();
+    }
+  </script>
+</body>
+</html>

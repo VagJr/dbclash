@@ -1,0 +1,202 @@
+/* ==========================================================================
+   Dragon Ball Clash Action TCG — Atmospheric Effects
+   CSS-only floating Ki particles, vignettes, energy wisps & scan lines
+   ========================================================================== */
+
+/* ── 1. Arena Ambient Ki Particles ────────────────────────────────────────── */
+#arena-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(2px 2px at 15% 20%, rgba(255,215,0,0.5) 50%, transparent 100%),
+    radial-gradient(2px 2px at 45% 65%, rgba(0,200,255,0.4) 50%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 78% 30%, rgba(255,215,0,0.35) 50%, transparent 100%),
+    radial-gradient(2.5px 2.5px at 88% 75%, rgba(0,242,254,0.3) 50%, transparent 100%),
+    radial-gradient(1px 1px at 25% 85%, rgba(255,140,0,0.4) 50%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 62% 12%, rgba(255,255,255,0.25) 50%, transparent 100%),
+    radial-gradient(2px 2px at 35% 45%, rgba(0,200,255,0.3) 50%, transparent 100%),
+    radial-gradient(1px 1px at 90% 50%, rgba(255,215,0,0.3) 50%, transparent 100%);
+  animation: floatParticles 12s ease-in-out infinite alternate;
+}
+
+@keyframes floatParticles {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.5;
+  }
+  33% {
+    opacity: 0.8;
+  }
+  66% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-20px) translateX(8px);
+    opacity: 0.4;
+  }
+}
+
+/* ── 2. Arena Cinematic Vignette ──────────────────────────────────────────── */
+#arena-screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(4, 6, 12, 0.5) 100%);
+}
+
+/* ── 3. Landing Page Floating Stars ──────────────────────────────────────── */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@keyframes driftUp {
+  0% { transform: translateY(100vh) scale(0.5); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 0.7; }
+  100% { transform: translateY(-20vh) scale(1); opacity: 0; }
+}
+
+/* Energy wisps for landing page atmosphere */
+.landing-energy-wisps {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.landing-energy-wisps::before,
+.landing-energy-wisps::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(30px);
+  animation: floatParticles 10s ease-in-out infinite alternate;
+}
+
+.landing-energy-wisps::before {
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(255,215,0,0.12) 0%, transparent 70%);
+  top: 20%;
+  left: 15%;
+}
+
+.landing-energy-wisps::after {
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle, rgba(0,200,255,0.10) 0%, transparent 70%);
+  bottom: 30%;
+  right: 20%;
+  animation-delay: -5s;
+}
+
+/* ── 4. Arena Subtle Scan Lines ──────────────────────────────────────────── */
+.arena-scan-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 3px,
+    rgba(0, 0, 0, 0.04) 3px,
+    rgba(0, 0, 0, 0.04) 4px
+  );
+  opacity: 0.3;
+}
+
+/* ── 5. Phase Transition Flash ───────────────────────────────────────────── */
+@keyframes phaseFlash {
+  0% { opacity: 0; }
+  15% { opacity: 0.15; }
+  100% { opacity: 0; }
+}
+
+.phase-transition-flash {
+  position: absolute;
+  inset: 0;
+  background: white;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0;
+  animation: phaseFlash 0.5s ease-out forwards;
+}
+
+/* ── 6. Power Level Aura (wraps around fighter HUD when Ki is full) ──── */
+@keyframes auraFlare {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(255,215,0,0.2), 0 0 30px rgba(255,215,0,0.1);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(255,215,0,0.35), 0 0 50px rgba(255,215,0,0.15), 0 0 80px rgba(255,215,0,0.05);
+  }
+}
+
+.fighter-hud.ki-full {
+  animation: auraFlare 2s ease-in-out infinite;
+  border-color: rgba(255,215,0,0.2) !important;
+}
+
+/* ── 7. Hand Zone Premium Fan Arc Glow ───────────────────────────────────── */
+.hand-zone::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255,215,0,0.15), rgba(0,200,255,0.1), transparent);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* ── 8. Drop Zone "Awaiting Card" Pulse ──────────────────────────────────── */
+@keyframes dropZonePulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255,215,0,0.03);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(255,215,0,0.08), inset 0 0 20px rgba(255,215,0,0.03);
+  }
+}
+
+.drop-zone:not(.drag-over) {
+  animation: dropZonePulse 4s ease-in-out infinite;
+}
+
+/* ── 9. Glass Panel Enhancement ──────────────────────────────────────────── */
+.glass {
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+}
+
+.glass:hover {
+  border-color: rgba(255,255,255,0.1) !important;
+}
+
+/* ── Responsive: Hide heavy atmospheric effects on lower-end mobile ──── */
+@media (max-width: 768px) {
+  #arena-screen::before {
+    opacity: 0.3;
+  }
+
+  .arena-scan-lines {
+    display: none;
+  }
+
+  .landing-energy-wisps::before,
+  .landing-energy-wisps::after {
+    width: 60px;
+    height: 60px;
+    filter: blur(20px);
+  }
+}

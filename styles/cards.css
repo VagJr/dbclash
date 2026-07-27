@@ -1,0 +1,392 @@
+/* ==========================================================================
+   Dragon Ball Clash Action TCG — Card Component, Touch Gestures & Badges
+   ========================================================================== */
+
+.card {
+  width: 120px;
+  aspect-ratio: 5 / 7;
+  border-radius: var(--r-sm);
+  position: relative;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.1);
+  cursor: grab;
+  user-select: none;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.3s var(--ease-snap), box-shadow 0.3s var(--ease-out), border-color 0.2s, opacity 0.3s, filter 0.3s;
+  touch-action: none;
+  will-change: transform;
+  flex-shrink: 0;
+  background: #080a12;
+  perspective: 800px;
+}
+
+/* Holographic shimmer overlay */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(125deg, transparent 0%, rgba(255,255,255,0.04) 25%, rgba(255,215,0,0.06) 50%, rgba(0,200,255,0.04) 75%, transparent 100%);
+  background-size: 300% 300%;
+  animation: shimmerSweep 5s linear infinite;
+  pointer-events: none;
+  z-index: 6;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.card:hover::after, .card.touch-hover::after {
+  opacity: 1;
+}
+
+.card:hover, .card.touch-hover {
+  transform: translateY(-38px) scale(1.25) !important;
+  z-index: 700 !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.95), 0 0 30px rgba(255, 215, 0, 0.6), 0 0 60px rgba(255, 215, 0, 0.15) !important;
+}
+
+.card:active, .card.dragging {
+  cursor: grabbing;
+  transform: scale(1.15) !important;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.95), 0 0 24px rgba(255, 215, 0, 0.4);
+  z-index: 100;
+  transition: none;
+}
+
+/* PLAYABLE CARD GLOW */
+.card.playable {
+  border-color: var(--ki-yellow) !important;
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.35), 0 4px 14px rgba(0, 0, 0, 0.6) !important;
+  animation: playGlow 1.8s infinite alternate ease-in-out;
+}
+
+@keyframes playGlow {
+  0% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.25), 0 4px 14px rgba(0,0,0,0.6); }
+  100% { box-shadow: 0 0 22px rgba(255, 215, 0, 0.7), 0 6px 18px rgba(0,0,0,0.8); }
+}
+
+/* COMBAT PHASE RESTRICTED CARD HIGHLIGHTING */
+.card.card-phase-active {
+  border-color: #ffd700 !important;
+  box-shadow: 0 0 18px #ffd700, 0 0 35px rgba(255, 215, 0, 0.7) !important;
+  animation: pulse-phase 1.2s infinite ease-in-out !important;
+  opacity: 1 !important;
+  filter: none !important;
+  transform: translateY(-6px) scale(1.04);
+}
+
+@keyframes pulse-phase {
+  0% { box-shadow: 0 0 12px #ffd700, 0 0 25px rgba(255, 215, 0, 0.5); }
+  50% { box-shadow: 0 0 24px #ffd700, 0 0 45px rgba(255, 215, 0, 0.9); }
+  100% { box-shadow: 0 0 12px #ffd700, 0 0 25px rgba(255, 215, 0, 0.5); }
+}
+
+.card.card-phase-disabled {
+  opacity: 0.35 !important;
+  filter: grayscale(70%) brightness(0.55) !important;
+  pointer-events: none !important;
+  transform: scale(0.92) !important;
+}
+
+/* Full Art Image & Overlays */
+.card-full-art-img {
+  width: 100%;
+  height: 100%;
+  object-fit: fill !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Upper Title Banner (Injected in upper dark field next to Ki sphere) */
+.card-header-banner {
+  position: absolute;
+  top: 4%;
+  left: 20%;
+  right: 5%;
+  height: 14%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  z-index: 10;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.card-title-text {
+  font-family: var(--font-title);
+  font-size: 0.58rem;
+  font-weight: 900;
+  color: #ffd700;
+  text-transform: uppercase;
+  text-shadow: 0 1px 3px #000, 0 0 4px #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1;
+}
+
+/* Lower Description Overlay Panel (Injected inside lower dark box) */
+.card-desc-overlay {
+  position: absolute;
+  top: 78%;
+  bottom: 3%;
+  left: 8%;
+  right: 8%;
+  padding: 1px 2px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.card-desc-text {
+  font-size: 0.52rem;
+  color: #d1d5db;
+  line-height: 1.15;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* Ki Cost & Badges */
+.card-header {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 5;
+}
+
+.card-ki-cost {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #ffd700, #ff8800);
+  color: #000;
+  font-family: var(--font-title);
+  font-weight: 900;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.8), 0 0 8px rgba(255,215,0,0.6);
+  border: 1.5px solid #fff;
+}
+
+.card-type-tag {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  z-index: 5;
+  font-size: 0.55rem;
+  font-weight: 900;
+  padding: 2px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.tag-attack { background: var(--accent-red); }
+.tag-defense { background: #3b82f6; }
+.tag-evade { background: #10b981; }
+.tag-counter { background: #8b5cf6; }
+.tag-tech { background: #f59e0b; }
+
+.card-power-badge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  z-index: 7;
+  font-size: 0.6rem;
+  font-weight: 900;
+  color: #fff;
+  background: rgba(0,0,0,0.85);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.25);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+/* Super-Rare Rainbow Border Animation */
+.card.super-rare {
+  border: 2px solid transparent !important;
+  background-clip: padding-box;
+  position: relative;
+}
+.card.super-rare::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: calc(var(--r-sm) + 2px);
+  background: conic-gradient(from 0deg, #ff0055, #ffd700, #00ff88, #00aaff, #aa55ff, #ff0055);
+  z-index: -1;
+  animation: spinRing 3s linear infinite;
+}
+
+.card-reason-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(12, 15, 29, 0.92);
+  color: var(--accent-gold);
+  border: 1px solid var(--accent-gold);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-align: center;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+/* LEADER CARD FULL ART SHOWCASE */
+.leader-full-card {
+  width: 180px;
+  aspect-ratio: 5 / 7;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--accent-gold);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.8), 0 0 16px rgba(255,215,0,0.3);
+  background: #0f1322;
+}
+
+.leader-full-card.awakened-card {
+  border-color: var(--accent-red);
+  box-shadow: 0 6px 24px rgba(255, 0, 0, 0.8), 0 0 20px rgba(255, 68, 68, 0.5);
+}
+
+.leader-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.leader-card-badge-atk {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.85);
+  color: #ffd700;
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #ffd700;
+}
+
+.leader-card-info-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(to top, rgba(10,12,20,0.98) 70%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-sizing: border-box;
+}
+
+.leader-card-name {
+  font-family: var(--font-title);
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: #fff;
+}
+
+.leader-card-playstyle {
+  font-size: 0.68rem;
+  color: var(--accent-cyan);
+  font-weight: 700;
+}
+
+.leader-card-desc {
+  font-size: 0.62rem;
+  color: #9ca3af;
+  line-height: 1.25;
+}
+
+
+/* ── UNPLAYABLE CARD CLEAN DIMMING ───────────────────────────────────────── */
+.card.unplayable {
+  opacity: 0.35 !important;
+  filter: grayscale(75%) brightness(0.5) !important;
+  pointer-events: auto !important; /* Enable touch gesture inspect on mobile */
+  cursor: not-allowed !important;
+}
+
+.card-reason-badge {
+  display: none !important;
+}
+
+/* ── MOBILE HAND RESPONSIVE FIT ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .card {
+    width: 82px !important;
+    aspect-ratio: 5 / 7 !important;
+  }
+  .hand-zone .card, .hand-container .card {
+    margin: 0 -14px !important;
+  }
+  .hand-zone, .hand-container {
+    padding: 6px 0 !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    flex-wrap: nowrap !important;
+    justify-content: center !important;
+  }
+  .card-ki-cost {
+    width: 20px !important;
+    height: 20px !important;
+    font-size: 0.72rem !important;
+  }
+  .card-title-text {
+    font-size: 0.58rem !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .card {
+    width: 70px !important;
+  }
+  .hand-zone .card, .hand-container .card {
+    margin: 0 -18px !important;
+  }
+}
+
+
+/* ── UNIFIED DYNAMIC CARD TYPE BORDERS & IDENTITIES ──────────────────── */
+.card.type-attack {
+  border-color: #ff3b30 !important;
+  box-shadow: 0 0 12px rgba(255, 59, 48, 0.35), 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 30px rgba(255,59,48,0.08) !important;
+}
+
+.card.type-defense {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.35), 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 30px rgba(59,130,246,0.08) !important;
+}
+
+.card.type-evade {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.35), 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 30px rgba(16,185,129,0.08) !important;
+}
+
+.card.type-counter {
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.35), 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 30px rgba(139,92,246,0.08) !important;
+}
+
+.card.type-tech {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.35), 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 30px rgba(245,158,11,0.08) !important;
+}

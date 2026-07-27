@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dragon Ball Clash Action TCG — Web Game Edition</title>
+  <meta name="description" content="O TCG de Dragon Ball em tempo real. Batalhas de Ki, Z-Vanish e Beam Clash direto no navegador.">
+  
+  <!-- PWA & Mobile Web App Standalone Meta -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0c0f1d">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DB Clash TCG">
+  <link rel="apple-touch-icon" href="assets/cards/atk_02.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/cards.css">
+  <link rel="stylesheet" href="styles/arena.css">
+</head>
+<body>
+
+  <!-- ═══ Sidebar Navigation (PC/Tablet) ═══ -->
+  <nav id="sidebar">
+    <div class="sidebar-brand">DB</div>
+    <button class="nav-item active" data-tab="landing"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
+    <button class="nav-item" data-tab="profile"><span class="nav-icon">👤</span><span class="nav-label">Perfil</span></button>
+    <button class="nav-item" data-tab="ranked"><span class="nav-icon">🏆</span><span class="nav-label">Ranqueado</span></button>
+    <button class="nav-item" data-tab="quests"><span class="nav-icon">📜</span><span class="nav-label">Missões</span></button>
+    <button class="nav-item" data-tab="lobby"><span class="nav-icon">⚔️</span><span class="nav-label">Lobby</span></button>
+    <button class="nav-item" data-tab="arena"><span class="nav-icon">🔥</span><span class="nav-label">Arena</span></button>
+    <button class="nav-item" data-tab="deck"><span class="nav-icon">🎴</span><span class="nav-label">Decks</span></button>
+    <button class="nav-item" data-tab="store"><span class="nav-icon">🎁</span><span class="nav-label">Loja</span></button>
+    <button class="nav-item" data-tab="dojos"><span class="nav-icon">🏯</span><span class="nav-label">Dojos</span></button>
+    <button class="nav-item" data-tab="chat"><span class="nav-icon">💬</span><span class="nav-label">Chat</span></button>
+  </nav>
+
+  <!-- ═══ Bottom Tab Bar (Mobile) ═══ -->
+  <nav id="bottom-bar">
+    <button class="btab active" data-tab="landing"><span class="btab-icon">🏠</span>Home</button>
+    <button class="btab" data-tab="profile"><span class="btab-icon">👤</span>Perfil</button>
+    <button class="btab" data-tab="ranked"><span class="btab-icon">🏆</span>Ranked</button>
+    <button class="btab" data-tab="quests"><span class="btab-icon">📜</span>Missões</button>
+    <button class="btab" data-tab="arena"><span class="btab-icon">🔥</span>Arena</button>
+    <button class="btab" data-tab="deck"><span class="btab-icon">🎴</span>Decks</button>
+    <button class="btab" data-tab="store"><span class="btab-icon">🎁</span>Loja</button>
+  </nav>
+
+  <!-- ═══ Top Header Bar ═══ -->
+  <header id="app-header">
+    <div class="brand-logo">
+      <span class="star">★</span>
+      <span class="title">Dragon Ball Clash TCG</span>
+    </div>
+    <div class="header-right">
+      <button id="pwa-install-btn-header" class="btn btn-gold btn-sm" onclick="window.socialManager && window.socialManager.showPWAInstallPrompt()">📱 Baixar App</button>
+      <button id="lang-switch-btn" class="lang-toggle">🇧🇷 PT-BR</button>
+      <div id="user-rank-tag" class="currency-pill rank-pill">🥈 Prata</div>
+      <div class="currency-pill">💰 <span id="user-zeni">1250</span> Zeni</div>
+      <div class="currency-pill dust">💎 <span id="user-gems">50</span> Gemas</div>
+      <button id="auth-btn" class="auth-pill">🔑 Entrar</button>
+    </div>
+  </header>
+
+  <!-- ═══ Main Content Area ═══ -->
+  <div id="app-body">
+    <main id="app-content">
+
+      <!-- ── LANDING PAGE ── -->
+      <section id="landing-screen" class="screen active">
+        <div class="landing-inner">
+          <h1 class="landing-logo" id="landing-title">O TCG de Dragon Ball Frenético em Tempo Real</h1>
+          <p class="landing-sub" id="landing-subtitle">Batalhas de Ki explosivas, Z-Vanish teletransporte e Disputas de Beam Kamehameha direto no seu navegador.</p>
+
+          <div class="landing-cta">
+            <button id="landing-enter-arena-btn" class="btn-ki">🔥 Entrar na Arena</button>
+            <button id="landing-guest-btn" class="btn-ghost">🎮 Jogar como Convidado</button>
+            <button id="landing-auth-btn" class="btn-ghost">🔑 Entrar / Criar Conta</button>
+          </div>
+
+          <div class="features-row">
+            <div class="glass feat-card">
+              <div class="feat-icon">📱</div>
+              <div class="feat-title">Web App Mobile PWA</div>
+              <div class="feat-desc">Instale no celular Android como App nativo em tela cheia na área de trabalho.</div>
+            </div>
+            <div class="glass feat-card">
+              <div class="feat-icon">🏆</div>
+              <div class="feat-title">Modo Ranqueado & MMO</div>
+              <div class="feat-desc">Suba de Rank (Bronze a Deus da Destruição), conquiste títulos e cumpra missões.</div>
+            </div>
+            <div class="glass feat-card">
+              <div class="feat-icon">🤖</div>
+              <div class="feat-title">IA de Bots Inteligente</div>
+              <div class="feat-desc">Bots estratégicos que utilizam combos, defensivas e disputas de feixe ativas.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── PROFILE SCREEN (NEW) ── -->
+      <section id="profile-screen" class="screen">
+        <div class="profile-inner" id="profile-view-content">
+          <!-- Dynamic Content rendered by SocialManager -->
+        </div>
+      </section>
+
+      <!-- ── RANKED SCREEN (NEW) ── -->
+      <section id="ranked-screen" class="screen">
+        <div class="ranked-inner" id="ranked-view-content">
+          <!-- Dynamic Content rendered by SocialManager -->
+        </div>
+      </section>
+
+      <!-- ── QUESTS SCREEN (NEW) ── -->
+      <section id="quests-screen" class="screen">
+        <div class="quests-inner" id="quests-view-content">
+          <!-- Dynamic Content rendered by SocialManager -->
+        </div>
+      </section>
+
+      <!-- ── LOBBY ── -->
+      <section id="lobby-screen" class="screen">
+        <div class="lobby-inner">
+
+          <div class="glass" style="padding:24px;">
+            <div class="lobby-section-title" id="select-leader-title">Selecione seu Lutador Líder</div>
+            <div class="lobby-section-sub" id="select-leader-sub">Cada lutador possui baralhos iniciais dedicados, forma Despertada e frases marcantes.</div>
+
+            <div class="leader-grid" id="leader-selection-grid">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <div class="glass" style="padding:24px;">
+            <div class="lobby-section-title">Modo de Jogo</div>
+            <div class="lobby-section-sub">Escolha como deseja batalhar na arena.</div>
+
+            <div class="game-modes-grid">
+              <div class="mode-card" id="start-vs-ai-btn">
+                <div class="mode-icon">🤖</div>
+                <div class="mode-title">Partida contra IA (Offline)</div>
+                <div class="mode-desc">Pratique contra bots inteligentes com IA aprimorada de combos e beam clashes.</div>
+              </div>
+
+              <div class="mode-card" id="create-room-btn">
+                <div class="mode-icon">🌐</div>
+                <div class="mode-title">Criar Sala Multiplayer</div>
+                <div class="mode-desc">Gere um código de 4 dígitos e convide um amigo online.</div>
+              </div>
+
+              <div class="mode-card" id="join-room-btn">
+                <div class="mode-icon">🔑</div>
+                <div class="mode-title">Entrar em Sala</div>
+                <div class="mode-desc">Insira o código de 4 dígitos para entrar em uma sala existente.</div>
+              </div>
+
+              <div class="mode-card" id="start-tutorial-btn">
+                <div class="mode-icon">📚</div>
+                <div class="mode-title">Tutorial Interativo</div>
+                <div class="mode-desc">Aprenda os conceitos de Ki, Reação Z-Vanish e Disputa de Beam.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ── ARENA DE BATALHA ── -->
+      <section id="arena-screen" class="screen">
+
+        <div id="fx-canvas-container">
+          <canvas id="fx-canvas"></canvas>
+        </div>
+
+        <div class="arena-layout">
+
+          <!-- OPPONENT (P2) HUD -->
+          <div class="fighter-hud opponent-hud" id="p2-leader-box">
+            <div class="portrait-container" id="p2-portrait"></div>
+            <div class="hud-details">
+              <div class="fighter-name" id="p2-name">Vegeta</div>
+              <div class="hp-bar-track">
+                <div class="hp-bar-fill" id="p2-hp-fill" style="width:100%;"></div>
+              </div>
+              <div class="hp-numeric" id="p2-hp-text">400/400 HP</div>
+              <div class="shields-row" id="p2-shields"></div>
+              <div class="ki-container">
+                <div class="ki-slots" id="p2-ki-slots"></div>
+                <span class="ki-numeric" id="p2-ki-text">4/10 Ki</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CENTER BATTLEFIELD -->
+          <div class="arena-center-field">
+            <div class="turn-tag" id="arena-turn-indicator">Batalha Pronta</div>
+
+            <div id="reaction-timer-bar" class="reaction-bar" style="display:none;">
+              <div id="timer-bar-fill" class="reaction-bar-fill"></div>
+            </div>
+
+            <div id="drop-zone" class="drop-zone-target">
+              <span>🎴 Arraste ou toque na carta para jogar</span>
+            </div>
+
+            <button id="clash-mash-btn" class="btn-ki pulse-glow" style="display:none; font-size:1.4rem; padding:16px 36px;">⚡ PRESSIONE RÁPIDO PARA EMPURRAR O FEIXE! ⚡</button>
+          </div>
+
+          <!-- PLAYER (P1) HUD -->
+          <div class="fighter-hud player-hud" id="p1-leader-box">
+            <div class="portrait-container" id="p1-portrait"></div>
+            <div class="hud-details">
+              <div class="fighter-name" id="p1-name">Son Goku</div>
+              <div class="hp-bar-track">
+                <div class="hp-bar-fill" id="p1-hp-fill" style="width:100%;"></div>
+              </div>
+              <div class="hp-numeric" id="p1-hp-text">400/400 HP</div>
+              <div class="shields-row" id="p1-shields"></div>
+              <div class="ki-container">
+                <div class="ki-slots" id="p1-ki-slots"></div>
+                <span class="ki-numeric" id="p1-ki-text">4/10 Ki</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- PLAYER HAND & CONTROLS -->
+          <div class="player-controls-bottom">
+            <div class="hand-container" id="p1-hand"></div>
+            <div class="action-buttons-row">
+              <button id="charge-ki-btn" class="btn-ki">⚡ Carregar Ki (+2 Ki)</button>
+              <button id="pass-turn-btn" class="btn-ghost">Passar Turno</button>
+            </div>
+          </div>
+
+          <!-- BATTLE LOG -->
+          <div class="battle-log-panel">
+            <div class="log-header">Histórico de Batalha</div>
+            <div class="log-list" id="battle-log-list"></div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ── DECK BUILDER ── -->
+      <section id="deck-screen" class="screen">
+        <div class="deck-inner" id="deck-builder-container"></div>
+      </section>
+
+      <!-- ── LOJA ── -->
+      <section id="store-screen" class="screen">
+        <div class="store-inner">
+          <div class="glass store-box">
+            <h2>🎁 Loja de Pacotes & Boosters</h2>
+            <p>Abra boosters para obter novas cartas de Ataque, Defesa, Esquiva e Técnicas!</p>
+
+            <div class="store-pack-card">
+              <div class="pack-icon">📦</div>
+              <h3>Booster Pack Saiyajin (5 Cartas)</h3>
+              <p>Contém 5 cartas aleatórias com garantia de pelo menos 1 Rara ou Super Rara.</p>
+              <button id="buy-pack-btn" class="btn-ki">Comprar Pacote (500 Zeni)</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── DOJOS ── -->
+      <section id="dojos-screen" class="screen">
+        <div class="dojos-inner">
+          <div class="glass dojos-box">
+            <h2>🏯 Dojos & Rankings de Clãs</h2>
+            <p>Junte-se a um Dojo para ganhar bônus de Ki e disputar o ranking de clãs.</p>
+            <div class="dojos-list" id="dojos-rankings-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── CHAT ── -->
+      <section id="chat-screen" class="screen">
+        <div class="chat-inner">
+          <div class="glass chat-box">
+            <h2>💬 Chat Global dos Guerreiros</h2>
+            <div class="chat-messages" id="chat-messages-container"></div>
+            <div class="chat-input-row">
+              <input type="text" id="chat-input-field" placeholder="Digite sua mensagem..." class="chat-input">
+              <button id="chat-send-btn" class="btn-ki">Enviar</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ═══ Auth Modal ═══ -->
+  <div id="auth-modal" class="modal-overlay">
+    <div class="glass modal-box">
+      <button id="auth-modal-close" class="inspect-close-btn">✕</button>
+      <div class="modal-title">🔑 Conta DBTCG</div>
+      <input type="text" id="auth-username" placeholder="Nome de usuário" class="chat-input" style="margin-bottom:10px;">
+      <input type="password" id="auth-password" placeholder="Senha" class="chat-input" style="margin-bottom:16px;">
+      <div class="auth-btn-row">
+        <button id="auth-login-submit" class="btn-ki">Entrar</button>
+        <button id="auth-register-submit" class="btn-ghost">Criar Conta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Tutorial Modal ═══ -->
+  <div id="tutorial-modal" class="modal-overlay">
+    <div class="glass modal-box">
+      <div class="modal-title" id="tutorial-title">Tutorial</div>
+      <p id="tutorial-text" style="color:#ccc; font-size:0.92rem; line-height:1.5; margin-bottom:20px;"></p>
+      <button id="tutorial-next-btn" class="btn-ki" style="width:100%;">Próximo Passo ▶</button>
+    </div>
+  </div>
+
+  <!-- ═══ K.O. Modal ═══ -->
+  <div id="ko-modal" class="modal-overlay">
+    <div class="glass modal-box">
+      <div class="modal-title" id="ko-text" style="font-size:1.6rem;">VITÓRIA!</div>
+      <button id="ko-exit-btn" class="btn-ki" style="margin-top:16px;">Voltar ao Lobby</button>
+    </div>
+  </div>
+
+  <!-- ═══ Card Inspect / Zoom Modal ═══ -->
+  <div id="card-inspect-modal" class="modal-overlay">
+    <div class="glass card-inspect-box">
+      <button id="card-inspect-close" class="inspect-close-btn">✕</button>
+      <div id="card-inspect-preview" class="card-inspect-preview"></div>
+      <div class="inspect-info">
+        <h3 id="inspect-card-name" class="inspect-title">Card Name</h3>
+        <div id="inspect-card-type" class="inspect-type-badge">TYPE</div>
+        <p id="inspect-card-desc" class="inspect-desc">Description text...</p>
+        <div class="inspect-stats">
+          <span id="inspect-card-cost">Ki Cost: 3</span>
+          <span id="inspect-card-power">ATK: 40</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script type="module" src="./js/social-manager.js"></script>
+  <script type="module">
+    import { UIManager } from './js/ui-manager.js';
+    window.addEventListener('DOMContentLoaded', () => {
+      window.uiManager = new UIManager();
+    });
+  </script>
+
+</body>
+</html>

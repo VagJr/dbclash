@@ -1,0 +1,574 @@
+{
+  "arte22_Row1_c1": {
+    "raw": "Flerco Charge) Drogon",
+    "match": "atk_28",
+    "score": 0.5853658536585366,
+    "box": [
+      118,
+      160,
+      116,
+      168
+    ]
+  },
+  "arte22_Row1_c2": {
+    "raw": "Enargy Shield",
+    "match": "def_01",
+    "score": 0.9230769230769231,
+    "box": [
+      257,
+      160,
+      116,
+      168
+    ]
+  },
+  "arte22_Row1_c3": {
+    "raw": "Ki Barrer",
+    "match": "def_02",
+    "score": 0.9473684210526315,
+    "box": [
+      397,
+      160,
+      116,
+      168
+    ]
+  },
+  "arte22_Row1_c4": {
+    "raw": "Android Barrier",
+    "match": "def_03",
+    "score": 1.0,
+    "box": [
+      536,
+      160,
+      116,
+      168
+    ]
+  },
+  "arte22_Row1_c5": {
+    "raw": "Godly Guard Vall",
+    "match": "def_04",
+    "score": 0.9375,
+    "box": [
+      677,
+      160,
+      116,
+      168
+    ]
+  },
+  "arte22_Row1_c6": {
+    "raw": "Sic",
+    "match": "piccolo",
+    "score": 0.4,
+    "box": [
+      818,
+      160,
+      116,
+      168
+    ]
+  },
+  "arte22_Row2_c1": {
+    "raw": "Royal Salyan Guard)",
+    "match": "def_06",
+    "score": 0.918918918918919,
+    "box": [
+      118,
+      335,
+      116,
+      168
+    ]
+  },
+  "arte22_Row2_c2": {
+    "raw": "Full Power Defilect",
+    "match": "def_07",
+    "score": 0.972972972972973,
+    "box": [
+      257,
+      335,
+      116,
+      168
+    ]
+  },
+  "arte22_Row2_c3": {
+    "raw": "Iron Guard Stance",
+    "match": "def_08",
+    "score": 1.0,
+    "box": [
+      397,
+      335,
+      116,
+      168
+    ]
+  },
+  "arte22_Row2_c4": {
+    "raw": "Titanium Ki Wall",
+    "match": "def_09",
+    "score": 1.0,
+    "box": [
+      536,
+      335,
+      116,
+      168
+    ]
+  },
+  "arte22_Row2_c5": {
+    "raw": "Ervercr Prdedtlo Frra",
+    "match": "def_10",
+    "score": 0.5333333333333333,
+    "box": [
+      677,
+      335,
+      116,
+      168
+    ]
+  },
+  "arte22_Row2_c6": {
+    "raw": "Ultva Energy Dome",
+    "match": "def_11",
+    "score": 0.9411764705882353,
+    "box": [
+      818,
+      335,
+      116,
+      168
+    ]
+  },
+  "arte22_Row3_c1": {
+    "raw": "Sword Goard Cress)",
+    "match": "def_12",
+    "score": 0.8571428571428571,
+    "box": [
+      88,
+      505,
+      102,
+      150
+    ]
+  },
+  "arte22_Row3_c2": {
+    "raw": "K Repulsion Fleld",
+    "match": "def_13",
+    "score": 0.9142857142857143,
+    "box": [
+      199,
+      505,
+      102,
+      150
+    ]
+  },
+  "arte22_Row3_c3": {
+    "raw": "Scucawaaante",
+    "match": "atk_22",
+    "score": 0.4166666666666667,
+    "box": [
+      311,
+      505,
+      102,
+      150
+    ]
+  },
+  "arte22_Row3_c4": {
+    "raw": "Sard alo",
+    "match": "evd_05",
+    "score": 0.5263157894736842,
+    "box": [
+      422,
+      505,
+      102,
+      150
+    ]
+  },
+  "arte22_Row3_c5": {
+    "raw": "[Super Seiyan Wall",
+    "match": "def_15",
+    "score": 0.9142857142857143,
+    "box": [
+      534,
+      505,
+      102,
+      150
+    ]
+  },
+  "arte22_Row3_c6": {
+    "raw": "Super Ssiyen Well)",
+    "match": "def_15",
+    "score": 0.8,
+    "box": [
+      643,
+      505,
+      102,
+      150
+    ]
+  },
+  "arte22_Row3_c7": {
+    "raw": "ZVuniah Teleport",
+    "match": "evd_01",
+    "score": 0.8484848484848485,
+    "box": [
+      752,
+      505,
+      102,
+      150
+    ]
+  },
+  "arte22_Row4_c1": {
+    "raw": "Mteniauge (senrakeng)",
+    "match": "evd_02",
+    "score": 0.6190476190476191,
+    "box": [
+      88,
+      660,
+      102,
+      150
+    ]
+  },
+  "arte22_Row4_c2": {
+    "raw": "Inerent Treosmnlssio",
+    "match": "evd_03",
+    "score": 0.65,
+    "box": [
+      199,
+      660,
+      102,
+      150
+    ]
+  },
+  "arte22_Row4_c3": {
+    "raw": "Kigh Speed Sidectes",
+    "match": "evd_04",
+    "score": 0.8421052631578947,
+    "box": [
+      311,
+      660,
+      102,
+      150
+    ]
+  },
+  "arte22_Row4_c4": {
+    "raw": "Shadow Slle",
+    "match": "evd_05",
+    "score": 0.8181818181818182,
+    "box": [
+      422,
+      660,
+      102,
+      150
+    ]
+  },
+  "arte22_Row4_c5": {
+    "raw": "[Unre Instuci Flash)",
+    "match": "evd_06",
+    "score": 0.7,
+    "box": [
+      534,
+      660,
+      102,
+      150
+    ]
+  },
+  "arte22_Row4_c6": {
+    "raw": "Speed Phantom",
+    "match": "evd_07",
+    "score": 1.0,
+    "box": [
+      643,
+      660,
+      102,
+      150
+    ]
+  },
+  "arte22_Row4_c7": {
+    "raw": "Aura Dedge",
+    "match": "evd_08",
+    "score": 0.9,
+    "box": [
+      752,
+      660,
+      102,
+      150
+    ]
+  },
+  "arte222_Row1_c1": {
+    "raw": "SolerFlare (Faiyckee)",
+    "match": "ctr_01",
+    "score": 0.7906976744186046,
+    "box": [
+      118,
+      160,
+      116,
+      168
+    ]
+  },
+  "arte222_Row1_c2": {
+    "raw": "Explosive Wave",
+    "match": "ctr_02",
+    "score": 1.0,
+    "box": [
+      257,
+      160,
+      116,
+      168
+    ]
+  },
+  "arte222_Row1_c3": {
+    "raw": "Time Freeze (Skip))",
+    "match": "ctr_03",
+    "score": 1.0,
+    "box": [
+      397,
+      160,
+      116,
+      168
+    ]
+  },
+  "arte222_Row1_c4": {
+    "raw": "Ki Blast Dellection)",
+    "match": "ctr_04",
+    "score": 0.9230769230769231,
+    "box": [
+      536,
+      160,
+      116,
+      168
+    ]
+  },
+  "arte222_Row1_c5": {
+    "raw": "Body Change Trick)",
+    "match": "ctr_05",
+    "score": 1.0,
+    "box": [
+      677,
+      160,
+      116,
+      168
+    ]
+  },
+  "arte222_Row1_c6": {
+    "raw": "Counter Shockwave)",
+    "match": "ctr_06",
+    "score": 1.0,
+    "box": [
+      818,
+      160,
+      116,
+      168
+    ]
+  },
+  "arte222_Row2_c1": {
+    "raw": "Dragon Roar Counter)",
+    "match": "ctr_07",
+    "score": 1.0,
+    "box": [
+      118,
+      335,
+      116,
+      168
+    ]
+  },
+  "arte222_Row2_c2": {
+    "raw": "Emperor Snap) Fagers",
+    "match": "ctr_08",
+    "score": 0.6666666666666666,
+    "box": [
+      257,
+      335,
+      116,
+      168
+    ]
+  },
+  "arte222_Row2_c3": {
+    "raw": "Kai Blast Counter",
+    "match": "ctr_09",
+    "score": 1.0,
+    "box": [
+      397,
+      335,
+      116,
+      168
+    ]
+  },
+  "arte222_Row2_c4": {
+    "raw": "Kaioken Boost",
+    "match": "tch_01",
+    "score": 1.0,
+    "box": [
+      536,
+      335,
+      116,
+      168
+    ]
+  },
+  "arte222_Row2_c5": {
+    "raw": "Senzu Bean",
+    "match": "tch_02",
+    "score": 1.0,
+    "box": [
+      677,
+      335,
+      116,
+      168
+    ]
+  },
+  "arte222_Row2_c6": {
+    "raw": "Spirit Bombs Charge)",
+    "match": "tch_03",
+    "score": 0.9473684210526315,
+    "box": [
+      818,
+      335,
+      116,
+      168
+    ]
+  },
+  "arte222_Row3_c1": {
+    "raw": "Salyan Prlde Surge",
+    "match": "tch_04",
+    "score": 0.8888888888888888,
+    "box": [
+      88,
+      505,
+      102,
+      150
+    ]
+  },
+  "arte222_Row3_c2": {
+    "raw": "MiepnardClary",
+    "match": "atk_03",
+    "score": 0.4166666666666667,
+    "box": [
+      199,
+      505,
+      102,
+      150
+    ]
+  },
+  "arte222_Row3_c3": {
+    "raw": "Paoidochek",
+    "match": "ctr_05",
+    "score": 0.4444444444444444,
+    "box": [
+      311,
+      505,
+      102,
+      150
+    ]
+  },
+  "arte222_Row3_c4": {
+    "raw": "Sed",
+    "match": "def_01",
+    "score": 0.375,
+    "box": [
+      422,
+      505,
+      102,
+      150
+    ]
+  },
+  "arte222_Row3_c5": {
+    "raw": "",
+    "match": null,
+    "score": 0.0,
+    "box": [
+      534,
+      505,
+      102,
+      150
+    ]
+  },
+  "arte222_Row3_c6": {
+    "raw": "TereCon LerTalg",
+    "match": "atk_16",
+    "score": 0.4444444444444444,
+    "box": [
+      643,
+      505,
+      102,
+      150
+    ]
+  },
+  "arte222_Row3_c7": {
+    "raw": "Tore Chamker Trcini g",
+    "match": "tch_08",
+    "score": 0.7619047619047619,
+    "box": [
+      752,
+      505,
+      102,
+      150
+    ]
+  },
+  "arte222_Row4_c1": {
+    "raw": "Saiyen Pride Surge",
+    "match": "tch_04",
+    "score": 0.9444444444444444,
+    "box": [
+      88,
+      660,
+      102,
+      150
+    ]
+  },
+  "arte222_Row4_c2": {
+    "raw": "hdzd Prnudbeled",
+    "match": "tch_05",
+    "score": 0.4878048780487805,
+    "box": [
+      199,
+      660,
+      102,
+      150
+    ]
+  },
+  "arte222_Row4_c3": {
+    "raw": "HuscaPdror icud",
+    "match": "atk_20",
+    "score": 0.4375,
+    "box": [
+      311,
+      660,
+      102,
+      150
+    ]
+  },
+  "arte222_Row4_c4": {
+    "raw": "Inadaovorend",
+    "match": "def_08",
+    "score": 0.41379310344827586,
+    "box": [
+      422,
+      660,
+      102,
+      150
+    ]
+  },
+  "arte222_Row4_c5": {
+    "raw": "oalacaig",
+    "match": "def_06",
+    "score": 0.46153846153846156,
+    "box": [
+      534,
+      660,
+      102,
+      150
+    ]
+  },
+  "arte222_Row4_c6": {
+    "raw": "TaoCharokar Tocuarg",
+    "match": "ctr_07",
+    "score": 0.47368421052631576,
+    "box": [
+      643,
+      660,
+      102,
+      150
+    ]
+  },
+  "arte222_Row4_c7": {
+    "raw": "Tert Comber Tretnkg",
+    "match": "tch_08",
+    "score": 0.65,
+    "box": [
+      752,
+      660,
+      102,
+      150
+    ]
+  }
+}
