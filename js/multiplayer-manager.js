@@ -1,11 +1,9 @@
 /* ==========================================================================
-   Dragon Ball Clash Action TCG — Expanded Multiplayer & Matchmaking
-   Supports Ranked 1v1, Event Sourcing, Chat and Firebase Realtime Database
-   FIXED: Race condition on pairing — two-phase commit with pairedWith field
+   Dragon Ball Clash Action TCG — Socket.io Multiplayer & Matchmaking
+   Supports Dedicated Render Server, Low Latency WebSockets, Ranked 1v1 & AI
    ========================================================================== */
 
-import { firebaseManager, db } from './firebase-config.js';
-import { ref, set, push, onValue, onChildAdded, remove, update, get } from 'firebase/database';
+import { socketManager } from './socket-config.js';
 import { deckBuilder } from './deck-builder.js';
 import { authManager } from './auth-manager.js';
 import { raidEngine } from './raid-engine.js';
@@ -22,63 +20,128 @@ export class MultiplayerManager {
     this.mode = '1v1';
     this.myUid = null;
     this.opponentUid = null;
-    this.movesUnsubscribe = null;
-    this.setupUnsubscribe = null;
-    this.mmUnsubscribe = null;
-    this.pairedUnsubscribe = null;
     this.mmInterval = null;
-    this.myQueueRef = null;
-    
+    this.syncInterval = null;
+    this.isPaired = false;
+
     // Inject multiplayer hook into game engine
     this.engine.onLocalAction = (actionType, data) => this.broadcastMove(actionType, data);
+    
+    this.initSocketListeners();
+  }
+
+  initSocketListeners() {
+    socketManager.on('waiting_for_opponent', () => {
+      console.log('[MultiplayerManager] Waiting for opponent in queue...');
+    });
+
+    socketManager.on('retry_matchmaking', () => {
+      console.log('[MultiplayerManager] Opponent disconnected, retrying...');
+      socketManager.emit('join_matchmaking', this.lastUserData || {});
+    });
+
+    socketManager.on('match_found', (payload) => {
+      console.log(`[MultiplayerManager] Match Found! Room: ${payload.roomCode} | Host: ${payload.isHost}`);
+      this.isPaired = true;
+      this.isHost = payload.isHost;
+      this.roomCode = payload.roomCode;
+      this.opponentUid = payload.opponent.uid;
+      
+      this.clearMatchmaking();
+
+      const mmModal = document.getElementById('matchmaking-modal');
+      if (mmModal) mmModal.classList.remove('active');
+
+      try { chatManager.setRoom(this.roomCode); } catch(e){}
+
+      if (typeof uiManager !== 'undefined' && uiManager) {
+        uiManager.triggerActionBanner(
+          `GUERREIRO ENCONTRADO: ${payload.opponent.username}!`,
+          'act-attack', 'VS JOGADOR REAL'
+        );
+      }
+
+      const pLeader = this.pendingLeaderKey || (typeof authManager !== 'undefined' && authManager.user?.selectedLeader) || 'goku';
+      const pDeck = this.myDeck || deckBuilder.getDeckForLeader(pLeader);
+      const pDeckShuffled = this.engine.secureShuffle([...pDeck]);
+      const oDeckShuffled = this.engine.secureShuffle([...payload.opponent.deck]);
+
+      const setupObj = {
+        playerDeck: pDeckShuffled,
+        opponentDeck: oDeckShuffled,
+        initiative: payload.initiative
+      };
+
+      this.startSyncedMatch(pLeader, payload.opponent.leader || payload.opponent.username, setupObj);
+    });
+
+    socketManager.on('state_update', (payload) => {
+      if (this.isMultiplayer) {
+        // In multiplayer, the engine is fully authoritative from the backend.
+        // Reverse opponent and player if we are the guest
+        let stateObj = payload;
+        if (!this.isHost && payload) {
+          stateObj = { ...payload, player: payload.opponent, opponent: payload.player };
+          if (payload.initiative === 'player') stateObj.initiative = 'opponent';
+          else if (payload.initiative === 'opponent') stateObj.initiative = 'player';
+          if (payload.pendingAttack) {
+            stateObj.pendingAttack = { ...payload.pendingAttack, attackerKey: payload.pendingAttack.attackerKey === 'player' ? 'opponent' : 'player' };
+          }
+          if (payload.beamClashData) {
+            stateObj.beamClashData = {
+              ...payload.beamClashData,
+              p1Progress: 100 - payload.beamClashData.p1Progress
+            };
+          }
+        }
+        this.engine.applyFullSyncState(stateObj);
+      }
+    });
+
+    socketManager.on('game_fx', (payload) => {
+      if (this.isMultiplayer) {
+        let fxData = payload.data || {};
+        // If we are guest, server's "player" is our "opponent" and vice versa
+        if (!this.isHost) {
+          if (fxData.attackerKey) {
+            fxData.attackerKey = fxData.attackerKey === 'player' ? 'opponent' : 'player';
+          }
+          if (fxData.defenderKey) {
+            fxData.defenderKey = fxData.defenderKey === 'player' ? 'opponent' : 'player';
+          }
+        }
+        this.engine.fx(payload.type, fxData);
+      }
+    });
+
+    socketManager.on('opponent_disconnected', (payload) => {
+      if (this.isMultiplayer && typeof uiManager !== 'undefined' && uiManager) {
+        uiManager.triggerActionBanner(
+          'OPONENTE DESCONECTOU! VITÓRIA POR W.O.',
+          'act-defense', 'FIM DE PARTIDA'
+        );
+      }
+    });
   }
 
   broadcastMove(actionType, data) {
-    if (!this.isMultiplayer || !this.roomCode || !db) return;
+    if (!this.isMultiplayer || !this.roomCode) return;
     try {
-      push(ref(db, `rooms/${this.roomCode}/moves`), {
-        uid: this.myUid,
+      socketManager.emit('game_action', {
         action: actionType,
-        data: data || {},
-        timestamp: Date.now()
+        data: data || {}
       });
     } catch(e) {
-      console.warn("Failed to broadcast move:", e);
+      console.warn("Failed to send action:", e);
     }
   }
 
-  onRemoteMove(snapshot) {
-    const move = snapshot.val();
-    if (!move) return;
-    
-    if (move.uid !== this.myUid && move.uid !== this.opponentUid) return;
-
-    const isMe = move.uid === this.myUid;
-    const actorKey = isMe ? 'player' : 'opponent';
-
-    if (move.action === 'playCard') {
-      this.engine._playCard(actorKey, move.data.cardIndex);
-    } else if (move.action === 'chargeKi') {
-      this.engine._chargeKi(actorKey);
-    } else if (move.action === 'passTurn') {
-      this.engine._passTurn(actorKey);
-    } else if (move.action === 'mashBeamClash') {
-      this.engine._mashBeamClash(actorKey);
-    } else if (move.action === 'beamClashEnd') {
-      this.engine.resolveBeamClashWinner(move.data.winnerKey);
-    }
-  }
-
-  listenToMoves() {
-    if (this.movesUnsubscribe) this.movesUnsubscribe();
-    this.movesUnsubscribe = onChildAdded(ref(db, `rooms/${this.roomCode}/moves`), (snapshot) => {
-      this.onRemoteMove(snapshot);
-    });
-  }
+  // Removed onRemoteMove as server is now completely authoritative
 
   startRanked1v1Matchmaking(leaderKey, deck) {
     this.mode = 'ranked_1v1';
     this.isMultiplayer = true;
+    this.isPaired = false;
     
     const mmModal = document.getElementById('matchmaking-modal');
     const mmTimer = document.getElementById('mm-timer');
@@ -91,189 +154,72 @@ export class MultiplayerManager {
     
     this.clearMatchmaking();
     
-    this.myUid = (typeof authManager !== 'undefined' && authManager.user?.uid) 
+    const baseUid = (typeof authManager !== 'undefined' && authManager.user?.uid) 
       ? authManager.user.uid 
-      : 'user_' + Math.floor(1000 + Math.random() * 9000);
+      : 'user';
+    this.myUid = baseUid + '_' + Math.random().toString(36).substring(2, 11);
     const pLeader = leaderKey || (typeof authManager !== 'undefined' && authManager.user?.selectedLeader) || 'goku';
+    this.pendingLeaderKey = pLeader; // Store exactly what we queued with
+    
     const myUsername = (typeof authManager !== 'undefined' && authManager.user?.displayName) 
       ? authManager.user.displayName : 'Guerreiro Z';
     
     const finalDeck = (Array.isArray(deck) && deck.length >= 5) ? deck : deckBuilder.getDeckForLeader(pLeader);
 
-    if (db) {
-      try {
-        // Step 1: Write our entry to the matchmaking queue
-        this.myQueueRef = ref(db, `matchmaking/${this.myUid}`);
-        set(this.myQueueRef, {
-          uid: this.myUid,
-          username: myUsername,
-          leader: pLeader,
-          deck: finalDeck,
-          timestamp: Date.now(),
-          paired: false  // not paired yet
-        });
+    this.myLeader = pLeader;
+    this.myDeck = finalDeck;
 
-        // Step 2: Listen for the queue to find an opponent
-        const mmRef = ref(db, 'matchmaking');
-        this.mmUnsubscribe = onValue(mmRef, (snapshot) => {
-          const queue = snapshot.val() || {};
-          const myEntry = queue[this.myUid];
-          
-          // If we already have a room (pairedByOpponent), start as guest
-          if (myEntry && myEntry.paired === true && myEntry.pairedWith) {
-            const paired = myEntry.pairedWith;
-            this.opponentUid = paired.opponentUid;
-            this.roomCode = paired.roomCode;
-            this.isHost = false;
-            
-            // Clean up our own entry
-            this.clearMatchmaking();
-            
-            if (mmModal) mmModal.classList.remove('active');
-            
-            try { chatManager.setRoom(this.roomCode); } catch(e) { console.warn('setRoom guest:', e); }
-            
-            if (typeof uiManager !== 'undefined' && uiManager) {
-              uiManager.triggerActionBanner(
-                `GUERREIRO ENCONTRADO: ${paired.opponentUsername}!`,
-                'act-attack', 'VS JOGADOR REAL'
-              );
-            }
-            
-            // Wait for host to set up the room, then read setup
-            this.setupUnsubscribe = onValue(ref(db, `rooms/${this.roomCode}/setup`), (snap) => {
-              const setupObj = snap.val();
-              if (setupObj) {
-                if (this.setupUnsubscribe) this.setupUnsubscribe();
-                const guestSetup = {
-                  playerDeck: setupObj.opponentDeck,
-                  opponentDeck: setupObj.playerDeck,
-                  initiative: setupObj.initiative === 'player' ? 'opponent' : 'player'
-                };
-                this.startSyncedMatch(pLeader, paired.opponentLeader || paired.opponentUsername, guestSetup);
-              }
-            });
-            return;
-          }
-          
-          // Step 3: Look for unpaired opponents
-          const otherKeys = Object.keys(queue).filter(
-            k => k !== this.myUid && queue[k] && queue[k].paired !== true
-          );
+    this.lastUserData = {
+      uid: this.myUid,
+      username: myUsername,
+      leader: pLeader,
+      deck: finalDeck
+    };
 
-          if (otherKeys.length > 0 && myEntry && myEntry.paired !== true) {
-            const opponentUid = otherKeys[0];
-            const opponent = queue[opponentUid];
-            
-            // Sort UIDs to deterministically decide who pairs who
-            if (this.myUid < opponentUid) {
-              // We are the HOST — we mark the opponent as paired and create the room
-              this.opponentUid = opponentUid;
-              this.roomCode = `${this.myUid}_${opponentUid}`;
-              this.isHost = true;
-              
-              // Write pairedWith to opponent's entry (two-phase commit)
-              const updates = {};
-              updates[`matchmaking/${opponentUid}/paired`] = true;
-              updates[`matchmaking/${opponentUid}/pairedWith`] = {
-                opponentUid: this.myUid,
-                opponentUsername: myUsername,
-                opponentLeader: pLeader,
-                roomCode: this.roomCode
-              };
-              
-              update(ref(db), updates).then(() => {
-                // Remove our own entry from queue
-                this.clearMatchmaking();
-                
-                if (mmModal) mmModal.classList.remove('active');
-                
-                try { chatManager.setRoom(this.roomCode); } catch(e) { console.warn('setRoom host:', e); }
-                
-                if (typeof uiManager !== 'undefined' && uiManager) {
-                  uiManager.triggerActionBanner(
-                    `GUERREIRO ONLINE: ${opponent.username}!`,
-                    'act-attack', 'VS JOGADOR REAL'
-                  );
-                }
-                
-                this.setupRoomAndMatch(pLeader, finalDeck, opponent.leader, opponent.deck);
-              });
-            }
-            // If opponentUid < myUid, the opponent will pair us — wait for pairedWith field
-          }
-        });
-      } catch(e) {
-        console.warn('[Matchmaking] Realtime queue warning:', e);
-      }
-    }
-    
+    console.log(`[MultiplayerManager] Entering queue as: ${myUsername} (${this.myUid})`);
+
+    socketManager.emit('join_matchmaking', this.lastUserData);
+
     this.mmInterval = setInterval(() => {
       seconds++;
       const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
       const secs = String(seconds % 60).padStart(2, '0');
       if (mmTimer) mmTimer.textContent = `${mins}:${secs}`;
       
-      // Fallback to bot if wait is too long
-      if (seconds >= 20) {
+      // Extended timer to 60 seconds for comfortable local/online pairing
+      if (seconds >= 60) {
+        socketManager.emit('leave_matchmaking');
         this.fallbackToBotAI(leaderKey, deck);
       }
     }, 1000);
-    
+
     if (cancelBtn) {
       cancelBtn.onclick = () => {
+        socketManager.emit('leave_matchmaking');
         this.clearMatchmaking();
         if (mmModal) mmModal.classList.remove('active');
       };
     }
   }
 
-  setupRoomAndMatch(pLeader, pDeck, oLeader, oDeck) {
-    // Host generates the shuffled decks and seed
-    const pDeckShuffled = this.engine.secureShuffle([...pDeck]);
-    const oDeckShuffled = this.engine.secureShuffle([...oDeck]);
-    
-    const cryptoBuf = new Uint32Array(1);
-    window.crypto.getRandomValues(cryptoBuf);
-    const initiative = cryptoBuf[0] % 2 === 0 ? 'player' : 'opponent';
-
-    const setupObj = {
-      playerUid: this.myUid,
-      opponentUid: this.opponentUid,
-      playerLeader: pLeader,
-      opponentLeader: oLeader,
-      playerDeck: pDeckShuffled,
-      opponentDeck: oDeckShuffled,
-      initiative: initiative
-    };
-
-    set(ref(db, `rooms/${this.roomCode}/setup`), setupObj).then(() => {
-      this.startSyncedMatch(pLeader, oLeader, setupObj);
-    });
-  }
-
   startSyncedMatch(pLeader, oLeader, setupObj) {
-    this.listenToMoves();
     this.engine.startMatch(pLeader, oLeader, [], false, setupObj);
     sceneManager.switchScene(GAME_SCENES.ARENA);
+    // State will automatically be synced from the server's initial emit
   }
 
   clearMatchmaking() {
+    this.isPaired = false;
     if (this.mmInterval) {
       clearInterval(this.mmInterval);
       this.mmInterval = null;
     }
-    if (this.mmUnsubscribe) {
-      this.mmUnsubscribe();
-      this.mmUnsubscribe = null;
+    if (this.syncInterval) {
+      clearInterval(this.syncInterval);
+      this.syncInterval = null;
     }
-    if (this.pairedUnsubscribe) {
-      this.pairedUnsubscribe();
-      this.pairedUnsubscribe = null;
-    }
-    if (this.myQueueRef && db) {
-      try { remove(this.myQueueRef); } catch(e){}
-    }
+    delete this.myLeader;
+    delete this.myDeck;
   }
 
   fallbackToBotAI(leaderKey, deck) {

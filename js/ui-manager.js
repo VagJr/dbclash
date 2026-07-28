@@ -1110,7 +1110,8 @@ export class UIManager {
 
     const sendChatMsg = () => {
       if (this.chatInput?.value.trim()) {
-        chatManager.addMessage(authDatabase.getCurrentUser().username, this.chatInput.value.trim());
+        const chatUsername = (typeof authManager !== 'undefined' && authManager.user?.displayName) ? authManager.user.displayName : 'Guerreiro Z';
+        chatManager.addMessage(chatUsername, this.chatInput.value.trim());
         this.chatInput.value = '';
         this.renderChat();
       }
@@ -1268,28 +1269,35 @@ export class UIManager {
       if (engine.pendingAttack) {
         const attackerName = engine.pendingAttack.attackerKey === 'player' ? p.name : opp.name;
         const attackCard = engine.pendingAttack.card;
-
-        this.dropZone.innerHTML = `
-          <div class="dbz-pending-action-badge">
-            <div class="dpab-bg"></div>
-            <div class="dpab-content">
-              <span class="dpab-tag">[ CARTA EM CAMPO ]</span>
-              <span class="dpab-title">${attackCard.name.toUpperCase()}</span>
-              <span class="dpab-sub">POR ${attackerName.toUpperCase()}</span>
+        const currentCardId = this.dropZone.dataset.currentCardId;
+        
+        if (currentCardId !== attackCard.id) {
+          this.dropZone.innerHTML = `
+            <div class="dbz-pending-action-badge">
+              <div class="dpab-bg"></div>
+              <div class="dpab-content">
+                <span class="dpab-tag">[ CARTA EM CAMPO ]</span>
+                <span class="dpab-title">${attackCard.name.toUpperCase()}</span>
+                <span class="dpab-sub">POR ${attackerName.toUpperCase()}</span>
+              </div>
             </div>
-          </div>
-          <div class="played-card-slot">
-            <div class="card type-${attackCard.type}${attackCard.rarity === 'super-rare' ? ' super-rare' : ''}">
-              ${assetLoader.renderCardArtHTML(attackCard)}
-              <div class="card-header"><div class="card-ki-cost">${attackCard.cost}</div></div>
-              <div class="card-title">${attackCard.name.toUpperCase()}</div>
-              <div class="card-type-tag tag-${attackCard.type}">${attackCard.type.toUpperCase()}</div>
-              ${attackCard.power > 0 ? `<div class="card-power-badge">${attackCard.power} ATK</div>` : ''}
+            <div class="played-card-slot">
+              <div class="card type-${attackCard.type}${attackCard.rarity === 'super-rare' ? ' super-rare' : ''}">
+                ${assetLoader.renderCardArtHTML(attackCard)}
+                <div class="card-header"><div class="card-ki-cost">${attackCard.cost}</div></div>
+                <div class="card-title">${attackCard.name.toUpperCase()}</div>
+                <div class="card-type-tag tag-${attackCard.type}">${attackCard.type.toUpperCase()}</div>
+                ${attackCard.power > 0 ? `<div class="card-power-badge">${attackCard.power} ATK</div>` : ''}
+              </div>
             </div>
-          </div>
-        `;
+          `;
+          this.dropZone.dataset.currentCardId = attackCard.id;
+        }
       } else {
-        this.dropZone.innerHTML = '';
+        if (this.dropZone.dataset.currentCardId) {
+          this.dropZone.innerHTML = '';
+          this.dropZone.dataset.currentCardId = '';
+        }
       }
     }
 
@@ -1301,11 +1309,17 @@ export class UIManager {
     }
 
     // Beam Clash
-    if (engine.state === 'BEAM_CLASH' && engine.beamClash.active) {
+    if (engine.state === 'BEAM_CLASH' && engine.beamClashData) {
       this.beamClashOverlay?.classList.add('active');
-      if (this.beamClashFill) this.beamClashFill.style.width = `${engine.beamClash.playerClicks}%`;
+      if (this.beamClashFill) this.beamClashFill.style.width = `${engine.beamClashData.p1Progress}%`;
+      this.fx.triggerBeamClash(
+        engine.beamClashData.p1Progress,
+        engine.player?.leader?.color || '#00f2fe',
+        engine.opponent?.leader?.color || '#ffd700'
+      );
     } else {
       this.beamClashOverlay?.classList.remove('active');
+      if (this.fx && this.fx.activeClash) this.fx.activeClash = null;
     }
 
         // Beam Clash Button & Overlay
@@ -1443,6 +1457,11 @@ export class UIManager {
   /* ── Player Hand & Touch Gesture Slide Pop-up ──────────────────────── */
   renderPlayerHand(hand, playerKi, gameState, initiative, pendingAttack, isOpenGuard) {
     if (!this.p1HandContainer) return;
+    
+    const renderHash = (hand || []).map(c => c.id).join(',') + `|${playerKi}|${gameState}|${initiative}|${isOpenGuard}`;
+    if (this.p1HandContainer.dataset.renderHash === renderHash) return;
+    this.p1HandContainer.dataset.renderHash = renderHash;
+
     this.p1HandContainer.innerHTML = '';
 
     hand.forEach((card, index) => {

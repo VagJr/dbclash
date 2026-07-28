@@ -1,11 +1,9 @@
 /* ==========================================================================
    Dragon Ball Clash Action TCG — Authentication & Account Manager
-   Handles Login, Sign-Up, Guest Auth, Cloud Save & Progress Sync
+   Handles MongoDB Atlas Cloud Auth, Login, Sign-Up, Progress Sync & Local Cache
    ========================================================================== */
 
 import { getStarterDeckForLeader } from './card-database.js';
-import { db } from './firebase-config.js';
-import { ref, set } from 'firebase/database';
 
 export class AuthManager {
   constructor() {
@@ -29,6 +27,14 @@ export class AuthManager {
     } else {
       this.createGuestUser();
     }
+  }
+
+  getServerUrl() {
+    if (typeof socketManager !== 'undefined' && socketManager && socketManager.serverUrl) {
+      return socketManager.serverUrl;
+    }
+    if (typeof window !== 'undefined' && window.SERVER_URL) return window.SERVER_URL;
+    return 'https://dbclash-server.onrender.com';
   }
 
   getDefaultOwnedCards() {
@@ -80,52 +86,130 @@ export class AuthManager {
       customDecks: {},
       ownedCards: this.getDefaultOwnedCards(),
       raidTrophies: 0,
+      zeni: 500,
+      gems: 10,
       createdAt: new Date().toISOString()
     };
     this.saveUser();
   }
 
   saveUser() {
-    if (this.user && typeof localStorage !== 'undefined') {
-      localStorage.setItem(this.storageKey, JSON.stringify(this.user));
+    if (!this.user) return;
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(this.storageKey, JSON.stringify(this.user));
+      }
+      // If logged in with real MongoDB user, sync to cloud asynchronously
+      if (!this.user.isGuest && this.user.uid) {
+        const serverUrl = this.getServerUrl();
+        fetch(`${serverUrl}/api/user/sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ uid: this.user.uid, userData: this.user })
+        }).catch(err => console.warn('[AuthManager] Cloud sync fallback:', err.message));
+      }
+    } catch(e) {}
+  }
+
+  async login(email, password) {
+    if (!email || !password) return { success: false, message: 'Digite e-mail e senha!' };
+    try {
+      const serverUrl = this.getServerUrl();
+      const res = await fetch(`${serverUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        this.user = data.user;
+        this.saveUser();
+        return { success: true, user: this.user };
+      } else {
+        return { success: false, message: data.message || 'Erro ao realizar login.' };
+      }
+    } catch (err) {
+      console.warn('[AuthManager] Online login failed, attempting local fallback:', err);
+      const username = email.split('@')[0];
+      this.user = {
+        ...this.user,
+        displayName: username.toUpperCase(),
+        email,
+        isGuest: false
+      };
+      this.saveUser();
+      return { success: true, user: this.user };
     }
   }
 
-  login(email, password) {
-    if (!email) return { success: false, message: 'Digite um email válido!' };
-    const username = email.split('@')[0];
-    this.user = {
-      ...this.user,
-      displayName: username.toUpperCase(),
-      email,
-      isGuest: false
-    };
-    this.saveUser();
-    return { success: true, user: this.user };
+  async signUp(displayName, email, password) {
+    if (!email || !password || !displayName) {
+      return { success: false, message: 'Preencha todos os campos!' };
+    }
+    try {
+      const serverUrl = this.getServerUrl();
+      const res = await fetch(`${serverUrl}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          displayName: displayName.trim(),
+          email: email.trim(),
+          password,
+          initialData: {
+            ownedCards: this.user ? this.user.ownedCards : this.getDefaultOwnedCards(),
+            unlockedLeaders: this.user ? this.user.unlockedLeaders : ['goku', 'vegeta', 'gohan', 'frieza'],
+            selectedLeader: this.user ? this.user.selectedLeader : 'goku',
+            customDecks: this.user ? this.user.customDecks : {},
+            zeni: this.user ? (this.user.zeni || 500) : 500,
+            gems: this.user ? (this.user.gems || 10) : 10
+          }
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        this.user = data.user;
+        this.saveUser();
+        return { success: true, user: this.user };
+      } else {
+        return { success: false, message: data.message || 'Erro ao criar conta.' };
+      }
+    } catch (err) {
+      console.warn('[AuthManager] Online signup failed, using local registration:', err);
+      this.user = {
+        uid: 'user_' + Date.now(),
+        displayName: displayName.trim(),
+        email: email.trim(),
+        isGuest: false,
+        level: 1,
+        xp: 0,
+        rankPoints: 1000,
+        division: 'Bronze I',
+        victories: 0,
+        losses: 0,
+        unlockedLeaders: ['goku', 'vegeta', 'gohan', 'frieza'],
+        selectedLeader: 'goku',
+        customDecks: {},
+        ownedCards: this.getDefaultOwnedCards(),
+        raidTrophies: 0,
+        zeni: 500,
+        gems: 10,
+        createdAt: new Date().toISOString()
+      };
+      this.saveUser();
+      return { success: true, user: this.user };
+    }
   }
 
-  signUp(displayName, email, password) {
-    if (!email || !displayName) return { success: false, message: 'Preencha todos os campos!' };
-    this.user = {
-      uid: 'user_' + Date.now(),
-      displayName: displayName.trim(),
-      email: email.trim(),
-      isGuest: false,
-      level: 1,
-      xp: 0,
-      rankPoints: 1000,
-      division: 'Bronze I',
-      victories: 0,
-      losses: 0,
-      unlockedLeaders: ['goku', 'vegeta', 'gohan', 'frieza'],
-      selectedLeader: 'goku',
-      customDecks: {},
-      ownedCards: this.getDefaultOwnedCards(),
-      raidTrophies: 0,
-      createdAt: new Date().toISOString()
-    };
-    this.saveUser();
-    return { success: true, user: this.user };
+  async fetchLeaderboard() {
+    try {
+      const serverUrl = this.getServerUrl();
+      const res = await fetch(`${serverUrl}/api/leaderboard`);
+      const data = await res.json();
+      if (data.success) return data.leaderboard;
+      return [];
+    } catch (err) {
+      return [];
+    }
   }
 
   recordMatchResult(isWin, rankPointsDelta = 25) {
@@ -140,20 +224,7 @@ export class AuthManager {
       this.user.xp += 50;
     }
     this.updateDivision();
-    this.updateDivision();
     this.saveUser();
-  }
-
-  saveUser() {
-    if (!this.user) return;
-    try {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(this.storageKey, JSON.stringify(this.user));
-      }
-      if (db && !this.user.isGuest) {
-        set(ref(db, `users/${this.user.uid}`), this.user);
-      }
-    } catch(e) {}
   }
 
   updateDivision() {

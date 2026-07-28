@@ -1,9 +1,8 @@
 /* ==========================================================================
-   Dragon Ball Clash Action TCG - Dojo Leaderboards & Real-Time Firebase Chat
+   Dragon Ball Clash Action TCG - Dojo Leaderboards & Real-Time Socket.io Chat
    ========================================================================== */
 
-import { db } from './firebase-config.js';
-import { ref, push, onChildAdded } from 'firebase/database';
+import { socketManager } from './socket-config.js';
 
 export const DOJO_RANKINGS = [
   { name: "Kame School Dojo", leader: "Master Roshi", power: 15420, icon: "🐢" },
@@ -18,59 +17,54 @@ class ChatManager {
     this.messages = [];
     this.onMessageCallback = null;
     this.currentRoom = null;
-    this.chatListenerUnsubscribe = null;
-    this.initFirebaseChat('global_chat');
+    this.initSocketChat();
   }
 
   setRoom(roomId) {
-    this.currentRoom = roomId;
+    this.currentRoom = roomId || null;
     this.messages = [];
-    this.initFirebaseChat(roomId ? `rooms/${roomId}/chat` : 'global_chat');
   }
 
-  initFirebaseChat(path) {
-    if (!db) return;
-    try {
-      if (this.chatListenerUnsubscribe) {
-        // Since Firebase V9 onChildAdded returns the unsubscribe function
-        this.chatListenerUnsubscribe();
+  initSocketChat() {
+    socketManager.on('chat_message', (data) => {
+      if (!data) return;
+
+      // Filtering: Room chat vs Global chat
+      const isRoomMsg = !!data.roomCode && data.roomCode !== 'global';
+      if (isRoomMsg) {
+        // If message belongs to another room, drop it
+        if (this.currentRoom !== data.roomCode) return;
+      } else {
+        // If it's a global message, only show if we are in global chat (not in a match room)
+        if (this.currentRoom !== null && this.currentRoom !== 'global') return;
       }
-      const chatRef = ref(db, path);
-      this.chatListenerUnsubscribe = onChildAdded(chatRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          const msg = {
-            user: data.user || 'Guerreiro Z',
-            text: data.text || '',
-            time: data.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          };
-          this.messages.push(msg);
-          if (this.onMessageCallback) {
-            this.onMessageCallback(msg);
-          }
-        }
-      });
-    } catch (e) {
-      console.warn('[ChatManager] Firebase chat error:', e);
-    }
+
+      const msg = {
+        user: data.user || 'Guerreiro Z',
+        text: data.text || '',
+        time: data.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        roomCode: data.roomCode || null
+      };
+
+      this.messages.push(msg);
+
+      if (this.onMessageCallback) {
+        this.onMessageCallback(msg);
+      }
+    });
   }
 
   addMessage(user, text) {
     if (!text || !text.trim()) return null;
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const msg = { user, text: text.trim(), time };
-    
-    if (db) {
-      try {
-        const path = this.currentRoom ? `rooms/${this.currentRoom}/chat` : 'global_chat';
-        push(ref(db, path), msg);
-      } catch (e) {
-        this.messages.push(msg);
-      }
-    } else {
-      this.messages.push(msg);
-    }
-    return msg;
+
+    // Send chat to server via WebSockets
+    socketManager.emit('send_chat', {
+      user: user || 'Guerreiro Z',
+      text: text.trim(),
+      roomCode: this.currentRoom || null
+    });
+
+    return null;
   }
 }
 

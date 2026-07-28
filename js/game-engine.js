@@ -96,10 +96,12 @@ export class GameEngine {
       discard: []
     };
 
+    this.attackResolved = false;
     this.pendingAttack = null;
     this.beamClashData = null;
     this.reactionTimer = null;
     this.reactionSecondsLeft = 3.0;
+    this.attackSafetyTimer = null;
     this.isAiMatch = true;
   }
 
@@ -142,6 +144,19 @@ export class GameEngine {
       const cryptoBuf = new Uint32Array(1);
       window.crypto.getRandomValues(cryptoBuf);
       const j = cryptoBuf[0] % (i + 1);
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  // Deterministic shuffle for discard→deck refill so both clients get the same order
+  deterministicShuffle(array) {
+    if (!Array.isArray(array) || array.length === 0) return [];
+    const copy = [...array];
+    let seed = array.length;
+    for (let i = copy.length - 1; i > 0; i--) {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      const j = seed % (i + 1);
       [copy[i], copy[j]] = [copy[j], copy[i]];
     }
     return copy;
@@ -207,7 +222,7 @@ export class GameEngine {
       if (target.hand.length >= 7) break;
       if (target.deck.length === 0) {
         if (target.discard.length === 0) break;
-        target.deck = this.secureShuffle(target.discard);
+        target.deck = this.deterministicShuffle(target.discard);
         target.discard = [];
       }
       const cardId = target.deck.pop();
@@ -220,7 +235,10 @@ export class GameEngine {
   }
 
   chargeKi(actorKey) {
-    if (this.onLocalAction && actorKey === 'player' && !this.isAiMatch) { this.onLocalAction('chargeKi', {}); return; }
+    if (this.onLocalAction && actorKey === 'player' && !this.isAiMatch) {
+      this.onLocalAction('chargeKi', {});
+      return; // Thin client: Wait for server response
+    }
     this._chargeKi(actorKey);
   }
 
@@ -235,12 +253,15 @@ export class GameEngine {
     }
     this.notifyState();
     if (this.state === 'FREE_ACTION' && this.initiative === actorKey) {
-      this.passTurn(actorKey);
+      this._passTurn(actorKey);
     }
   }
 
   passTurn(actorKey) {
-    if (this.onLocalAction && actorKey === 'player' && !this.isAiMatch) { this.onLocalAction('passTurn', {}); return; }
+    if (this.onLocalAction && actorKey === 'player' && !this.isAiMatch) {
+      this.onLocalAction('passTurn', {});
+      return; // Thin client: Wait for server response
+    }
     this._passTurn(actorKey);
   }
 
@@ -259,30 +280,38 @@ export class GameEngine {
   }
 
   playCard(actorKey, handIndex) {
-    // Broadcast to opponent in multiplayer
+    // Thin client execution: broadcast intent FIRST
     if (this.onLocalAction && actorKey === 'player' && !this.isAiMatch) {
-      this.onLocalAction('playCard', { cardIndex: handIndex });
-      return;
+      const card = this.player.hand[handIndex];
+      this.onLocalAction('playCard', { cardIndex: handIndex, cardId: card ? card.id : null });
+      return; // Thin client: Wait for server response
     }
     this._playCard(actorKey, handIndex);
   }
 
-  _playCard(actorKey, handIndex) {
+  _playCard(actorKey, handIndex, remoteCardId) {
     const actor = actorKey === 'player' ? this.player : this.opponent;
 
-    if (handIndex < 0 || handIndex >= actor.hand.length) return;
-    const card = actor.hand[handIndex];
+    let actualIndex = handIndex;
+    if (remoteCardId) {
+      const foundIndex = actor.hand.findIndex(c => c.id === remoteCardId);
+      if (foundIndex !== -1) actualIndex = foundIndex;
+    }
+
+    if (actualIndex < 0 || actualIndex >= actor.hand.length) return;
+    const card = actor.hand[actualIndex];
 
     if (actor.ki < card.cost) return;
 
     actor.ki -= card.cost;
-    actor.hand.splice(handIndex, 1);
+    actor.hand.splice(actualIndex, 1);
     actor.discard.push(card.id);
 
     if (this.state === 'FREE_ACTION' && this.initiative === actorKey) {
       if (card.type === 'attack' || card.type === 'tech') {
         this.pendingAttack = { attackerKey: actorKey, card };
         this.state = 'ATTACK_PENDING';
+        this.attackResolved = false;
         this.log(`${actor.name} jogou ${card.name}!`, 'damage');
 
         const cardNameLower = (card.name || '').toLowerCase();
@@ -313,7 +342,25 @@ export class GameEngine {
     this.clearReactionTimer();
     this.reactionSecondsLeft = 3.0;
     const intervalMs = 100;
-    
+
+    // In online multiplayer, only the DEFENDER runs the 3s timer.
+    // The attacker relies on the defender's broadcast (with a backup safety timer).
+    const isOnline = !this.isAiMatch;
+    const isAttacker = this.pendingAttack && this.pendingAttack.attackerKey === 'player';
+
+    if (isOnline && isAttacker) {
+      this.reactionSecondsLeft = 5.0;
+      this.reactionTimer = setInterval(() => {
+        this.reactionSecondsLeft -= 0.1;
+        if (this.onTimerTick) this.onTimerTick(this.reactionSecondsLeft, 5.0);
+        if (this.reactionSecondsLeft <= 0) {
+          this.clearReactionTimer();
+          this.resolveUnansweredAttack();
+        }
+      }, intervalMs);
+      return;
+    }
+
     this.reactionTimer = setInterval(() => {
       this.reactionSecondsLeft -= 0.1;
       if (this.onTimerTick) this.onTimerTick(this.reactionSecondsLeft, 3.0);
@@ -329,10 +376,15 @@ export class GameEngine {
       clearInterval(this.reactionTimer);
       this.reactionTimer = null;
     }
+    if (this.attackSafetyTimer) {
+      clearTimeout(this.attackSafetyTimer);
+      this.attackSafetyTimer = null;
+    }
   }
 
   resolveUnansweredAttack() {
-    if (!this.pendingAttack) return;
+    if (!this.pendingAttack || this.attackResolved) return;
+    this.attackResolved = true;
     const { attackerKey, card } = this.pendingAttack;
     const attacker = attackerKey === 'player' ? this.player : this.opponent;
     const defender = attackerKey === 'player' ? this.opponent : this.player;
@@ -348,17 +400,51 @@ export class GameEngine {
     this.notifyState();
 
     // Leader Passive: Goku gains +1 Ki on taking direct damage
-    if (defender.leader && defender.leader.id === 'goku' && defender.ki < 10) {
+    const gokuKiGain = defender.leader && defender.leader.id === 'goku' && defender.ki < 10;
+    if (gokuKiGain) {
       defender.ki = Math.min(10, defender.ki + 1);
       this.log(`⚡ Passive Goku: +1 Ki por receber dano!`, 'info');
     }
 
     // Leader Passive: Gohan draws 2 cards on Shield Break
-    if (attacker.leader && attacker.leader.id === 'gohan' && prevShields > defender.shields) {
+    const gohanShieldBreak = attacker.leader && attacker.leader.id === 'gohan' && prevShields > defender.shields;
+    if (gohanShieldBreak) {
       this.drawCard(attacker, 2);
       this.log(`💥 Passive Gohan: Escudo destruído! Comprou 2 cartas.`, 'info');
     }
 
+    // Broadcast result for remote sync (absolute HP values + passives)
+    if (this.onLocalAction && !this.isAiMatch) {
+      const passives = {};
+      if (gokuKiGain) passives.gokuKiGain = true;
+      if (gohanShieldBreak) passives.gohanShieldBreak = true;
+      this.onLocalAction('resolveAttack', {
+        attackerKey,
+        defenderHp: defender.hp,
+        defenderShields: defender.shields,
+        damage: dmg,
+        passives: Object.keys(passives).length > 0 ? passives : undefined
+      });
+    }
+
+    this._playAttackFX(card, attackerKey, dmg);
+
+    if (defender.hp <= 0) {
+      this.state = 'GAME_OVER';
+      this.winner = attackerKey;
+      this.log(`K.O.! ${attacker.name} venceu a batalha!`, 'info');
+      return;
+    }
+
+    this.pendingAttack = null;
+    this.state = 'FREE_ACTION';
+    this._passTurn(attackerKey);
+  }
+
+  _playAttackFX(card, attackerKey, dmg) {
+    if (!card) return;
+    const attacker = attackerKey === 'player' ? this.player : this.opponent;
+    const defender = attackerKey === 'player' ? this.opponent : this.player;
     const cardNameLower = (card.name || '').toLowerCase();
     const cardIdLower = (card.id || '').toLowerCase();
 
@@ -402,17 +488,42 @@ export class GameEngine {
 
     this.log(`${attacker.name} acertou ${card.name} causando ${dmg} de dano em ${defender.name}!`, 'damage');
     this.checkAwaken(defender);
+  }
 
-    if (defender.hp <= 0) {
-      this.state = 'GAME_OVER';
-      this.winner = attackerKey;
-      this.log(`K.O.! ${attacker.name} venceu a batalha!`, 'info');
-      return;
+  applyResolvedAttack(data) {
+    if (this.state !== 'ATTACK_PENDING' || !this.pendingAttack) return;
+    this.clearReactionTimer();
+    const atkKey = data.attackerKey;
+    const defender = atkKey === 'player' ? this.player : this.opponent;
+    defender.hp = data.defenderHp;
+    defender.shields = data.defenderShields;
+
+    if (!this.attackResolved && data.passives) {
+      const attacker = atkKey === 'player' ? this.opponent : this.player;
+      if (data.passives.gohanShieldBreak) {
+        this.drawCard(attacker, 2);
+      }
+      if (data.passives.gokuKiGain && defender.ki < 10) {
+        defender.ki = Math.min(10, defender.ki + 1);
+      }
     }
+
+    this.attackResolved = true;
+
+    const card = this.pendingAttack ? this.pendingAttack.card : null;
+    if (card && data.damage) {
+      this._playAttackFX(card, atkKey, data.damage);
+    }
+    this.checkGameOver();
+    if (this.state === 'GAME_OVER') return;
 
     this.pendingAttack = null;
     this.state = 'FREE_ACTION';
-    this.passTurn(attackerKey);
+
+    const remoteAttackerKey = atkKey === 'player' ? 'opponent' : 'player';
+    this._passTurn(remoteAttackerKey);
+
+    this.notifyState();
   }
 
   resolveReaction(defenderKey, card) {
@@ -455,94 +566,219 @@ export class GameEngine {
 
     this.pendingAttack = null;
     this.state = 'FREE_ACTION';
-    this.passTurn(attackerKey);
+    this._passTurn(attackerKey);
   }
 
   startBeamClashLoop() {
     this.state = 'BEAM_CLASH';
-    this.beamClashData = { playerMashCount: 0, opponentMashCount: 0, startTime: Date.now() };
+    this.beamClashData = { p1Progress: 50, timer: 6.0 };
     this.log(`🔥 DISPUTA DE BEAM KAMEHAMEHA! Pressione o botão rapidamente!`, 'info');
-    this.clearBeamClashLoop();
-    this.fx('beamClash', { p1Progress: 50, p1Color: this.player.leader.color, p2Color: this.opponent.leader.color });
 
-    // Safety timeout to end beam clash after 6.5s if no one reaches 100/0
-    this.beamClashTimer = setTimeout(() => {
-      if (this.state === 'BEAM_CLASH' && this.beamClashData) {
-        const progress = this.getBeamProgress();
-        this.resolveBeamClashWinner(progress >= 50 ? 'player' : 'opponent');
+    this.clearBeamClashLoop();
+    this.beamClashInterval = setInterval(() => {
+      if (this.state !== 'BEAM_CLASH' || !this.beamClashData) {
+        this.clearBeamClashLoop();
+        return;
       }
-    }, 6500);
+
+      const attackerKey = this.pendingAttack ? this.pendingAttack.attackerKey : 'player';
+      const defenderKey = attackerKey === 'player' ? 'opponent' : 'player';
+
+      this.beamClashData.p1Progress = Math.max(0, this.beamClashData.p1Progress - 1.2);
+      this.beamClashData.timer -= 0.1;
+
+      this.fx('beamClash', {
+        p1Progress: this.beamClashData.p1Progress,
+        p1Color: this.player.leader.color,
+        p2Color: this.opponent.leader.color
+      });
+
+      if (this.beamClashData.p1Progress <= 0) {
+        this.clearBeamClashLoop();
+        this.resolveBeamClashWinner(defenderKey);
+      } else if (this.beamClashData.p1Progress >= 100) {
+        this.clearBeamClashLoop();
+        this.resolveBeamClashWinner(attackerKey);
+      } else if (this.beamClashData.timer <= 0) {
+        this.clearBeamClashLoop();
+        const winnerKey = this.beamClashData.p1Progress >= 50 ? attackerKey : defenderKey;
+        this.resolveBeamClashWinner(winnerKey);
+      }
+    }, 100);
   }
 
-  getBeamProgress() {
-    if (!this.beamClashData) return 50;
-    const net = (this.beamClashData.playerMashCount - this.beamClashData.opponentMashCount) * 7;
-    return Math.max(0, Math.min(100, 50 + net));
+  getSyncState() {
+    return {
+      playerHp: this.player.hp,
+      playerKi: this.player.ki,
+      playerShields: this.player.shields,
+      playerHandSize: this.player.hand.length,
+      opponentHp: this.opponent.hp,
+      opponentKi: this.opponent.ki,
+      opponentShields: this.opponent.shields,
+      opponentHandSize: this.opponent.hand.length,
+      state: this.state,
+      initiative: this.initiative
+    };
+  }
+
+  applyFullSyncState(data) {
+    if (!data || this.isAiMatch) return;
+    
+    // Check for phase transitions to trigger FX
+    const oldState = this.state;
+    
+    this.state = data.state;
+    this.initiative = data.initiative;
+    this.pendingAttack = data.pendingAttack;
+    this.beamClashData = data.beamClashData;
+    this.reactionSecondsLeft = data.reactionSecondsLeft;
+
+    this.player.hp = data.player.hp;
+    this.player.maxHp = data.player.maxHp;
+    this.player.ki = data.player.ki;
+    this.player.shields = data.player.shields;
+    this.player.hand = data.player.hand;
+    this.player.discard = data.player.discard;
+    if (data.player.leader) this.player.leader = data.player.leader;
+    
+    // We don't get the full deck array, just the count, to avoid peeking. 
+    // We can fake it locally or just accept it (the UI only needs length usually)
+    // Actually, server-engine sent the full deck. We should just assign it.
+    if (data.player.deck) this.player.deck = data.player.deck;
+
+    this.opponent.hp = data.opponent.hp;
+    this.opponent.maxHp = data.opponent.maxHp;
+    this.opponent.ki = data.opponent.ki;
+    this.opponent.shields = data.opponent.shields;
+    this.opponent.hand = data.opponent.hand;
+    this.opponent.discard = data.opponent.discard;
+    if (data.opponent.leader) this.opponent.leader = data.opponent.leader;
+    if (data.opponent.deck) this.opponent.deck = data.opponent.deck;
+
+    // Trigger animations for state changes
+    if (oldState !== 'BEAM_CLASH' && this.state === 'BEAM_CLASH') {
+       this.log(`🔥 DISPUTA DE BEAM KAMEHAMEHA! Pressione o botão rapidamente!`, 'info');
+    }
+
+    if (this.state === 'ATTACK_PENDING' && this.onTimerTick) {
+      this.onTimerTick(this.reactionSecondsLeft, 3.0);
+    }
+
+    this.checkGameOver();
+    this.notifyState();
+  }
+
+  applySyncState(data, remote) {
+    if (remote) {
+      this.player.hp = data.opponentHp;
+      this.player.ki = data.opponentKi;
+      this.player.shields = data.opponentShields;
+      this.opponent.hp = data.playerHp;
+      this.opponent.ki = data.playerKi;
+      this.opponent.shields = data.playerShields;
+      this.state = data.state;
+      this.initiative = data.initiative === 'player' ? 'opponent' : 'player';
+    } else {
+      this.player.hp = data.playerHp;
+      this.player.ki = data.playerKi;
+      this.player.shields = data.playerShields;
+      this.opponent.hp = data.opponentHp;
+      this.opponent.ki = data.opponentKi;
+      this.opponent.shields = data.opponentShields;
+      this.state = data.state;
+      this.initiative = data.initiative;
+    }
+    this.notifyState();
   }
 
   clearBeamClashLoop() {
-    if (this.beamClashTimer) {
-      clearTimeout(this.beamClashTimer);
-      this.beamClashTimer = null;
+    if (this.beamClashInterval) {
+      clearInterval(this.beamClashInterval);
+      this.beamClashInterval = null;
     }
   }
 
   mashBeamClash(actorKey = 'player') {
-    if (this.onLocalAction && actorKey === 'player' && !this.isAiMatch) { this.onLocalAction('mashBeamClash', {}); return; }
+    if (this.onLocalAction && actorKey === 'player' && !this.isAiMatch) {
+      this.onLocalAction('mashBeamClash', {});
+      return; // Thin client: Wait for server response
+    }
     this._mashBeamClash(actorKey);
   }
 
   _mashBeamClash(actorKey = 'player') {
     if (this.state !== 'BEAM_CLASH' || !this.beamClashData) return;
 
+    const attackerKey = this.pendingAttack ? this.pendingAttack.attackerKey : 'player';
+    const defenderKey = attackerKey === 'player' ? 'opponent' : 'player';
+
     if (actorKey === 'opponent') {
-      this.beamClashData.opponentMashCount++;
-    } else {
-      this.beamClashData.playerMashCount++;
+      this.beamClashData.p1Progress = Math.max(0, this.beamClashData.p1Progress - 7);
+      if (this.beamClashData.p1Progress <= 0) {
+        this.resolveBeamClashWinner(defenderKey);
+        return;
+      }
+      this.fx('beamClash', {
+        p1Progress: this.beamClashData.p1Progress,
+        p1Color: this.player.leader.color,
+        p2Color: this.opponent.leader.color
+      });
+      return;
     }
 
-    const progress = this.getBeamProgress();
+    this.beamClashData.p1Progress = Math.min(100, this.beamClashData.p1Progress + 7);
     this.fx('beamClash', {
-      p1Progress: progress,
+      p1Progress: this.beamClashData.p1Progress,
       p1Color: this.player.leader.color,
       p2Color: this.opponent.leader.color
     });
 
-    if (progress >= 100) {
-      this.resolveBeamClashWinner('player');
-    } else if (progress <= 0) {
-      this.resolveBeamClashWinner('opponent');
-    } else if (Date.now() - this.beamClashData.startTime >= 6000) {
-      const winnerKey = progress >= 50 ? 'player' : 'opponent';
-      this.resolveBeamClashWinner(winnerKey);
-    } else {
-      this.notifyState();
+    if (this.beamClashData.p1Progress >= 100) {
+      this.resolveBeamClashWinner(attackerKey);
     }
   }
 
-  resolveBeamClashWinner(winnerKey) {
-    // Idempotent: beam clash already resolved
-    if (!this.beamClashData) return;
+  resolveBeamClashWinner(winnerKey, loserHp) {
+    if (loserHp === undefined && !this.beamClashData) return;
 
-    // Broadcast result to sync remote client
-    if (this.onLocalAction && !this.isAiMatch) {
-      this.onLocalAction('beamClashEnd', { winnerKey });
-    }
-
-    const originalAttacker = this.pendingAttack ? this.pendingAttack.attackerKey : this.initiative;
+    this.beamClashData = null;
     this.clearBeamClashLoop();
+
     const winner = winnerKey === 'player' ? this.player : this.opponent;
     const loser = winnerKey === 'player' ? this.opponent : this.player;
 
+    if (loserHp !== undefined) {
+      loser.hp = Math.max(0, loserHp);
+      loser.shields = Math.ceil(loser.hp / 50);
+      this.state = 'FREE_ACTION';
+      this.pendingAttack = null;
+      this.fx('kamehameha', { attackerKey: winnerKey, isGolden: true });
+      this.log(`💥 DISPUTA DE BEAM VENCIDA POR ${winner.name}! Causou 80 HP de dano massivo em ${loser.name}!`, 'damage');
+      if (loser.hp <= 0) {
+        this.state = 'GAME_OVER';
+        this.winner = winnerKey;
+      }
+      this.checkAwaken(loser);
+      this.notifyState();
+      return;
+    }
+
+    const originalAttacker = this.pendingAttack ? this.pendingAttack.attackerKey : this.initiative;
     loser.hp = Math.max(0, loser.hp - 80);
     loser.shields = Math.ceil(loser.hp / 50);
+
+    if (this.onLocalAction && !this.isAiMatch) {
+      const attackerKey = this.pendingAttack ? this.pendingAttack.attackerKey : 'player';
+      const role = winnerKey === attackerKey ? 'attacker' : 'defender';
+      this.onLocalAction('beamClashEnd', { winner: role, loserHp: loser.hp });
+    }
 
     this.fx('kamehameha', { attackerKey: winnerKey, isGolden: true });
     this.log(`💥 DISPUTA DE BEAM VENCIDA POR ${winner.name}! Causou 80 HP de dano massivo em ${loser.name}!`, 'damage');
     
     this.state = 'FREE_ACTION';
     this.pendingAttack = null;
-    this.beamClashData = null;
 
     if (loser.hp <= 0) {
       this.state = 'GAME_OVER';
@@ -551,7 +787,7 @@ export class GameEngine {
     this.notifyState();
 
     if (this.state === 'FREE_ACTION') {
-      this.passTurn(originalAttacker);
+      this._passTurn(originalAttacker);
     }
   }
 
