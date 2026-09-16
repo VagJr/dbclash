@@ -1,0 +1,39 @@
+DBCLASH RC1 - MONGOOSE 9 AUTH HOTFIX
+====================================
+
+Erro confirmado:
+  TypeError: next is not a function
+  server/user-model.js
+
+Causa:
+O projeto usa Mongoose 9. Nesta versao, pre middleware nao recebe mais
+o callback next(). Middleware async deve apenas retornar uma Promise.
+
+Antes:
+  UserSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) return next();
+    ...
+    next();
+  });
+
+Depois:
+  UserSchema.pre('save', async function () {
+    if (!this.isModified('password')) return;
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+  });
+
+APLICAR
+-------
+Na raiz C:\dbclash:
+
+  .\PATCH_RC1_MONGOOSE9_AUTH_HOTFIX.ps1
+
+Depois:
+1. Pare o backend.
+2. Inicie novamente com MONGODB_URI configurada.
+3. Use um nome de usuario NOVO no primeiro cadastro.
+4. Depois faca logout e login com a mesma conta.
+
+Se receber 400 ACCOUNT_EXISTS, esse usuario ja existe. Nesse caso,
+teste LOGIN com ele ou use outro nome de usuario.

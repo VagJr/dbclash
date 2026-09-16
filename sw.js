@@ -53,18 +53,24 @@ async function networkFirst(request) {
   }
 }
 
-async function staleWhileRevalidate(request) {
+async function staleWhileRevalidate(request, event) {
   const cache = await caches.open(RUNTIME_CACHE);
   const cached = await cache.match(request);
 
   const update = fetch(request)
-    .then(response => {
-      if (response?.ok) cache.put(request, response.clone());
+    .then(async response => {
+      if (response?.ok) await cache.put(request, response.clone());
       return response;
     })
     .catch(() => null);
 
-  return cached || update || Response.error();
+  if (cached) {
+    event?.waitUntil(update.then(() => undefined));
+    return cached;
+  }
+
+  const network = await update;
+  return network || Response.error();
 }
 
 self.addEventListener('fetch', event => {
@@ -79,5 +85,5 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  event.respondWith(staleWhileRevalidate(request));
+  event.respondWith(staleWhileRevalidate(request, event));
 });

@@ -1,0 +1,65 @@
+DBCLASH — AI FILL & BOT RUNTIME
+===============================
+
+OBJETIVO
+--------
+- 15 segundos de busca por jogadores humanos.
+- Depois disso, bots completam a partida.
+- Ranked 1v1: 1 humano + 1 bot se nao houver oponente.
+- Ranked 2v2: completa as 4 vagas com bots.
+- Private 1v1/2v2: completa vagas com bots apos 15s.
+- Raid: 1-4 humanos; apos 15s completa o grupo para 4 com bots.
+- Bots jogam pelas mesmas funcoes autoritativas do servidor.
+- Bot avalia ataque, tecnica, custo de Ki, vida, defesa, evade, counter,
+  lethal, Open Guard e Beam Clash.
+- Raid bots escolhem dano, cura, defesa ou carga conforme estado.
+- Boss AI escolhe alvo por ameaca, HP, Ki, fase e identidade do chefe.
+- Bots nunca recebem recompensa em Mongo nem precisam de socket/conta.
+
+APLICAR
+-------
+Na raiz C:\dbclash:
+
+  .\PATCH_AI_FILL_BOTS.ps1
+
+O patch executa:
+  npm run test:bot-ai
+  npm run rc:check
+
+SMOKE TEST 1 — Ranked 1v1
+-------------------------
+1. Entre com UMA conta.
+2. Entre na fila 1x1.
+3. Aguarde 15 segundos sem segundo jogador.
+4. Deve surgir CPU como adversario.
+5. CPU deve atacar/carregar/defender e reagir.
+6. O servidor nao pode cair.
+
+SMOKE TEST 2 — Ranked 2v2
+-------------------------
+1. Entre sozinho ou com 2/3 contas.
+2. Entre na fila 2v2.
+3. Aguarde 15 segundos.
+4. Vagas faltantes devem ser CPUs.
+5. CPUs ativas devem jogar automaticamente.
+
+SMOKE TEST 3 — Raid
+-------------------
+1. Entre sozinho em um Raid.
+2. Aguarde 15 segundos.
+3. Grupo deve ser completado para 4 com CPUs.
+4. Nos turnos das CPUs elas devem jogar automaticamente.
+5. Boss deve alternar alvo/ataque conforme fase, ameaca e HP.
+
+SMOKE TEST 4 — Sala privada
+----------------------------
+1. Crie private 1v1 ou 2v2.
+2. Nao convide jogadores suficientes.
+3. Depois de 15 segundos as vagas faltantes devem ser preenchidas.
+
+OBSERVACAO DE PRODUTO
+---------------------
+Ranked contra bot continua usando a progressao ranked atual para o humano.
+O bot nunca recebe RP/XP/Mongo. Se depois voce quiser uma regra diferente
+(ex.: RP reduzido contra CPU), isso pode virar uma camada de balanceamento
+separada sem mexer no motor de IA.

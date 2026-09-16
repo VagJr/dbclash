@@ -15,6 +15,7 @@ import {
   rollPack
 } from './economy-rules.js';
 import { getStarterDeckForLeader } from './card-database.js';
+import { socketManager } from './socket-config.js';
 
 export class AuthManager {
   constructor() {
@@ -26,7 +27,7 @@ export class AuthManager {
   }
 
   getServerUrl() {
-    if (typeof socketManager !== 'undefined' && socketManager?.serverUrl) return socketManager.serverUrl;
+    if (socketManager?.serverUrl) return socketManager.serverUrl;
     if (typeof window !== 'undefined' && window.SERVER_URL) return window.SERVER_URL;
     return 'https://dbclash-server.onrender.com';
   }

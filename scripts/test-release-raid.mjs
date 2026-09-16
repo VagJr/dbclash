@@ -18,8 +18,8 @@ function players(count = 3) {
   return Array.from({ length: count }, (_, i) => ({
     uid: `u${i + 1}`,
     username: `P${i + 1}`,
-    leader: leaders[i],
-    deck: getStarterDeckForLeader(leaders[i])
+    leader: leaders[i % leaders.length],
+    deck: getStarterDeckForLeader(leaders[i % leaders.length])
   }));
 }
 
@@ -45,10 +45,10 @@ function test(name, fn) {
   }
 }
 
-test('raid suporta oficialmente 3-4 jogadores', () => {
+test('raid suporta party final 3-4 e fill de bots apos 15 segundos', () => {
   assert.equal(RAID_MIN_PLAYERS, 3);
   assert.equal(RAID_MAX_PLAYERS, 4);
-  assert.equal(RAID_QUEUE_FILL_MS, 5000);
+  assert.equal(RAID_QUEUE_FILL_MS, 15000);
 });
 
 test('existem Cell Max Broly e Jiren com rewards', () => {
@@ -190,7 +190,7 @@ test('timeout de turno executa pass automatico', () => {
   assert.equal(RAID_TURN_MS, 30000);
 });
 
-test('servidor possui fila 3-4, rewards e reconexao de raid', () => {
+test('servidor permite 1 humano e completa Raid com bots apos 15s', () => {
   const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
   assert.ok(src.includes('join_raid_queue'));
   assert.ok(src.includes('raid_match_found'));
@@ -198,6 +198,19 @@ test('servidor possui fila 3-4, rewards e reconexao de raid', () => {
   assert.ok(src.includes('raid_result'));
   assert.ok(src.includes('RAID_RECONNECT_GRACE_MS'));
   assert.ok(src.includes('finalizeRaidRoom'));
+
+  assert.match(src, /queue\.entries\.length\s*>=\s*1/);
+  assert.match(src, /connected\.length\s*<\s*1/);
+  assert.match(
+    src,
+    /createBotProfile\s*\(\s*\{\s*[\s\S]{0,300}?mode\s*:\s*['"]raid['"]/m
+  );
+  assert.ok(src.includes('new RaidBotController({ engine: room.engine })'));
+});
+
+test('bots de raid nao recebem persistencia/recompensa como usuarios Mongo', () => {
+  const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  assert.ok(src.includes('if (slot.isBot) continue;') || src.includes('if (isBotUid(uid)) return null;'));
 });
 
 test('cliente nao inicia mais uma luta fake contra Frieza para raid', () => {

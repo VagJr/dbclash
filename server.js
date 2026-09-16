@@ -15,8 +15,10 @@ import { Server } from 'socket.io';
 import mongoose from 'mongoose';
 import { GameEngine as ServerGameEngine } from './server/server-engine.js';
 import { RaidRoomEngine } from './server/raid-room-engine.js';
+import { BOT_FILL_DELAY_MS, createBotProfile, DuelBotController, RaidBotController, isBotUid } from './server/bot-ai.js';
 import { registerProductModes } from './server/product-modes.js';
 import { applyQuestEventToUser } from './js/daily-quest-rules.js';
+import { getStarterDeckForLeader } from './js/card-database.js';
 import { User } from './server/user-model.js';
 import crypto from 'node:crypto';
 import { createSessionToken, requireSession, verifySessionToken } from './server/auth-session.js';
@@ -93,7 +95,14 @@ app.post('/api/auth/register', async (req, res) => {
     const cleanEmail = String(email).trim().toLowerCase();
     const existingUser = await User.findOne({ email: cleanEmail });
     if (existingUser) {
-      return res.status(400).json({ success: false, message: 'Este e-mail ja esta cadastrado!' });
+      const isUsernameAccount = cleanEmail.endsWith('@dbtcg.local');
+      return res.status(400).json({
+        success: false,
+        code: 'ACCOUNT_EXISTS',
+        message: isUsernameAccount
+          ? 'Este nome de usuario ja esta cadastrado!'
+          : 'Este e-mail ja esta cadastrado!'
+      });
     }
 
     const unlockedLeaders = [...DEFAULT_UNLOCKED_LEADERS];
@@ -414,6 +423,7 @@ function sendRoomFx(roomCode, type, data) {
 }
 
 async function updateRankedUser(uid, isWin) {
+  if (isBotUid(uid)) return null;
   const user = await User.findOne({ uid });
   if (!user) return null;
 
@@ -450,6 +460,7 @@ async function finalizeRankedRoom(roomCode, winnerRole, reason = 'KO') {
   }
 
   room.finished = true;
+  room.botController?.dispose?.();
   room.engine.winner = winnerRole;
   room.engine.state = 'GAME_OVER';
 
@@ -542,6 +553,114 @@ async function attemptResume(socket) {
 }
 
 
+function clearMatchmakingBotTimer(entry) {
+  if (entry?.botFillTimer) {
+    clearTimeout(entry.botFillTimer);
+    entry.botFillTimer = null;
+  }
+}
+
+function scheduleRankedBotFill(entry) {
+  clearMatchmakingBotTimer(entry);
+  entry.botFillTimer = setTimeout(() => {
+    entry.botFillTimer = null;
+    startRankedBotMatchByUid(entry.uid).catch(err => {
+      console.error('[Ranked Bot Fill] Failed:', err);
+    });
+  }, BOT_FILL_DELAY_MS);
+  entry.botFillTimer.unref?.();
+}
+
+async function startRankedBotMatchByUid(uid) {
+  const index = matchmakingQueue.findIndex(item => item.uid === uid);
+  if (index < 0) return false;
+
+  const human = matchmakingQueue[index];
+  const humanSocket = io.sockets.sockets.get(human.socketId);
+  if (!humanSocket?.connected || humanSocket.authUid !== human.uid) {
+    clearMatchmakingBotTimer(human);
+    matchmakingQueue.splice(index, 1);
+    return false;
+  }
+
+  matchmakingQueue.splice(index, 1);
+  clearMatchmakingBotTimer(human);
+  const bot = createBotProfile({ mode: 'ranked1v1', difficulty: 'hard' });
+
+  roomCounter += 1;
+  const roomCode = `room_${Date.now()}_${roomCounter}`;
+  const matchId = `ranked_${crypto.randomUUID()}`;
+  const initiative = crypto.randomInt(0, 2) === 0 ? 'player' : 'opponent';
+
+  const room = {
+    roomCode,
+    matchId,
+    engine: null,
+    botController: null,
+    finished: false,
+    stateVersion: 0,
+    lastSeq: { player: 0, opponent: 0 },
+    slots: {
+      player: {
+        uid: human.uid,
+        username: human.username,
+        leader: human.leader,
+        socketId: humanSocket.id,
+        connected: true,
+        isBot: false,
+        reconnectTimer: null
+      },
+      opponent: {
+        uid: bot.uid,
+        username: bot.username,
+        leader: bot.leader,
+        socketId: null,
+        connected: true,
+        isBot: true,
+        reconnectTimer: null
+      }
+    }
+  };
+
+  room.engine = new ServerGameEngine(
+    eng => {
+      sendRoomState(roomCode);
+      room.botController?.poke();
+      if (eng.state === 'GAME_OVER' && eng.winner && !room.finished) {
+        finalizeRankedRoom(roomCode, eng.winner, 'KO').catch(err => {
+          console.error('[Ranked Bot] Finalize error:', err);
+        });
+      }
+    },
+    (type, data) => sendRoomFx(roomCode, type, data)
+  );
+
+  activeRooms[roomCode] = room;
+  humanSocket.roomCode = roomCode;
+  humanSocket.matchRole = 'player';
+  humanSocket.join(roomCode);
+
+  room.engine.startMatch(
+    human.leader,
+    bot.leader,
+    human.deck,
+    false,
+    {
+      playerDeck: room.engine.secureShuffle(human.deck),
+      opponentDeck: room.engine.secureShuffle(bot.deck),
+      initiative
+    }
+  );
+
+  room.botController = new DuelBotController({ engine: room.engine, botKey: 'opponent' });
+  attachSocketToRoom(humanSocket, roomCode, 'player', false);
+  room.botController.poke();
+
+  console.log(`[Ranked Bot] ${matchId}: ${human.username} vs ${bot.username}`);
+  return true;
+}
+
+
 const raidQueues = new Map();
 const activeRaidRooms = {};
 let raidRoomCounter = 0;
@@ -556,7 +675,7 @@ function removeFromRaidQueuesByUid(uid) {
   if (!uid) return;
   for (const queue of raidQueues.values()) {
     queue.entries = queue.entries.filter(entry => entry.uid !== uid);
-    if (queue.entries.length < RAID_MIN_PLAYERS && queue.fillTimer) {
+    if (queue.entries.length === 0 && queue.fillTimer) {
       clearTimeout(queue.fillTimer);
       queue.fillTimer = null;
     }
@@ -707,13 +826,20 @@ async function startRaidFromQueue(bossId) {
     if (socket?.connected && socket.authUid === entry.uid) connected.push(entry);
   }
 
-  if (connected.length < RAID_MIN_PLAYERS) {
+  if (connected.length < 1) {
     queue.entries = connected;
     return false;
   }
 
   const team = connected.slice(0, RAID_MAX_PLAYERS);
-  const used = new Set(team.map(entry => entry.uid));
+  while (team.length < RAID_MAX_PLAYERS) {
+    team.push(createBotProfile({
+      mode: 'raid',
+      difficulty: 'normal',
+      index: team.length
+    }));
+  }
+  const used = new Set(connected.slice(0, RAID_MAX_PLAYERS).map(entry => entry.uid));
   queue.entries = connected.filter(entry => !used.has(entry.uid));
 
   raidRoomCounter += 1;
@@ -738,6 +864,7 @@ async function startRaidFromQueue(bossId) {
       leader: entry.leader,
       socketId: entry.socketId,
       connected: true,
+      isBot: !!entry.isBot,
       abandoned: false,
       reconnectTimer: null
     };
@@ -748,7 +875,10 @@ async function startRaidFromQueue(bossId) {
   room.engine = new RaidRoomEngine({
     bossId,
     players: team,
-    onState: () => emitRaidState(roomCode),
+    onState: () => {
+      emitRaidState(roomCode);
+      room.botController?.poke();
+    },
     onEvent: (type, data) => io.to(roomCode).emit('raid_event', { type, data }),
     onComplete: result => {
       finalizeRaidRoom(roomCode, result).catch(err => {
@@ -756,6 +886,9 @@ async function startRaidFromQueue(bossId) {
       });
     }
   });
+
+  room.botController = new RaidBotController({ engine: room.engine });
+  room.botController.poke();
 
   for (const entry of team) {
     const socket = io.sockets.sockets.get(entry.socketId);
@@ -772,11 +905,12 @@ function scheduleRaidQueueStart(bossId) {
     return;
   }
 
-  if (queue.entries.length >= RAID_MIN_PLAYERS && !queue.fillTimer) {
+  if (queue.entries.length >= 1 && !queue.fillTimer) {
     queue.fillTimer = setTimeout(() => {
       queue.fillTimer = null;
       startRaidFromQueue(bossId).catch(console.error);
     }, RAID_QUEUE_FILL_MS);
+    queue.fillTimer.unref?.();
   }
 }
 
@@ -946,7 +1080,17 @@ io.on('connection', socket => {
       return;
     }
 
-    const profile = await loadRankedProfile(socket.authUid, payload?.leader);
+    let profile;
+    try {
+      profile = await loadRankedProfile(socket.authUid, payload?.leader);
+    } catch (err) {
+      console.error('[Ranked] Profile load error:', err);
+      return socket.emit('ranked_error', {
+        code: 'PROFILE_LOAD_FAILED',
+        message: 'Falha ao carregar o perfil ranqueado. Tente novamente.'
+      });
+    }
+
     if (!profile.ok) {
       return socket.emit('ranked_error', {
         code: profile.code,
@@ -971,16 +1115,19 @@ io.on('connection', socket => {
     let opponentIndex = matchmakingQueue.findIndex(item => item.uid !== entry.uid);
     if (opponentIndex < 0) {
       matchmakingQueue.push(entry);
-      socket.emit('waiting_for_opponent');
+      scheduleRankedBotFill(entry);
+      socket.emit('waiting_for_opponent', { botFillMs: BOT_FILL_DELAY_MS });
       return;
     }
 
     const opponentEntry = matchmakingQueue.splice(opponentIndex, 1)[0];
+    clearMatchmakingBotTimer(opponentEntry);
     const opponentSocket = io.sockets.sockets.get(opponentEntry.socketId);
 
     if (!opponentSocket?.connected) {
       matchmakingQueue.push(entry);
-      socket.emit('waiting_for_opponent');
+      scheduleRankedBotFill(entry);
+      socket.emit('waiting_for_opponent', { botFillMs: BOT_FILL_DELAY_MS });
       return;
     }
 
@@ -1057,6 +1204,7 @@ io.on('connection', socket => {
   socket.on('leave_matchmaking', () => {
     for (let i = matchmakingQueue.length - 1; i >= 0; i--) {
       if (matchmakingQueue[i].socketId === socket.id || matchmakingQueue[i].uid === socket.authUid) {
+        clearMatchmakingBotTimer(matchmakingQueue[i]);
         matchmakingQueue.splice(i, 1);
       }
     }
@@ -1152,7 +1300,10 @@ io.on('connection', socket => {
     }
 
     for (let i = matchmakingQueue.length - 1; i >= 0; i--) {
-      if (matchmakingQueue[i].socketId === socket.id) matchmakingQueue.splice(i, 1);
+      if (matchmakingQueue[i].socketId === socket.id) {
+        clearMatchmakingBotTimer(matchmakingQueue[i]);
+        matchmakingQueue.splice(i, 1);
+      }
     }
 
     const roomCode = socket.roomCode;

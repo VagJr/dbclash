@@ -2,7 +2,7 @@ import { getCardById } from './card-database.js';
 
 export const RAID_MIN_PLAYERS = 3;
 export const RAID_MAX_PLAYERS = 4;
-export const RAID_QUEUE_FILL_MS = 5000;
+export const RAID_QUEUE_FILL_MS = 15000;
 export const RAID_TURN_MS = 30000;
 export const RAID_RECONNECT_GRACE_MS = 30000;
 

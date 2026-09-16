@@ -1,0 +1,22 @@
+DBCLASH — AI FILL & BOT RUNTIME — RESUME
+========================================
+
+USE ESTE PACOTE DEPOIS DO ERRO:
+  Anchor nao encontrado: executeAiTurn
+
+NAO RODE NOVAMENTE O ZIP ANTERIOR.
+
+O primeiro patch ja criou:
+  server/bot-ai.js
+  scripts/test-release-bot-ai.mjs
+
+Este RESUME:
+- regrava esses dois arquivos na versao correta;
+- encontra executeAiTurn por estrutura de chaves, nao por texto literal;
+- continua as integracoes 1v1, 2v2, Raid e salas privadas;
+- configura fill de bots em 15 segundos;
+- adiciona AI de jogador e AI de boss;
+- executa node --check, test:bot-ai e rc:check.
+
+APLICAR EM C:\dbclash:
+  .\PATCH_AI_FILL_BOTS_RESUME.ps1

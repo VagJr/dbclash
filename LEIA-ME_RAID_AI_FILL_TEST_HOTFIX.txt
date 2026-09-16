@@ -1,0 +1,22 @@
+DBCLASH — RAID AI FILL TEST HOTFIX
+=================================
+
+Motivo:
+A suite antiga ainda exigia RAID_QUEUE_FILL_MS = 5000 e descrevia o Raid
+como fila apenas de 3-4 jogadores humanos.
+
+A regra nova e:
+- party final continua com ate 4;
+- 1 humano ja pode iniciar a espera;
+- espera 15 segundos;
+- bots completam as vagas faltantes.
+
+Este hotfix altera SOMENTE:
+  scripts/test-release-raid.mjs
+
+Depois executa:
+  npm run test:raid
+  npm run rc:check
+
+Aplicar:
+  .\PATCH_RAID_AI_FILL_TEST_HOTFIX.ps1

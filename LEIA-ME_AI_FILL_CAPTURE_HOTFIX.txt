@@ -1,0 +1,29 @@
+DBCLASH — AI FILL CAPTURE MARKER HOTFIX
+=======================================
+
+Use depois do erro:
+
+  server/tag-team-engine.js
+  username: entry.username,$1 isBot...
+  SyntaxError: Unexpected identifier 'isBot'
+
+CAUSA
+-----
+O patcher anterior usou grupos de regex $1/$2 dentro de um callback de
+String.replace(), fazendo os marcadores serem gravados literalmente.
+
+ESTE HOTFIX
+-----------
+- Reconstroi os dois membros de TagTeam corretamente.
+- Verifica e corrige o mesmo defeito potencial em product-modes.js.
+- Audita todos os arquivos do ciclo para garantir que nao reste $1/$2 literal.
+- Roda node --check em todos os arquivos.
+- Continua com test:bot-ai.
+- Continua com rc:check.
+
+NAO RODE NOVAMENTE:
+  PATCH_AI_FILL_BOTS.ps1
+  PATCH_AI_FILL_BOTS_RESUME.ps1
+
+APLICAR:
+  .\PATCH_AI_FILL_CAPTURE_HOTFIX.ps1

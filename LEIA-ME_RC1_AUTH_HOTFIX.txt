@@ -1,0 +1,40 @@
+DBCLASH RC1 AUTH HOTFIX
+=======================
+
+Problemas confirmados no main do GitHub:
+1. AuthManager REST nao importava socketManager.
+   Resultado: localhost:5500 enviava /api/auth/* para o Render.
+2. sw.js podia resolver staleWhileRevalidate() como null.
+   Resultado: TypeError Failed to convert value to Response.
+3. UI usa nome de usuario mas backend dizia "e-mail ja cadastrado".
+
+CORRECOES
+---------
+- AuthManager passa a usar socketManager.serverUrl.
+- Em localhost, REST e Socket.io usam http://localhost:3000.
+- Service Worker sempre entrega um objeto Response valido.
+- Conta duplicada retorna code ACCOUNT_EXISTS.
+- Mensagem correta para username.
+- Novo test:rc-auth com 6 regressions.
+- rc:check inclui test:rc-auth.
+
+APLICAR
+-------
+Na raiz C:\dbclash:
+
+  .\PATCH_RC1_AUTH_HOTFIX.ps1
+
+DEPOIS
+------
+1. Pare backend e frontend.
+2. Inicie backend local com MONGODB_URI configurada.
+3. Inicie frontend em localhost:5500.
+4. No navegador: DevTools > Application > Service Workers > Unregister.
+5. Recarregue com Ctrl+Shift+R.
+6. Confirme que Network mostra:
+     http://localhost:3000/api/auth/register
+   e nao:
+     https://dbclash-server.onrender.com/api/auth/register
+
+Teste com um nome de usuario NOVO.
+Depois teste logout/login com o mesmo usuario.

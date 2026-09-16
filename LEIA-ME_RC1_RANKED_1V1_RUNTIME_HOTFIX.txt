@@ -1,0 +1,32 @@
+DBCLASH RC1 - RANKED 1V1 RUNTIME HOTFIX
+=======================================
+
+Crash confirmado:
+  ReferenceError: getStarterDeckForLeader is not defined
+  at loadRankedProfile (server.js)
+
+Causa:
+server.js chama getStarterDeckForLeader(leader), mas nao importava a funcao
+exportada por js/card-database.js.
+
+Correcao:
+1. Importa getStarterDeckForLeader no servidor.
+2. Protege await loadRankedProfile() com try/catch.
+3. Em falha inesperada, envia ranked_error PROFILE_LOAD_FAILED em vez
+   de deixar uma rejeicao async derrubar Node 22.
+4. Adiciona teste de regressao ao rc:check.
+
+APLICAR
+-------
+Na raiz C:\dbclash:
+
+  .\PATCH_RC1_RANKED_1V1_RUNTIME_HOTFIX.ps1
+
+DEPOIS
+------
+Reinicie o backend:
+
+  npm start
+
+Abra duas sessoes autenticadas diferentes e entre na fila Ranked 1x1.
+O servidor deve permanecer online e formar a sala quando houver dois jogadores.

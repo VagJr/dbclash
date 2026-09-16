@@ -1,0 +1,28 @@
+DBCLASH AI FILL — TEST HOTFIX
+=============================
+
+Falha corrigida:
+  FAIL Raid possui bots aliados e controller automatico
+
+Causa:
+O runtime foi inserido corretamente em formato multilinha:
+
+  createBotProfile({
+    mode: 'raid',
+    ...
+  })
+
+O teste antigo procurava literalmente:
+  createBotProfile({ mode: 'raid'
+
+na mesma linha.
+
+Este hotfix altera SOMENTE:
+  scripts/test-release-bot-ai.mjs
+
+Ele usa regex tolerante a espacos e quebras de linha e depois executa:
+  npm run test:bot-ai
+  npm run rc:check
+
+Aplicar:
+  .\PATCH_AI_FILL_TEST_HOTFIX.ps1

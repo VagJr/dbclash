@@ -3,6 +3,7 @@ import { User } from './user-model.js';
 import { Dojo } from './dojo-model.js';
 import { GameEngine as ServerGameEngine } from './server-engine.js';
 import { TagTeamEngine } from './tag-team-engine.js';
+import { BOT_FILL_DELAY_MS, createBotProfile, DuelBotController, TagTeamBotController, isBotUid } from './bot-ai.js';
 import { requireSession } from './auth-session.js';
 import { getStarterDeckForLeader } from '../js/card-database.js';
 import { migrateLegacyInventory, validateDeck, inventoryToOwnedCards } from '../js/economy-rules.js';
@@ -58,6 +59,7 @@ async function loadProfile(uid, requestedLeader) {
 }
 
 async function updateRankedTeamUser(uid, isWin) {
+  if (isBotUid(uid)) return null;
   const user = await User.findOne({ uid });
   if (!user) return null;
 
@@ -250,6 +252,68 @@ export function registerProductModes(app, io) {
   const teamRooms = new Map();
   const privateLobbies = new Map();
   const privateDuels = new Map();
+  let teamFillTimer = null;
+
+  function clearTeamFillTimer() {
+    if (teamFillTimer) {
+      clearTimeout(teamFillTimer);
+      teamFillTimer = null;
+    }
+  }
+
+  function scheduleTeamBotFill() {
+    if (!teamQueue.length || teamQueue.length >= TEAM_MATCH_SIZE || teamFillTimer) return;
+    teamFillTimer = setTimeout(() => {
+      teamFillTimer = null;
+      const connected = teamQueue.filter(entry => {
+        const socket = io.sockets.sockets.get(entry.socketId);
+        return socket?.connected && socket.authUid === entry.uid;
+      });
+      teamQueue.length = 0;
+      teamQueue.push(...connected);
+      if (!teamQueue.length) return;
+
+      const entries = teamQueue.splice(0, TEAM_MATCH_SIZE);
+      while (entries.length < TEAM_MATCH_SIZE) {
+        entries.push(createBotProfile({
+          mode: 'ranked2v2',
+          difficulty: 'hard',
+          index: entries.length
+        }));
+      }
+      startTeamRoom(entries, { ranked: true });
+      if (teamQueue.length) scheduleTeamBotFill();
+    }, BOT_FILL_DELAY_MS);
+    teamFillTimer.unref?.();
+  }
+
+  function clearPrivateBotFill(lobby) {
+    if (lobby?.fillTimer) {
+      clearTimeout(lobby.fillTimer);
+      lobby.fillTimer = null;
+    }
+  }
+
+  function schedulePrivateBotFill(lobby) {
+    if (!lobby || lobby.fillTimer) return;
+    const required = lobby.mode === '2v2' ? 4 : 2;
+    if (lobby.members.length >= required) return;
+
+    lobby.fillTimer = setTimeout(async () => {
+      lobby.fillTimer = null;
+      if (!privateLobbies.has(lobby.code)) return;
+      while (lobby.members.length < required) {
+        lobby.members.push(createBotProfile({
+          mode: lobby.mode === '2v2' ? 'private2v2' : 'private1v1',
+          difficulty: 'normal',
+          index: lobby.members.length
+        }));
+      }
+      emitPrivateLobbyStatus(lobby);
+      await maybeStartPrivateLobby(lobby);
+    }, BOT_FILL_DELAY_MS);
+    lobby.fillTimer.unref?.();
+  }
 
   function userInProductMode(uid) {
     if (!uid) return false;
@@ -340,6 +404,7 @@ export function registerProductModes(app, io) {
     room.engine = new ServerGameEngine(
       eng => {
         sendPrivateDuelState(code);
+        room.botController?.poke();
         if (eng.state === 'GAME_OVER' && eng.winner && !room.finished) {
           room.finished = true;
           setTimeout(() => privateDuels.delete(code), 15000);
@@ -359,6 +424,11 @@ export function registerProductModes(app, io) {
       opponentDeck: room.engine.secureShuffle(b.deck),
       initiative: crypto.randomInt(0, 2) === 0 ? 'player' : 'opponent'
     });
+
+    if (b?.isBot) {
+      room.botController = new DuelBotController({ engine: room.engine, botKey: 'opponent' });
+      room.botController.poke();
+    }
 
     if (aSocket) attachPrivateDuel(aSocket, code, 'player', false);
     if (bSocket) attachPrivateDuel(bSocket, code, 'opponent', false);
@@ -459,6 +529,7 @@ export function registerProductModes(app, io) {
           socketId: entry.socketId,
           side,
           connected: true,
+          isBot: !!entry.isBot,
           reconnectTimer: null
         };
       }
@@ -467,10 +538,16 @@ export function registerProductModes(app, io) {
     room.engine = new TagTeamEngine({
       teamA,
       teamB,
-      onState: () => sendTeamState(code),
+      onState: () => {
+        sendTeamState(code);
+        room.botController?.poke();
+      },
       onFx: (type, data) => io.to(code).emit('game_fx', { type, data }),
       onComplete: winnerSide => finalizeTeamRoom(code, winnerSide).catch(console.error)
     });
+
+    room.botController = new TagTeamBotController({ teamEngine: room.engine });
+    room.botController.poke();
 
     teamRooms.set(code, room);
     for (const entry of members) {
@@ -499,6 +576,7 @@ export function registerProductModes(app, io) {
   async function maybeStartPrivateLobby(lobby) {
     const required = lobby.mode === '2v2' ? 4 : 2;
     if (lobby.members.length < required) return;
+    clearPrivateBotFill(lobby);
     privateLobbies.delete(lobby.code);
     if (lobby.mode === '2v2') startTeamRoom(lobby.members, { ranked: false, roomCode: lobby.code });
     else startPrivateDuel(lobby);
@@ -508,6 +586,8 @@ export function registerProductModes(app, io) {
     for (let i = teamQueue.length - 1; i >= 0; i--) {
       if (teamQueue[i].uid === uid) teamQueue.splice(i, 1);
     }
+    if (!teamQueue.length) clearTeamFillTimer();
+    else scheduleTeamBotFill();
   }
 
   async function attemptProductResume(socket) {
@@ -549,8 +629,12 @@ export function registerProductModes(app, io) {
       }
 
       if (teamQueue.length >= TEAM_MATCH_SIZE) {
+        clearTeamFillTimer();
         const team = teamQueue.splice(0, TEAM_MATCH_SIZE);
         startTeamRoom(team, { ranked: true });
+        if (teamQueue.length) scheduleTeamBotFill();
+      } else {
+        scheduleTeamBotFill();
       }
     });
 
@@ -585,6 +669,7 @@ export function registerProductModes(app, io) {
         code,
         mode,
         ownerUid: profile.uid,
+        fillTimer: null,
         members: [{
           socketId: socket.id,
           uid: profile.uid,
@@ -594,8 +679,15 @@ export function registerProductModes(app, io) {
         }]
       };
       privateLobbies.set(code, lobby);
+      schedulePrivateBotFill(lobby);
       socket.privateLobbyCode = code;
-      socket.emit('private_room_created', { code, mode, count: 1, required: mode === '2v2' ? 4 : 2 });
+      socket.emit('private_room_created', {
+        code,
+        mode,
+        count: 1,
+        required: mode === '2v2' ? 4 : 2,
+        botFillMs: BOT_FILL_DELAY_MS
+      });
     });
 
     socket.on('join_private_room', async payload => {
@@ -632,7 +724,10 @@ export function registerProductModes(app, io) {
       if (!lobby) return;
       lobby.members = lobby.members.filter(member => member.uid !== socket.authUid);
       socket.privateLobbyCode = null;
-      if (!lobby.members.length) privateLobbies.delete(code);
+      if (!lobby.members.length) {
+        clearPrivateBotFill(lobby);
+        privateLobbies.delete(code);
+      }
       else {
         if (lobby.ownerUid === socket.authUid) lobby.ownerUid = lobby.members[0].uid;
         emitPrivateLobbyStatus(lobby);
@@ -666,7 +761,10 @@ export function registerProductModes(app, io) {
       const lobby = privateLobbies.get(socket.privateLobbyCode);
       if (lobby) {
         lobby.members = lobby.members.filter(member => member.uid !== socket.authUid);
-        if (!lobby.members.length) privateLobbies.delete(lobby.code);
+        if (!lobby.members.length) {
+          clearPrivateBotFill(lobby);
+          privateLobbies.delete(lobby.code);
+        }
         else {
           if (lobby.ownerUid === socket.authUid) lobby.ownerUid = lobby.members[0].uid;
           emitPrivateLobbyStatus(lobby);

@@ -8,7 +8,7 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test:core": "node scripts/test-release-core.mjs",
-    "test": "npm run test:core && npm run test:content && npm run test:account && npm run test:multiplayer && npm run test:raid && npm run test:social && npm run test:polish",
+    "test": "npm run test:core && npm run test:content && npm run test:account && npm run test:multiplayer && npm run test:raid && npm run test:social && npm run test:polish && npm run test:bot-ai",
     "check": "npm run release:check",
     "test:content": "node scripts/test-release-content.mjs",
     "test:account": "node scripts/test-release-account.mjs",
@@ -21,7 +21,11 @@
     "rc:verify": "node scripts/rc-verify.mjs",
     "rc:verify:prod": "node scripts/rc-verify.mjs --production",
     "rc:report": "node scripts/rc-report.mjs",
-    "rc:check": "npm run release:check && npm run rc:verify && npm run rc:report"
+    "rc:check": "npm run release:check && npm run test:rc-auth && npm run test:rc-mongoose9-auth && npm run test:rc-ranked-runtime && npm run rc:verify && npm run rc:report",
+    "test:rc-auth": "node scripts/test-rc-auth.mjs",
+    "test:rc-mongoose9-auth": "node scripts/test-rc-mongoose9-auth.mjs",
+    "test:rc-ranked-runtime": "node scripts/test-rc-ranked-runtime.mjs",
+    "test:bot-ai": "node scripts/test-release-bot-ai.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

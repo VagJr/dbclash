@@ -49,6 +49,8 @@ export class TagTeamEngine {
         uid: entry.uid,
         username: entry.username,
         leader: entry.leader,
+        isBot: !!entry.isBot,
+        botDifficulty: entry.botDifficulty || 'normal',
         downed: false,
         abandoned: false,
         fighter: makeFighterSnapshot(entry)
@@ -57,6 +59,8 @@ export class TagTeamEngine {
         uid: entry.uid,
         username: entry.username,
         leader: entry.leader,
+        isBot: !!entry.isBot,
+        botDifficulty: entry.botDifficulty || 'normal',
         downed: false,
         abandoned: false,
         fighter: makeFighterSnapshot(entry)
@@ -290,6 +294,7 @@ export class TagTeamEngine {
       uid: member.uid,
       username: member.username,
       leader: member.fighter.leader,
+      isBot: !!member.isBot,
       hp: member.fighter.hp,
       maxHp: member.fighter.maxHp,
       ki: member.fighter.ki,

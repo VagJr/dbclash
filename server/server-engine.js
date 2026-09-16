@@ -6,6 +6,7 @@
 import { LEADERS, getCardById, getStarterDeckForLeader } from '../js/card-database.js';
 import { getCardRule, isAttackAction, isImmediateTechnique, getEffectiveCardCost, getLeaderAttackBonus, getChargeAmount, getOpenGuardDurationMs, getBeamMashPower, getReactionSeconds, getDefenseBlockMultiplier, canUseReaction } from '../js/content-rules.js';
 import crypto from 'crypto';
+import { chooseDuelBotAction } from './bot-ai.js';
 
 export class GameEngine {
   checkGameOver() {
@@ -844,6 +845,14 @@ export class GameEngine {
         }
         this.beamClashData.timer = Math.max(0, this.beamClashData.timer - 0.1);
         this.notifyState();
+
+        if (
+          this.isAiMatch &&
+          this.state === 'BEAM_CLASH' &&
+          Date.now() - (this.lastMashAt?.opponent || 0) >= 180
+        ) {
+          this._mashBeamClash('opponent');
+        }
   
         if (this.beamClashData.p1Progress <= 0) this.resolveBeamClashWinner('opponent');
         else if (this.beamClashData.p1Progress >= 100) this.resolveBeamClashWinner('player');
@@ -1007,34 +1016,35 @@ export class GameEngine {
 
   // ── AI TURN EXECUTION WITH FAILSAFE PASS ─────────────────────────────
   executeAiTurn() {
-      if (this.state === 'FREE_ACTION' && this.initiative === 'opponent') {
-        const playable = this.opponent.hand.findIndex(card => {
-          if (!card || (!isAttackAction(card) && !isImmediateTechnique(card))) return false;
-          return this.getCardCost('opponent', card) <= this.opponent.ki;
-        });
-  
-        if (playable !== -1) this.playCard('opponent', playable);
-        else if (this.opponent.ki < 10) this.chargeKi('opponent');
-        else this.passTurn('opponent');
-        return;
-      }
-  
-      if (this.state === 'ATTACK_PENDING' && this.pendingAttack?.attackerKey === 'player') {
-        const defIdx = this.opponent.hand.findIndex(card => {
-          if (!card || this.getCardCost('opponent', card) > this.opponent.ki) return false;
-          return this.isReactionCardLegal('opponent', card, this.pendingAttack.card);
-        });
-  
-        if (defIdx !== -1) {
-          this.playCard('opponent', defIdx);
-        } else {
+      const decision = chooseDuelBotAction(this, 'opponent');
+
+      if (!decision) {
+        if (this.state === 'ATTACK_PENDING' && this.pendingAttack?.attackerKey === 'player') {
           setTimeout(() => {
             if (this.state === 'ATTACK_PENDING' && this.pendingAttack?.attackerKey === 'player') {
               this.clearReactionTimer();
               this.resolveUnansweredAttack();
             }
-          }, 1000);
+          }, 850);
         }
+        return;
+      }
+
+      switch (decision.action) {
+        case 'playCard':
+          this._playCard('opponent', decision.cardIndex, decision.cardId);
+          break;
+        case 'chargeKi':
+          this._chargeKi('opponent');
+          break;
+        case 'passTurn':
+          this._passTurn('opponent');
+          break;
+        case 'mashBeamClash':
+          this._mashBeamClash('opponent');
+          break;
+        default:
+          break;
       }
     }
 }

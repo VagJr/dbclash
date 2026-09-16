@@ -14,6 +14,8 @@ import {
   RAID_TURN_MS
 } from '../js/raid-rules.js';
 
+import { chooseRaidBossDecision } from './bot-ai.js';
+
 function shuffleSecure(list) {
   const out = [...list];
   for (let i = out.length - 1; i > 0; i--) {
@@ -43,6 +45,9 @@ export class RaidRoomEngine {
         ki: leader.id === 'frieza' ? 6 : 4,
         isAwakened: false,
         nextAttackBonus: 0,
+        isBot: !!entry.isBot,
+        botDifficulty: entry.botDifficulty || 'normal',
+        threat: 0,
         guardBlock: 0,
         dodgeNext: false,
         counterNext: 0,
@@ -196,6 +201,7 @@ export class RaidRoomEngine {
     if (damage <= 0) return 0;
 
     this.boss.hp = Math.max(0, this.boss.hp - damage);
+    sourcePlayer.threat = Math.max(0, Number(sourcePlayer.threat) || 0) + damage;
     const oldPhase = this.boss.phase;
     this.boss.phase = raidPhaseForHp(this.boss.hp, this.boss.maxHp);
     this._log(`${sourcePlayer.username} causou ${damage} em ${this.boss.name} com ${card.name}.`, 'damage');
@@ -366,8 +372,17 @@ export class RaidRoomEngine {
 
     this.state = 'BOSS_TURN';
     this.boss.phase = raidPhaseForHp(this.boss.hp, this.boss.maxHp);
-    const profile = raidBossAttackProfile(this.boss, this.boss.phase, this.round);
-    const targets = this._selectTargets(profile);
+    const decision = chooseRaidBossDecision({
+      boss: this.boss,
+      players: this.getAlivePlayers(),
+      phase: this.boss.phase,
+      round: this.round
+    });
+    const profile = decision?.profile || raidBossAttackProfile(this.boss, this.boss.phase, this.round);
+    const selected = (decision?.targetUids || [])
+      .map(uid => this.getPlayer(uid))
+      .filter(Boolean);
+    const targets = selected.length ? selected : this._selectTargets(profile);
     this._log(`${this.boss.name} usou ${profile.name}.`, 'damage');
 
     for (const target of targets) {
@@ -471,6 +486,7 @@ export class RaidRoomEngine {
         maxHp: player.maxHp,
         ki: player.ki,
         isAwakened: player.isAwakened,
+        isBot: !!player.isBot,
         downed: player.downed,
         abandoned: player.abandoned,
         handSize: player.hand.length
