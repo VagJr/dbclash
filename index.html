@@ -23,19 +23,13 @@
   <link rel="stylesheet" href="styles/animations.css?v=realtime_firebase_v3">
   <link rel="stylesheet" href="styles/atmosphere.css?v=realtime_firebase_v3">
   <script>
-    // Automatic Cache Purge Engine — Guarantees immediate delivery of code updates
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        for (let registration of registrations) {
-          registration.unregister();
-        }
-      });
-    }
-    if ('caches' in window) {
-      caches.keys().then(names => {
-        for (let name of names) caches.delete(name);
-      });
-    }
+    window.addEventListener('load', function () {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(function (err) {
+          console.warn('[PWA] Service worker registration failed:', err.message);
+        });
+      }
+    });
   </script>
 </head>
 <body class="aaa-game-body">
@@ -376,7 +370,7 @@
       <h2 style="color: #ffd700; font-size: 1.4rem; font-weight: 900; margin-bottom: 12px;">💬 Chat Global dos Guerreiros</h2>
       <div id="chat-feed" class="chat-feed" style="flex: 1; overflow-y: auto; background: rgba(0,0,0,0.35); border-radius: 8px; padding: 14px; margin-bottom: 12px;"></div>
       <div class="chat-input-row" style="display: flex; gap: 8px;">
-        <input type="text" id="chat-input" placeholder="Digite sua mensagem..." class="modal-input" style="font-size: 1.1rem; padding: 12px; background: rgba(0,0,0,0.6); border: 2px solid #ffd700; color: #fff; text-align: center;" style="margin: 0; flex: 1;">
+        <input type="text" id="chat-input" placeholder="Digite sua mensagem..." class="modal-input" style="font-size:1.1rem;padding:12px;background:rgba(0,0,0,.6);border:2px solid #ffd700;color:#fff;text-align:center;margin:0;flex:1;">
         <button id="send-chat-btn" class="btn-ki">Enviar</button>
       </div>
       <button id="chat-back-btn" class="btn-ghost" style="margin-top: 12px;">VOLTAR AO MENU</button>
@@ -390,7 +384,7 @@
       <p style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 24px;">Dispute pontos de Rank e suba do Prata ao Rank Deus da Destruição!</p>
       <div id="ranked-view-content" style="display: flex; flex-direction: column; gap: 12px; font-size: 0.95rem; color: #fff;">
         <div style="padding: 16px; background: rgba(255,215,0,0.08); border-radius: 8px; border: 1px solid rgba(255,215,0,0.3);">
-          🥇 <strong>Seu Rank Atual:</strong> Guerreiro Prata (1250 RP)
+          <span id="ranked-current-summary">Carregando perfil ranqueado...</span>
         </div>
       </div>
       <button id="ranked-back-btn" class="btn-ghost" style="margin-top: 24px;">VOLTAR AO MENU</button>
@@ -450,7 +444,7 @@
       <div style="font-size: 2.5rem; animation: pulse 1s infinite; margin-bottom: 10px;">⚡</div>
       <div style="font-size: 1.5rem; font-weight: 900; color: #ffd700; text-shadow: 0 0 10px #ff8c00;">BUSCANDO GUERREIRO Z...</div>
       <div id="mm-timer" style="font-size: 2.2rem; font-weight: 900; color: #fff; margin: 15px 0;">00:00</div>
-      <div style="color: #cbd5e1; font-size: 0.85rem; margin-bottom: 20px;">Conectando ao Realtime Database do Torneio do Poder...</div>
+      <div style="color: #cbd5e1; font-size: 0.85rem; margin-bottom: 20px;">Conectando ao servidor competitivo do Torneio do Poder...</div>
       <button id="mm-cancel-btn" class="btn-ghost" style="width: 100%;">CANCELAR BUSCA</button>
     </div>
   </div>
@@ -508,7 +502,9 @@
     </div>
   </div>
 
-  <script type="module">
+  <script type="module" src="./js/runtime-guard.js"></script>
+
+<script type="module">
     import { UIManager } from './js/ui-manager.js';
     function boot() { window.uiManager = new UIManager(); }
     if (document.readyState === 'loading') {
@@ -517,30 +513,15 @@
       boot();
     }
   </script>
-
-  <!-- Auto fullscreen on first tap/click (mobile) -->
   <script>
-    (function() {
-      function goFS() {
-        var el = document.documentElement;
-        var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-        if (fn && !document.fullscreenElement && !document.webkitFullscreenElement) {
-          try { fn.call(el); } catch(e) {}
-        }
+    window.dbclashRequestFullscreen = function () {
+      var el = document.documentElement;
+      var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+      if (fn && !document.fullscreenElement && !document.webkitFullscreenElement) {
+        try { return fn.call(el); } catch (e) {}
       }
-      document.addEventListener('click', goFS, { once: true });
-      document.addEventListener('touchstart', goFS, { once: true });
-      // Retry when arena becomes active
-      document.addEventListener('dbtcg:sceneChange', function onScene(e) {
-        if (e.detail && e.detail.sceneId === 'scene-arena') {
-          setTimeout(goFS, 500);
-          setTimeout(goFS, 1500);
-        }
-      });
-      // Also retry on any user gesture after page loads
-      document.addEventListener('click', goFS);
-      document.addEventListener('touchstart', goFS);
-    })();
+      return null;
+    };
   </script>
 </body>
 </html>

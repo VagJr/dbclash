@@ -1,12 +1,27 @@
 {
   "name": "dragonball-clash-server",
-  "version": "1.0.0",
+  "version": "1.0.0-rc.1",
   "description": "Dragon Ball Clash Action TCG - Socket.io Dedicated Backend Server for Render Deployment",
   "main": "server.js",
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "test:core": "node scripts/test-release-core.mjs",
+    "test": "npm run test:core && npm run test:content && npm run test:account && npm run test:multiplayer && npm run test:raid && npm run test:social && npm run test:polish",
+    "check": "npm run release:check",
+    "test:content": "node scripts/test-release-content.mjs",
+    "test:account": "node scripts/test-release-account.mjs",
+    "test:multiplayer": "node scripts/test-release-multiplayer.mjs",
+    "test:raid": "node scripts/test-release-raid.mjs",
+    "test:social": "node scripts/test-release-social.mjs",
+    "test:polish": "node scripts/test-release-polish.mjs",
+    "audit:release": "node scripts/release-static-audit.mjs",
+    "release:check": "npm test && npm run audit:release",
+    "rc:verify": "node scripts/rc-verify.mjs",
+    "rc:verify:prod": "node scripts/rc-verify.mjs --production",
+    "rc:report": "node scripts/rc-report.mjs",
+    "rc:check": "npm run release:check && npm run rc:verify && npm run rc:report"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

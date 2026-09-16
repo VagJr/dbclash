@@ -1,103 +1,127 @@
 /* ==========================================================================
-   Dragon Ball Clash Action TCG - Deck Builder & Card Crafting Engine
-   Per-character deck loading, saving, card crafting, and interactive UI
+   Dragon Ball Clash Action TCG - Account-scoped Deck Builder
    ========================================================================== */
 
 import { CARD_DATABASE, getCardById, getStarterDeckForLeader, LEADERS } from './card-database.js';
 import { soundEngine } from './audio.js';
 import { assetLoader } from './asset-loader.js';
-
-function safeGetItem(key, fallback = null) {
-  try {
-    if (typeof localStorage !== 'undefined') {
-      return localStorage.getItem(key) ?? fallback;
-    }
-  } catch (e) {}
-  return fallback;
-}
-
-function safeSetItem(key, val) {
-  try {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(key, val);
-    }
-  } catch (e) {}
-}
+import { authManager } from './auth-manager.js';
+import { DECK_MIN, DECK_MAX, MAX_CARD_COPIES, getCraftCost, validateDeck } from './economy-rules.js';
 
 export class DeckBuilder {
   constructor() {
     this.activeLeader = 'goku';
-    this.zeni = parseInt(safeGetItem('dbtcg_zeni', '1500'), 10);
-    this.dust = parseInt(safeGetItem('dbtcg_dust', '300'), 10);
   }
+
+  get zeni() { return authManager.user?.zeni || 0; }
+  set zeni(_) {}
+  get dust() { return authManager.user?.dust || 0; }
+  set dust(_) {}
 
   getDeckForLeader(leaderId = this.activeLeader) {
-    const saved = safeGetItem(`dbtcg_deck_${leaderId}`);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length >= 10) return parsed;
-      } catch (e) {}
-    }
-    return getStarterDeckForLeader(leaderId);
+    return authManager.getDeckForLeader(leaderId);
   }
 
-  saveDeckForLeader(leaderId, deckList) {
-    safeSetItem(`dbtcg_deck_${leaderId}`, JSON.stringify(deckList));
-    safeSetItem('dbtcg_zeni', this.zeni.toString());
-    safeSetItem('dbtcg_dust', this.dust.toString());
+  async saveDeckForLeader(leaderId, deckList) {
+    return await authManager.saveDeck(leaderId, deckList);
   }
 
-  saveDeck(deckList) {
-    this.saveDeckForLeader(this.activeLeader, deckList || this.getDeckForLeader());
+  async saveDeck(deckList) {
+    return await this.saveDeckForLeader(this.activeLeader, deckList || this.getDeckForLeader());
   }
 
-  addCardToDeck(cardId, leaderId = this.activeLeader) {
-    const currentDeck = this.getDeckForLeader(leaderId);
-    if (currentDeck.length >= 20) {
-      alert("Tamanho máximo do baralho é 20 cartas!");
-      return false;
-    }
-    currentDeck.push(cardId);
-    this.saveDeckForLeader(leaderId, currentDeck);
-    soundEngine.playClick();
-    this.render();
-    return true;
+  getOwnedCount(cardId) {
+    return authManager.getCardCount(cardId);
   }
 
-  removeCardFromDeck(index, leaderId = this.activeLeader) {
-    const currentDeck = this.getDeckForLeader(leaderId);
-    if (currentDeck.length <= 10) {
-      alert("Tamanho mínimo do baralho é 10 cartas!");
-      return false;
-    }
-    currentDeck.splice(index, 1);
-    this.saveDeckForLeader(leaderId, currentDeck);
-    soundEngine.playClick();
-    this.render();
-    return true;
+  getDeckCount(cardId, leaderId = this.activeLeader) {
+    return this.getDeckForLeader(leaderId).filter(id => id === cardId).length;
   }
 
-  resetDeckToDefault(leaderId = this.activeLeader) {
-    const starter = getStarterDeckForLeader(leaderId);
-    this.saveDeckForLeader(leaderId, starter);
-    soundEngine.playClick();
-    this.render();
-  }
-
-  craftCard(cardId) {
+  async addCardToDeck(cardId, leaderId = this.activeLeader) {
     const card = getCardById(cardId);
-    const costMap = { 'common': 50, 'rare': 150, 'super-rare': 400 };
-    const craftCost = costMap[card.rarity] || 100;
+    if (!card) return false;
 
-    if (this.dust < craftCost) {
-      alert(`Poeira de Estrelas insuficiente! Necessário: ${craftCost} Poeiras.`);
+    const currentDeck = [...this.getDeckForLeader(leaderId)];
+    if (currentDeck.length >= DECK_MAX) {
+      alert(`Tamanho maximo do baralho e ${DECK_MAX} cartas!`);
       return false;
     }
 
-    this.dust -= craftCost;
-    this.addCardToDeck(cardId);
+    const inDeck = currentDeck.filter(id => id === cardId).length;
+    const owned = this.getOwnedCount(cardId);
+    if (inDeck >= MAX_CARD_COPIES || inDeck >= owned) {
+      alert(`Voce nao possui outra copia disponivel de ${card.name}.`);
+      return false;
+    }
+
+    currentDeck.push(cardId);
+    const result = await this.saveDeckForLeader(leaderId, currentDeck);
+    if (!result.success) {
+      alert(result.message || 'Nao foi possivel salvar o deck.');
+      return false;
+    }
+
+    soundEngine.playClick();
+    this.render();
+    return true;
+  }
+
+  async removeCardFromDeck(index, leaderId = this.activeLeader) {
+    const currentDeck = [...this.getDeckForLeader(leaderId)];
+    if (currentDeck.length <= DECK_MIN) {
+      alert(`Tamanho minimo do baralho e ${DECK_MIN} cartas!`);
+      return false;
+    }
+    if (index < 0 || index >= currentDeck.length) return false;
+
+    currentDeck.splice(index, 1);
+    const result = await this.saveDeckForLeader(leaderId, currentDeck);
+    if (!result.success) {
+      alert(result.message || 'Nao foi possivel salvar o deck.');
+      return false;
+    }
+
+    soundEngine.playClick();
+    this.render();
+    return true;
+  }
+
+  async resetDeckToDefault(leaderId = this.activeLeader) {
+    const starter = getStarterDeckForLeader(leaderId);
+    const validation = validateDeck(
+      starter,
+      authManager.user?.cardInventory,
+      leaderId,
+      authManager.user?.unlockedLeaders || []
+    );
+    if (!validation.ok) {
+      alert(validation.message || 'Deck inicial indisponivel para esta conta.');
+      return false;
+    }
+
+    const result = await this.saveDeckForLeader(leaderId, starter);
+    if (!result.success) return false;
+    soundEngine.playClick();
+    this.render();
+    return true;
+  }
+
+  async craftCard(cardId) {
+    const card = getCardById(cardId);
+    if (!card) return false;
+
+    const result = await authManager.craftCard(cardId);
+    if (!result.success) {
+      const cost = getCraftCost(cardId);
+      if (result.code === 'COPY_LIMIT') alert(`Limite de ${MAX_CARD_COPIES} copias atingido.`);
+      else if (result.code === 'NOT_ENOUGH_DUST') alert(`Dust insuficiente. Necessario: ${cost}.`);
+      else alert(result.message || 'Nao foi possivel criar a carta.');
+      return false;
+    }
+
     soundEngine.playAwaken();
+    this.render();
     return true;
   }
 
@@ -105,75 +129,76 @@ export class DeckBuilder {
     const container = document.getElementById(containerId);
     if (!container) return;
 
+    if (!authManager.user?.unlockedLeaders?.includes(this.activeLeader)) {
+      this.activeLeader = authManager.user?.selectedLeader || 'goku';
+    }
+
     const currentDeck = this.getDeckForLeader(this.activeLeader);
+    const unlocked = new Set(authManager.user?.unlockedLeaders || []);
 
     container.innerHTML = `
       <div class="deck-builder-wrapper glass" style="padding:24px; max-width:1100px; margin:0 auto;">
-        
-        <!-- Header Controls -->
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:14px;">
           <div>
-            <h2 style="font-family:var(--font-title); font-weight:900; color:var(--ki-yellow); margin-bottom:4px;">🎴 Construtor de Decks</h2>
-            <p style="font-size:0.82rem; color:var(--text-secondary);">Monte e personalize baralhos únicos para cada lutador (${currentDeck.length}/20 Cartas)</p>
+            <h2 style="font-family:var(--font-title); font-weight:900; color:var(--ki-yellow); margin-bottom:4px;">Construtor de Decks</h2>
+            <p style="font-size:0.82rem; color:var(--text-secondary);">
+              ${currentDeck.length}/${DECK_MAX} cartas | ${DECK_MIN}-${DECK_MAX} por deck | max. ${MAX_CARD_COPIES} copias
+            </p>
           </div>
-
           <div style="display:flex; gap:10px;">
-            <button id="reset-deck-btn" class="btn-ghost" style="font-size:0.78rem; padding:6px 12px;">↺ Restaurar Padrão</button>
+            <span style="font-weight:800;">${this.dust} Dust</span>
+            <button id="reset-deck-btn" class="btn-ghost" style="font-size:0.78rem; padding:6px 12px;">Restaurar Padrao</button>
           </div>
         </div>
 
-        <!-- Leader Selector Bar -->
         <div style="display:flex; gap:10px; overflow-x:auto; padding-bottom:12px; margin-bottom:20px;">
-          ${Object.values(LEADERS).map(l => `
-            <button class="db-leader-tab ${this.activeLeader === l.id ? 'active' : ''}" data-leader="${l.id}" style="
-              background:${this.activeLeader === l.id ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.05)'};
-              border:1px solid ${this.activeLeader === l.id ? 'var(--ki-yellow)' : 'rgba(255,255,255,0.1)'};
-              color:${this.activeLeader === l.id ? 'var(--ki-yellow)' : '#fff'};
-              padding:8px 16px; border-radius:10px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; flex-shrink:0;
-            ">
+          ${Object.values(LEADERS).filter(l => unlocked.has(l.id)).map(l => `
+            <button class="db-leader-tab ${this.activeLeader === l.id ? 'active' : ''}" data-leader="${l.id}">
               <span>${l.icon}</span> ${l.name.split(' ')[0]}
             </button>
           `).join('')}
         </div>
 
-        <!-- Deck List Slots -->
         <div style="margin-bottom:24px;">
-          <h3 style="font-size:0.9rem; font-weight:900; color:#fff; margin-bottom:10px;">Baralho Ativo de ${LEADERS[this.activeLeader]?.name} (${currentDeck.length}/20)</h3>
-          <div style="display:flex; flex-wrap:wrap; gap:8px; background:rgba(10,13,22,0.6); padding:14px; border-radius:12px; border:1px solid rgba(255,255,255,0.08); min-height:80px; align-items:center;">
+          <h3>Baralho Ativo (${currentDeck.length}/${DECK_MAX})</h3>
+          <div style="display:flex; flex-wrap:wrap; gap:8px; min-height:80px;">
             ${currentDeck.map((cardId, index) => {
               const card = getCardById(cardId);
+              if (!card) return '';
               return `
-                <div class="deck-chip type-${card.type}" style="
-                  background:rgba(18,24,38,0.9); border:1px solid rgba(255,255,255,0.15); padding:4px 10px; border-radius:8px; font-size:0.75rem; font-weight:800; display:flex; align-items:center; gap:6px; color:#fff;
-                ">
-                  <span style="color:var(--ki-yellow);">${card.cost} Ki</span>
+                <div class="deck-chip type-${card.type}">
+                  <span>${card.cost} Ki</span>
                   <span>${card.name}</span>
-                  <button class="chip-remove-btn" data-index="${index}" style="background:none; border:none; color:#ff4444; font-weight:900; cursor:pointer; margin-left:4px;">✕</button>
-                </div>
-              `;
+                  <button class="chip-remove-btn" data-index="${index}">x</button>
+                </div>`;
             }).join('')}
           </div>
         </div>
 
-        <!-- Card Collection Grid -->
         <div>
-          <h3 style="font-size:0.9rem; font-weight:900; color:#fff; margin-bottom:10px;">Coleção de Cartas Disponíveis (Clique para Adicionar)</h3>
+          <h3>Colecao</h3>
           <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:12px;">
-            ${CARD_DATABASE.map(card => `
-              <div class="card collection-card type-${card.type}" data-card-id="${card.id}" style="cursor:pointer;">
-                ${assetLoader.renderCardArtHTML(card)}
-                <div class="card-header"><div class="card-ki-cost">${card.cost}</div></div>
-                <div class="card-type-tag tag-${card.type}">${card.type.toUpperCase()}</div>
-                ${card.power > 0 ? `<div class="card-power-badge">${card.power} ATK</div>` : ''}
-              </div>
-            `).join('')}
+            ${CARD_DATABASE.map(card => {
+              const owned = this.getOwnedCount(card.id);
+              const used = this.getDeckCount(card.id);
+              const canAdd = owned > used && used < MAX_CARD_COPIES && currentDeck.length < DECK_MAX;
+              return `
+                <div class="card collection-card type-${card.type} ${owned ? '' : 'unowned'}" data-card-id="${card.id}">
+                  ${assetLoader.renderCardArtHTML(card)}
+                  <div class="card-header"><div class="card-ki-cost">${card.cost}</div></div>
+                  <div class="card-type-tag tag-${card.type}">${card.type.toUpperCase()}</div>
+                  <div style="font-size:.68rem;font-weight:900;">Possui ${owned}/${MAX_CARD_COPIES} | Deck ${used}</div>
+                  ${canAdd
+                    ? `<button class="collection-add-btn" data-card-id="${card.id}">ADICIONAR</button>`
+                    : owned < MAX_CARD_COPIES
+                      ? `<button class="collection-craft-btn" data-card-id="${card.id}">CRIAR ${getCraftCost(card.id)} Dust</button>`
+                      : ''}
+                </div>`;
+            }).join('')}
           </div>
         </div>
+      </div>`;
 
-      </div>
-    `;
-
-    // Event Bindings
     container.querySelectorAll('.db-leader-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         this.activeLeader = tab.dataset.leader;
@@ -183,22 +208,28 @@ export class DeckBuilder {
     });
 
     container.querySelectorAll('.chip-remove-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async e => {
         e.stopPropagation();
-        const idx = parseInt(btn.dataset.index, 10);
-        this.removeCardFromDeck(idx);
+        await this.removeCardFromDeck(Number(btn.dataset.index));
       });
     });
 
-    container.querySelectorAll('.collection-card').forEach(cardEl => {
-      cardEl.addEventListener('click', () => {
-        const cardId = cardEl.dataset.cardId;
-        this.addCardToDeck(cardId);
+    container.querySelectorAll('.collection-add-btn').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        await this.addCardToDeck(btn.dataset.cardId);
       });
     });
 
-    container.querySelector('#reset-deck-btn')?.addEventListener('click', () => {
-      this.resetDeckToDefault(this.activeLeader);
+    container.querySelectorAll('.collection-craft-btn').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        await this.craftCard(btn.dataset.cardId);
+      });
+    });
+
+    container.querySelector('#reset-deck-btn')?.addEventListener('click', async () => {
+      await this.resetDeckToDefault(this.activeLeader);
     });
   }
 }

@@ -1,2 +1,12 @@
-.vercel
-.env*
+node_modules/
+.env
+.env.*
+*.log
+*.bak
+/*.zip
+/*-source.js
+/*-source.mjs
+/PATCH_RELEASE_*.ps1
+/apply-release-*.mjs
+/LEIA-ME_RELEASE_*.txt
+/test-release-*-hotfix.mjs

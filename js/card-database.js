@@ -1036,7 +1036,7 @@ export const CARD_DATABASE = [
 ];
 
 export function getCardById(cardId) {
-  return CARD_DATABASE.find(c => c.id === cardId) || CARD_DATABASE[0];
+  return CARD_DATABASE.find(c => c.id === cardId) || null;
 }
 
 /* ==========================================================================

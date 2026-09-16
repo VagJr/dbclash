@@ -11,7 +11,8 @@ import { GameEngine } from './game-engine.js';
 import { MultiplayerManager } from './multiplayer-manager.js';
 import { deckBuilder } from './deck-builder.js';
 import { packOpener } from './pack-opener.js';
-import { chatManager, DOJO_RANKINGS } from './chat-manager.js';
+import { chatManager } from './chat-manager.js';
+import { socialManager } from './social-manager.js';
 import { FXEngine } from './fx-engine.js';
 import { TutorialManager } from './tutorial-manager.js';
 import { characterUnlocks } from './character-unlocks.js';
@@ -21,7 +22,6 @@ import { ANIMATION_TYPES } from './animation-catalog.js';
 import { soundEngine } from './audio.js';
 import { spriteAnimator } from './sprite-animator.js';
 import { getCardById, LEADERS, getStarterDeckForLeader, CARD_DATABASE } from './card-database.js';
-import { authDatabase } from './auth-database.js';
 import { i18n } from './i18n.js';
 
 import { sceneManager, GAME_SCENES } from './scene-manager.js';
@@ -51,6 +51,7 @@ export class UIManager {
     };
 
     this.multiplayer = new MultiplayerManager(this.gameEngine);
+    socialManager.bind({ multiplayer: this.multiplayer });
     this.tutorial = new TutorialManager(this);
 
     this.selectedLeader = 'goku';
@@ -239,7 +240,7 @@ export class UIManager {
 
     if (type === 'kiAura') {
       soundEngine.playKiCharge();
-      this.triggerActionBanner('CARREGAR KI (+2 KI)', 'act-charge', '気力充填');
+      this.triggerActionBanner(`CARREGAR KI (+${data.amount || 2} KI)`, 'act-charge', '気力充填');
       this.fx.spawnKiAura(vec.fromX, vec.fromY, data.color);
     } else if (type === 'attackCharging') {
       const cardTitle = data.card ? data.card.name.toUpperCase() : 'ATAQUE DE KI';
@@ -831,22 +832,36 @@ export class UIManager {
     // 2. Press Start AAA Console Button
     document.getElementById('title-press-start-btn')?.addEventListener('click', () => {
       soundEngine.playClick();
+
+      if (authManager.isLoggedIn) {
+        soundEngine.playAwaken();
+        sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
+        return;
+      }
+
       const authModal = document.getElementById('auth-modal');
       const authCloseBtn = document.getElementById('auth-close-btn');
       const userInput = document.getElementById('auth-user-input');
 
-      if (userInput && typeof authManager !== 'undefined' && authManager.user && authManager.user.displayName) {
+      if (userInput && authManager.user?.displayName) {
         userInput.value = authManager.user.displayName;
       }
 
-      if (authModal) {
-        authModal.classList.add('active');
-        if (authCloseBtn) authCloseBtn.style.display = 'none';
-        return; // FORCE LOGIN / SIGNUP SCREEN ON EVERY GAME START
+      if (!authModal) {
+        sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
+        return;
       }
 
-      soundEngine.playAwaken();
-      sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
+      authModal.classList.add('active');
+
+      if (authCloseBtn) {
+        authCloseBtn.style.display = '';
+        authCloseBtn.textContent = 'JOGAR COMO CONVIDADO';
+        authCloseBtn.onclick = () => {
+          authModal.classList.remove('active');
+          sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
+        };
+      }
     });
 
     // 3. Cinematic Intro Skip Button
@@ -863,7 +878,7 @@ export class UIManager {
 
     document.getElementById('menu-btn-ranked-2v2')?.addEventListener('click', () => {
       soundEngine.playClick();
-      alert('⚔️ MODO RANQUEADO 2v2 EM BREVE! Duplas online no Torneio do Poder.');
+      this.multiplayer.startRanked2v2Matchmaking(this.selectedLeader);
     });
 
     document.getElementById('menu-btn-coop-raid')?.addEventListener('click', () => {
@@ -964,10 +979,12 @@ export class UIManager {
     });
     document.getElementById('bnav-ranked')?.addEventListener('click', () => {
       soundEngine.playClick();
+      this.renderRankedSummary();
       sceneManager.switchScene(GAME_SCENES.RANKED);
     });
     document.getElementById('bnav-quests')?.addEventListener('click', () => {
       soundEngine.playClick();
+      socialManager.renderQuests();
       sceneManager.switchScene(GAME_SCENES.QUESTS);
     });
     document.getElementById('bnav-settings')?.addEventListener('click', () => {
@@ -1041,40 +1058,38 @@ export class UIManager {
 
     this.authBtn?.addEventListener('click', () => {
       soundEngine.playClick();
-      if (authDatabase.isLoggedIn() && !authDatabase.getCurrentUser().isGuest) {
-        authDatabase.logout();
+      if (authManager.isLoggedIn) {
+        authManager.logout();
         this.updateUserSessionUI();
       } else {
         this.authModal?.classList.add('active');
       }
     });
     this.authCloseBtn?.addEventListener('click', () => this.authModal?.classList.remove('active'));
-    this.authLoginSubmit?.addEventListener('click', () => {
+    this.authLoginSubmit?.addEventListener('click', async () => {
       soundEngine.playClick();
       const username = this.authUserInput?.value.trim() || 'GuerreiroZ';
       const email = username + '@dbtcg.local';
-      const res = authManager.login(email, this.authPassInput?.value || '');
-      if (res.success) { 
-        this.authModal?.classList.remove('active'); 
+      const res = await authManager.login(email, this.authPassInput?.value || '');
+      if (res.success) {
+        this.authModal?.classList.remove('active');
         soundEngine.playAwaken();
+        this.updateUserSessionUI();
         sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
-        const nameEl = document.getElementById('display-user-name');
-        if (nameEl) nameEl.textContent = authManager.user.displayName;
       } else {
         alert(res.message);
       }
     });
-    this.authRegisterSubmit?.addEventListener('click', () => {
+    this.authRegisterSubmit?.addEventListener('click', async () => {
       soundEngine.playClick();
       const username = this.authUserInput?.value.trim() || 'GuerreiroZ';
       const email = username + '@dbtcg.local';
-      const res = authManager.signUp(username, email, this.authPassInput?.value || '');
-      if (res.success) { 
+      const res = await authManager.signUp(username, email, this.authPassInput?.value || '');
+      if (res.success) {
         this.authModal?.classList.remove('active');
         soundEngine.playAwaken();
+        this.updateUserSessionUI();
         sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
-        const nameEl = document.getElementById('display-user-name');
-        if (nameEl) nameEl.textContent = authManager.user.displayName;
       } else {
         alert(res.message);
       }
@@ -1103,9 +1118,13 @@ export class UIManager {
       });
     }
 
-    document.getElementById('buy-pack-btn')?.addEventListener('click', () => {
-      const cards = packOpener.openPack();
-      if (cards) { this.renderPackReveal(cards); this.updateCurrencies(); this.renderDeckBuilder(); }
+    document.getElementById('buy-pack-btn')?.addEventListener('click', async () => {
+      const cards = await packOpener.openPack();
+      if (cards) {
+        this.renderPackReveal(cards);
+        this.updateCurrencies();
+        this.renderDeckBuilder();
+      }
     });
 
     const sendChatMsg = () => {
@@ -1118,26 +1137,20 @@ export class UIManager {
     };
     document.getElementById('send-chat-btn')?.addEventListener('click', sendChatMsg);
     this.chatInput?.addEventListener('keydown', e => { if (e.key === 'Enter') sendChatMsg(); });
-
-    document.getElementById('close-ko-btn')?.addEventListener('click', () => {
-      this.koModal?.classList.remove('active');
-      this.switchTab('lobby');
-    });
-
-    this.renderDeckBuilder();
+this.renderDeckBuilder();
     this.renderDojos();
     this.renderChat();
   }
 
   /* ── User Session ───────────────────────────────────────────────────── */
   updateUserSessionUI() {
-    const user = authDatabase.getCurrentUser();
-    deckBuilder.zeni = user.zeni;
-    deckBuilder.dust = user.dust;
+    const user = authManager.user;
     this.updateCurrencies();
     if (this.authBtn) {
-      this.authBtn.textContent = user.isGuest ? '🔑 Entrar' : `👤 ${user.username}`;
+      this.authBtn.textContent = user?.isGuest ? '🔑 Entrar' : `👤 ${user?.displayName || 'Guerreiro Z'}`;
     }
+    const nameEl = document.getElementById('display-user-name');
+    if (nameEl) nameEl.textContent = user?.displayName || 'Guerreiro Z';
   }
 
   updateCurrencies() {
@@ -1200,12 +1213,14 @@ export class UIManager {
         soundEngine.playClick();
         if (!characterUnlocks.isUnlocked(leaderId)) {
           if (confirm(`Unlock ${leader.name} for ${leader.unlockCost} Zeni?`)) {
-            characterUnlocks.unlockCharacter(leaderId, leader.unlockCost, deckBuilder.zeni, cost => {
-              deckBuilder.zeni -= cost;
-              authDatabase.updateProfileStats({ zeni: deckBuilder.zeni });
+            characterUnlocks.unlockCharacter(leaderId).then(result => {
+              if (!result.success) {
+                alert(result.message || 'Zeni insuficiente ou falha ao desbloquear.');
+                return;
+              }
               this.updateCurrencies();
               this.renderLeaderSelectionRoster();
-    this.initDevPanel();
+              this.initDevPanel();
             });
           }
           return;
@@ -1382,12 +1397,27 @@ export class UIManager {
   }
 
   startFighterSpriteLoop() {
-    setInterval(() => {
-      if (this.gameEngine) {
+    if (this._fighterLoopStarted) return;
+    this._fighterLoopStarted = true;
+    let lastFrameAt = 0;
+
+    const frame = timestamp => {
+      const arena = document.getElementById('scene-arena');
+      const shouldRender =
+        document.visibilityState === 'visible' &&
+        arena?.classList.contains('active') &&
+        timestamp - lastFrameAt >= 120;
+
+      if (shouldRender && this.gameEngine) {
+        lastFrameAt = timestamp;
         this.renderFighterCanvas('p1', this.gameEngine.player);
         this.renderFighterCanvas('p2', this.gameEngine.opponent);
       }
-    }, 130);
+
+      this._fighterAnimationFrame = requestAnimationFrame(frame);
+    };
+
+    this._fighterAnimationFrame = requestAnimationFrame(frame);
   }
 
   renderFighterCanvas(prefix, fighter) {
@@ -1456,86 +1486,74 @@ export class UIManager {
 
   /* ── Player Hand & Touch Gesture Slide Pop-up ──────────────────────── */
   renderPlayerHand(hand, playerKi, gameState, initiative, pendingAttack, isOpenGuard) {
-    if (!this.p1HandContainer) return;
-    
-    const renderHash = (hand || []).map(c => c.id).join(',') + `|${playerKi}|${gameState}|${initiative}|${isOpenGuard}`;
-    if (this.p1HandContainer.dataset.renderHash === renderHash) return;
-    this.p1HandContainer.dataset.renderHash = renderHash;
-
-    this.p1HandContainer.innerHTML = '';
-
-    hand.forEach((card, index) => {
-      const el = document.createElement('div');
-
-      let isPlayable = false;
-      let reasonText = '';
-
-      if (playerKi < card.cost) {
-        reasonText = i18n.t('reasonNeedKi');
-      } else if (card.type === 'evade' && isOpenGuard) {
-        reasonText = i18n.t('reasonOpenGuard');
-      } else if (gameState === 'FREE_ACTION' && initiative === 'player') {
-        if (card.type === 'attack' || card.type === 'tech') isPlayable = true;
-        else reasonText = i18n.t('reasonDefenseOnly');
-      } else if (gameState === 'ATTACK_PENDING' && pendingAttack) {
-        if (pendingAttack.attackerKey === 'opponent') {
-          if (['defense', 'evade', 'counter'].includes(card.type) || card.isBeam) isPlayable = true;
-          else reasonText = i18n.t('reasonReactionOnly');
-        } else {
-          reasonText = i18n.t('reasonInFlight');
+      if (!this.p1HandContainer) return;
+  
+      const awakened = !!this.gameEngine?.player?.isAwakened;
+      const buff = Number(this.gameEngine?.player?.nextAttackBonus || 0);
+      const renderHash = (hand || []).map(c => c.id).join(',') + `|${playerKi}|${gameState}|${initiative}|${isOpenGuard}|${awakened}|${buff}`;
+      if (this.p1HandContainer.dataset.renderHash === renderHash) return;
+      this.p1HandContainer.dataset.renderHash = renderHash;
+      this.p1HandContainer.innerHTML = '';
+  
+      hand.forEach((card, index) => {
+        if (!card || card.hidden) return;
+        const el = document.createElement('div');
+        const effectiveCost = this.gameEngine.getCardCost('player', card);
+        let isPlayable = false;
+        let reasonText = '';
+  
+        if (playerKi < effectiveCost) {
+          reasonText = i18n.t('reasonNeedKi');
+        } else if (gameState === 'FREE_ACTION' && initiative === 'player') {
+          if (card.type === 'attack' || card.type === 'tech') isPlayable = true;
+          else reasonText = i18n.t('reasonDefenseOnly');
+        } else if (gameState === 'ATTACK_PENDING' && pendingAttack) {
+          if (pendingAttack.attackerKey === 'opponent') {
+            if (this.gameEngine.isReactionCardLegal('player', card, pendingAttack.card)) isPlayable = true;
+            else reasonText = card.type === 'evade' && isOpenGuard ? i18n.t('reasonOpenGuard') : i18n.t('reasonReactionOnly');
+          } else {
+            reasonText = i18n.t('reasonInFlight');
+          }
+        } else if (initiative !== 'player') {
+          reasonText = i18n.t('reasonOpponentTurn');
         }
-      } else if (initiative !== 'player') {
-        reasonText = i18n.t('reasonOpponentTurn');
-      }
-
-      el.className = `card type-${card.type}${card.rarity === 'super-rare' ? ' super-rare' : ''} ${isPlayable ? 'playable' : 'unplayable'}`;
-
-      el.innerHTML = `
-        ${assetLoader.renderCardArtHTML(card)}
-        <div class="card-header"><div class="card-ki-cost">${card.cost}</div></div>
-        <div class="card-type-tag tag-${card.type}">${card.type.toUpperCase()}</div>
-        
-        ${card.power > 0 ? `<div class="card-power-badge">${card.power} ATK</div>` : ''}
-      `;
-
-      el.draggable = isPlayable;
-      el.addEventListener('dragstart', () => { this.draggedCardIndex = index; });
-
-      // Touchscreen Mobile Slide Pop-up Gesture
-      el.addEventListener('touchstart', () => {
-        if (isPlayable) this.draggedCardIndex = index;
-        el.classList.add('touch-hover');
-      }, { passive: true });
-
-      el.addEventListener('touchmove', (e) => {
-        if (e.touches && e.touches[0]) {
-          const touch = e.touches[0];
-          const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
-          const parentCard = targetEl ? targetEl.closest('.card') : null;
-          
-          this.p1HandContainer.querySelectorAll('.card').forEach(c => {
-            if (c === parentCard) c.classList.add('touch-hover');
-            else c.classList.remove('touch-hover');
-          });
-        }
-      }, { passive: true });
-
-      const clearTouchHover = () => {
-        this.p1HandContainer.querySelectorAll('.card').forEach(c => c.classList.remove('touch-hover'));
-      };
-      el.addEventListener('touchend', clearTouchHover);
-      el.addEventListener('touchcancel', clearTouchHover);
-
-      el.addEventListener('click', () => {
-        if (isPlayable) {
-          soundEngine.playClick();
-          soundEngine.playCardPlay(); this.gameEngine.playCard('player', index);
-        }
+  
+        el.className = `card type-${card.type}${card.rarity === 'super-rare' ? ' super-rare' : ''} ${isPlayable ? 'playable' : 'unplayable'}`;
+        el.title = isPlayable ? '' : reasonText;
+        el.innerHTML = `
+          ${assetLoader.renderCardArtHTML(card)}
+          <div class="card-header"><div class="card-ki-cost">${effectiveCost}</div></div>
+          <div class="card-type-tag tag-${card.type}">${card.type.toUpperCase()}</div>
+          ${card.power > 0 ? `<div class="card-power-badge">${card.power} ATK</div>` : ''}
+        `;
+  
+        el.draggable = isPlayable;
+        el.addEventListener('dragstart', () => { this.draggedCardIndex = index; });
+        el.addEventListener('touchstart', () => {
+          if (isPlayable) this.draggedCardIndex = index;
+          el.classList.add('touch-hover');
+        }, { passive: true });
+        el.addEventListener('touchmove', e => {
+          if (e.touches?.[0]) {
+            const touch = e.touches[0];
+            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+            const parentCard = targetEl ? targetEl.closest('.card') : null;
+            this.p1HandContainer.querySelectorAll('.card').forEach(c => c.classList.toggle('touch-hover', c === parentCard));
+          }
+        }, { passive: true });
+        const clearTouchHover = () => this.p1HandContainer.querySelectorAll('.card').forEach(c => c.classList.remove('touch-hover'));
+        el.addEventListener('touchend', clearTouchHover);
+        el.addEventListener('touchcancel', clearTouchHover);
+        el.addEventListener('click', () => {
+          if (isPlayable) {
+            soundEngine.playClick();
+            soundEngine.playCardPlay();
+            this.gameEngine.playCard('player', index);
+          }
+        });
+        this.p1HandContainer.appendChild(el);
       });
-
-      this.p1HandContainer.appendChild(el);
-    });
-  }
+    }
 
   /* ── Battle Log ─────────────────────────────────────────────────────── */
   renderLogs(logs) {
@@ -1606,33 +1624,60 @@ export class UIManager {
   }
 
   renderDojos() {
-    if (!this.dojoListContainer) return;
-    this.dojoListContainer.innerHTML = '';
-    const medals = ['🥇', '🥈', '🥉'];
-    DOJO_RANKINGS.forEach((dojo, i) => {
-      const row = document.createElement('div');
-      row.className = 'dojo-row';
-      row.innerHTML = `
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span class="dojo-rank">${medals[i] || `#${i + 1}`}</span>
-          <span>${dojo.icon} ${dojo.name} <span style="color:var(--text-dim)">(${dojo.leader})</span></span>
-        </div>
-        <span class="dojo-power">${dojo.power} PWR</span>
-      `;
-      this.dojoListContainer.appendChild(row);
-    });
+    socialManager.renderDojos();
   }
 
   /* ── Chat ────────────────────────────────────────────────────────────── */
+  isDevMode() {
+    if (typeof window === 'undefined') return false;
+    const host = window.location?.hostname || '';
+    return window.DBCLASH_DEV_MODE === true || host === 'localhost' || host === '127.0.0.1';
+  }
+
+  appendSafeChatMessage(msg) {
+    if (!this.chatFeed || !msg) return;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble';
+
+    const user = document.createElement('span');
+    user.className = 'cb-user';
+    user.textContent = String(msg.user || 'Guerreiro Z').slice(0, 40);
+
+    const time = document.createElement('span');
+    time.className = 'cb-time';
+    time.textContent = String(msg.time || '').slice(0, 16);
+
+    const br = document.createElement('br');
+    const text = document.createTextNode(String(msg.text || '').slice(0, 300));
+
+    bubble.append(user, time, br, text);
+    this.chatFeed.appendChild(bubble);
+  }
+
+  renderRankedSummary() {
+    const container = document.getElementById('ranked-view-content');
+    if (!container) return;
+
+    container.replaceChildren();
+
+    const card = document.createElement('div');
+    card.style.cssText =
+      'padding:16px;background:rgba(255,215,0,.08);border-radius:8px;' +
+      'border:1px solid rgba(255,215,0,.3);';
+
+    const user = authManager.user;
+    card.textContent = user?.isGuest
+      ? 'Entre em uma conta online para disputar o Ranked.'
+      : `Rank atual: ${user?.division || 'Bronze I'} | ${user?.rankPoints || 0} RP | ${user?.victories || 0}V / ${user?.losses || 0}D`;
+
+    container.appendChild(card);
+  }
+
   renderChat() {
     if (!this.chatFeed) return;
-    this.chatFeed.innerHTML = '';
-    chatManager.messages.forEach(msg => {
-      const bubble = document.createElement('div');
-      bubble.className = 'chat-bubble';
-      bubble.innerHTML = `<span class="cb-user">${msg.user}</span><span class="cb-time">${msg.time}</span><br>${msg.text}`;
-      this.chatFeed.appendChild(bubble);
-    });
+    this.chatFeed.replaceChildren();
+    chatManager.messages.forEach(msg => this.appendSafeChatMessage(msg));
     this.chatFeed.scrollTop = this.chatFeed.scrollHeight;
   }
 
@@ -1657,6 +1702,10 @@ export class UIManager {
 
   /* ── DEV ADMIN PANEL CONTROLLER ────────────────────────────────────── */
   initDevPanel() {
+    if (!this.isDevMode()) {
+      document.getElementById('open-dev-panel-btn')?.remove();
+      return;
+    }
     const modal = document.getElementById('dev-panel-modal');
     const openBtn = document.getElementById('open-dev-panel-btn');
     const closeBtn = document.getElementById('close-dev-modal-btn');
@@ -1726,6 +1775,7 @@ export class UIManager {
   }
 
   openDevPanel() {
+    if (!this.isDevMode()) return;
     const modal = document.getElementById('dev-panel-modal');
     if (!modal) return;
     modal.classList.add('active');
@@ -1793,111 +1843,74 @@ export class UIManager {
   }
 
   
-  openLeaderboardModal() {
+  async openLeaderboardModal() {
     const lbModal = document.getElementById('leaderboard-modal');
     const lbContainer = document.getElementById('lb-list-container');
-    if (lbModal) {
-      const topList = leaderboardManager.getTopRankings();
-      if (lbContainer) {
-        lbContainer.innerHTML = topList.map(item => `
-          <div class="lb-item ${item.isCurrent ? 'is-current' : ''}">
-            <div class="lb-rank">#${item.rank}</div>
-            <div class="lb-user-info">
-              <div class="lb-name">${item.name}</div>
-              <div class="lb-division">${item.division}</div>
-            </div>
-            <div class="lb-rp">⚡ ${item.rp} RP (${item.wins}V)</div>
-          </div>
-        `).join('');
-      }
-      lbModal.classList.add('active');
+    if (!lbModal || !lbContainer) return;
+
+    lbModal.classList.add('active');
+    lbContainer.textContent = 'Carregando ranking...';
+
+    try {
+      await leaderboardManager.refresh(true);
+    } catch {}
+
+    const topList = leaderboardManager.getTopRankings();
+    lbContainer.replaceChildren();
+
+    if (!topList.length) {
+      lbContainer.textContent = 'Ranking indisponivel no momento.';
+      return;
+    }
+
+    for (const item of topList) {
+      const row = document.createElement('div');
+      row.className = `lb-item${item.isCurrent ? ' is-current' : ''}`;
+
+      const rank = document.createElement('div');
+      rank.className = 'lb-rank';
+      rank.textContent = `#${item.rank}`;
+
+      const info = document.createElement('div');
+      info.className = 'lb-user-info';
+
+      const name = document.createElement('div');
+      name.className = 'lb-name';
+      name.textContent = String(item.name || 'Guerreiro Z').slice(0, 40);
+
+      const division = document.createElement('div');
+      division.className = 'lb-division';
+      division.textContent = String(item.division || 'Bronze I').slice(0, 40);
+
+      info.append(name, division);
+
+      const rp = document.createElement('div');
+      rp.className = 'lb-rp';
+      rp.textContent = `${item.rp || 0} RP (${item.wins || 0}V)`;
+
+      row.append(rank, info, rp);
+      lbContainer.appendChild(row);
     }
   }
 
   setupAuthAndLeaderboardHandlers() {
-    // Live Realtime Chat Listener — updates chat-feed in real time
     if (typeof chatManager !== 'undefined') {
-      chatManager.onMessageCallback = (msg) => {
-        if (this.chatFeed) {
-          const bubble = document.createElement('div');
-          bubble.className = 'chat-bubble';
-          bubble.innerHTML = `<span class="cb-user">${msg.user}</span><span class="cb-time">${msg.time}</span><br>${msg.text}`;
-          this.chatFeed.appendChild(bubble);
-          this.chatFeed.scrollTop = this.chatFeed.scrollHeight;
-        }
+      chatManager.onMessageCallback = msg => {
+        this.appendSafeChatMessage(msg);
+        if (this.chatFeed) this.chatFeed.scrollTop = this.chatFeed.scrollHeight;
       };
     }
-    const authBtn = document.getElementById('auth-btn');
-    const authModal = document.getElementById('auth-modal');
-    const authCloseBtn = document.getElementById('auth-close-btn');
-    const authForm = document.getElementById('auth-form');
 
-    const bnavRanked = document.getElementById('bnav-ranked');
     const lbModal = document.getElementById('leaderboard-modal');
     const lbCloseBtn = document.getElementById('lb-close-btn');
-    const lbContainer = document.getElementById('lb-list-container');
 
-    if (authModal) {
-      if (!authManager.isLoggedIn) {
-        authModal.classList.add('active');
-      }
-    }
+    lbCloseBtn?.addEventListener('click', () => {
+      lbModal?.classList.remove('active');
+    });
 
-    if (authBtn && authModal) {
-      authBtn.addEventListener('click', () => {
-        authModal.classList.add('active');
-      });
-    }
-
-    if (authCloseBtn && authModal) {
-      authCloseBtn.addEventListener('click', () => {
-        if (!authManager.isLoggedIn) {
-          alert('Atenção: É necessário criar uma conta ou fazer login para acessar o jogo!');
-          authModal.classList.add('active');
-        } else {
-          authModal.classList.remove('active');
-        }
-      });
-    }
-
-    if (authForm) {
-      authForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const username = document.getElementById('auth-username')?.value || 'Guerreiro Z';
-        const email = document.getElementById('auth-email')?.value || 'guerreiro@dbtcg.com';
-        const pass = document.getElementById('auth-password')?.value || '123456';
-        authManager.signUp(username, email, pass);
-        const nameEl = document.getElementById('display-user-name');
-        if (nameEl) nameEl.textContent = authManager.user.displayName;
-        if (authModal) authModal.classList.remove('active');
-        this.triggerActionBanner(`CONTA SALVA: ${authManager.user.displayName}`, 'act-attack', 'ACCOUNT READY');
-      });
-    }
-
-    if (bnavRanked && lbModal) {
-      bnavRanked.addEventListener('click', () => {
-        const topList = leaderboardManager.getTopRankings();
-        if (lbContainer) {
-          lbContainer.innerHTML = topList.map(item => `
-            <div class="lb-item ${item.isCurrent ? 'is-current' : ''}">
-              <div class="lb-rank">#${item.rank}</div>
-              <div class="lb-user-info">
-                <div class="lb-name">${item.name}</div>
-                <div class="lb-division">${item.division}</div>
-              </div>
-              <div class="lb-rp">⚡ ${item.rp} RP (${item.wins}V)</div>
-            </div>
-          `).join('');
-        }
-        lbModal.classList.add('active');
-      });
-    }
-
-    if (lbCloseBtn && lbModal) {
-      lbCloseBtn.addEventListener('click', () => {
-        lbModal.classList.remove('active');
-      });
-    }
+    window.addEventListener('dbclash-leaderboard-updated', () => {
+      if (lbModal?.classList.contains('active')) this.openLeaderboardModal();
+    });
   }
 
 }

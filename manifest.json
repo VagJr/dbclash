@@ -6,7 +6,7 @@
   "display": "standalone",
   "background_color": "#050a15",
   "theme_color": "#ffd700",
-  "orientation": "portrait",
+  "orientation": "any",
   "icons": [
     {
       "src": "imagens/Dragon-Ball-PNG-HD-Image.png",
@@ -20,5 +20,7 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "id": "./",
+  "scope": "./"
 }

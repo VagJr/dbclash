@@ -1,0 +1,22 @@
+DBCLASH FIX 07 - TEST HOTFIX
+============================
+
+Este hotfix corrige APENAS o teste de release.
+
+Motivo:
+A UI ja usa appendSafeChatMessage(), onde username usa textContent
+e a mensagem usa createTextNode(). O teste anterior examinava somente
+o corpo de renderChat() e exigia textContent diretamente ali.
+
+Tambem corrige a deteccao do leaderboard para aceitar:
+  async openLeaderboardModal()
+
+Nao altera gameplay, servidor, UI, economia ou dados.
+
+Execute em C:\dbclash:
+  .\PATCH_RELEASE_FIX_07_TEST_HOTFIX.ps1
+
+Esperado:
+  POLISH RELEASE TESTS: 24 PASS / 0 FAIL
+  RELEASE STATIC AUDIT: PASS / 0 BLOCKERS
+  === RELEASE FIX 07 VALIDADO ===

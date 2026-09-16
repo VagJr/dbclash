@@ -1,0 +1,27 @@
+DBCLASH - FIX 07 RESUME HOTFIX
+==============================
+
+Use este pacote SOMENTE depois do erro:
+
+  Error: Client reset marker ausente.
+
+O primeiro PATCH_RELEASE_FIX_07.ps1 ja aplicou a primeira metade.
+NAO execute o Fix 07 original novamente.
+
+Passos:
+1. Extraia os dois arquivos deste ZIP em C:\dbclash.
+2. Execute:
+
+   .\PATCH_RELEASE_FIX_07_RESUME.ps1
+
+O hotfix:
+- confirma que a primeira metade do Fix 07 esta presente;
+- localiza reset() estruturalmente, sem depender da ordem interna;
+- conclui game-engine, UI, PWA, manifest e package.json;
+- roda node --check;
+- roda npm run release:check.
+
+Gate final esperado:
+  123 testes PASS
+  RELEASE STATIC AUDIT: PASS / 0 BLOCKERS
+  === RELEASE FIX 07 VALIDADO ===
