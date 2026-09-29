@@ -1,0 +1,86 @@
+[
+  {
+    "name": "primary-button",
+    "path": "assets/rework/ui/primary-button.png",
+    "width": 358,
+    "height": 286,
+    "alpha": true
+  },
+  {
+    "name": "secondary-button",
+    "path": "assets/rework/ui/secondary-button.png",
+    "width": 360,
+    "height": 210,
+    "alpha": true
+  },
+  {
+    "name": "panel-cyan",
+    "path": "assets/rework/ui/panel-cyan.png",
+    "width": 357,
+    "height": 269,
+    "alpha": true
+  },
+  {
+    "name": "panel-orange",
+    "path": "assets/rework/ui/panel-orange.png",
+    "width": 344,
+    "height": 299,
+    "alpha": true
+  },
+  {
+    "name": "hud-left",
+    "path": "assets/rework/ui/hud-left.png",
+    "width": 356,
+    "height": 352,
+    "alpha": true
+  },
+  {
+    "name": "hud-right",
+    "path": "assets/rework/ui/hud-right.png",
+    "width": 352,
+    "height": 332,
+    "alpha": true
+  },
+  {
+    "name": "card-frame-orange",
+    "path": "assets/rework/ui/card-frame-orange.png",
+    "width": 301,
+    "height": 361,
+    "alpha": true
+  },
+  {
+    "name": "card-frame-cyan",
+    "path": "assets/rework/ui/card-frame-cyan.png",
+    "width": 268,
+    "height": 351,
+    "alpha": true
+  },
+  {
+    "name": "booster",
+    "path": "assets/rework/ui/booster.png",
+    "width": 356,
+    "height": 334,
+    "alpha": true
+  },
+  {
+    "name": "portal",
+    "path": "assets/rework/ui/portal.png",
+    "width": 359,
+    "height": 330,
+    "alpha": true
+  },
+  {
+    "name": "header",
+    "path": "assets/rework/ui/header.png",
+    "width": 362,
+    "height": 337,
+    "alpha": true
+  },
+  {
+    "name": "footer",
+    "path": "assets/rework/ui/footer.png",
+    "width": 362,
+    "height": 318,
+    "alpha": true
+  }
+]

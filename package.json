@@ -8,7 +8,7 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test:core": "node scripts/test-release-core.mjs",
-    "test": "npm run test:core && npm run test:content && npm run test:account && npm run test:multiplayer && npm run test:raid && npm run test:social && npm run test:polish && npm run test:bot-ai",
+    "test": "npm run test:core && npm run test:content && npm run test:account && npm run test:multiplayer && npm run test:raid && npm run test:social && npm run test:polish && npm run test:bot-ai && npm run test:audio && npm run test:team-ui && npm run test:team-sync && npm run test:nexus",
     "check": "npm run release:check",
     "test:content": "node scripts/test-release-content.mjs",
     "test:account": "node scripts/test-release-account.mjs",
@@ -25,7 +25,15 @@
     "test:rc-auth": "node scripts/test-rc-auth.mjs",
     "test:rc-mongoose9-auth": "node scripts/test-rc-mongoose9-auth.mjs",
     "test:rc-ranked-runtime": "node scripts/test-rc-ranked-runtime.mjs",
-    "test:bot-ai": "node scripts/test-release-bot-ai.mjs"
+    "test:bot-ai": "node scripts/test-release-bot-ai.mjs",
+    "test:audio": "node scripts/test-release-audio.mjs",
+    "test:team-ui": "node scripts/test-release-team-arena-ui.mjs",
+    "test:team-sync": "node scripts/test-release-team-combat-sync.mjs",
+    "preview": "node scripts/preview-game.mjs",
+    "test:nexus-collection": "node scripts/test-nexus-collection.mjs",
+    "test:nexus-exchange": "node scripts/test-nexus-exchange.mjs",
+    "test:nexus-combat": "node scripts/test-nexus-combat.mjs",
+    "test:nexus": "npm run test:nexus-collection && npm run test:nexus-combat && npm run test:nexus-exchange"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

@@ -1,0 +1,29 @@
+DBCLASH — POLISH RAID LOG TEST HOTFIX
+=====================================
+
+Falha corrigida:
+  FAIL Raid escapa nomes e logs antes de templates HTML
+
+Causa:
+O runtime novo usa:
+
+  escapeHtml(log.text || '')
+
+O teste antigo exigia exatamente:
+
+  escapeHtml(log.text)
+
+Ambos sao seguros, mas a forma nova tambem protege contra log.text nulo.
+
+Este hotfix altera SOMENTE:
+  scripts/test-release-polish.mjs
+
+A nova assercao aceita:
+  escapeHtml(log.text)
+  escapeHtml(log.text || '')
+
+e continua falhando se surgir interpolacao crua:
+  ${log.text}
+
+APLICAR:
+  .\PATCH_POLISH_RAID_LOG_TEST_HOTFIX.ps1

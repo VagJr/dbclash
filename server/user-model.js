@@ -21,6 +21,7 @@ const UserSchema = new mongoose.Schema({
 
   ownedCards: { type: [String], default: [] },
   cardInventory: { type: Object, default: {} },
+  escrowInventory: { type: Object, default: {} },
 
   raidTrophies: { type: Number, default: 0, min: 0 },
   zeni: { type: Number, default: 500, min: 0 },
@@ -31,7 +32,7 @@ const UserSchema = new mongoose.Schema({
   dailyQuests: { type: Object, default: {} },
 
   createdAt: { type: Date, default: Date.now }
-}, { timestamps: true });
+}, { timestamps: true, optimisticConcurrency: true });
 
 UserSchema.pre('save', async function () {
   if (!this.isModified('password')) return;
@@ -60,6 +61,7 @@ UserSchema.methods.toPublicJSON = function () {
     customDecks: this.customDecks,
     ownedCards: this.ownedCards,
     cardInventory: this.cardInventory,
+      escrowInventory: this.escrowInventory,
     raidTrophies: this.raidTrophies,
     zeni: this.zeni,
     gems: this.gems,

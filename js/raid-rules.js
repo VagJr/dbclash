@@ -1,9 +1,11 @@
 import { getCardById } from './card-database.js';
 
-export const RAID_MIN_PLAYERS = 3;
+export const RAID_MIN_PLAYERS = 1;
 export const RAID_MAX_PLAYERS = 4;
 export const RAID_QUEUE_FILL_MS = 15000;
 export const RAID_TURN_MS = 30000;
+export const RAID_PLAYER_ACTION_COOLDOWN_MS = 1800;
+export const RAID_BOSS_ACTION_MS = 5000;
 export const RAID_RECONNECT_GRACE_MS = 30000;
 
 export const RAID_BOSSES = Object.freeze({
@@ -56,15 +58,17 @@ export function raidBossAttackProfile(boss, phase, round) {
   if (round > 0 && round % 3 === 0) {
     return {
       mode: 'all',
+      isBeam: true,
+      isPhysical: false,
       damage: Math.max(base, Number(boss.ultimateDamage) || base),
       name: boss.ultimateAttack || 'ULTIMATE'
     };
   }
 
-  if (phase >= 4) return { mode: 'all', damage: Math.floor(base * 1.75), name: 'ENRAGE TOTAL' };
-  if (phase === 3) return { mode: 'two', damage: Math.floor(base * 1.45), name: 'ATAQUE FURIOSO' };
-  if (phase === 2) return { mode: 'one', damage: Math.floor(base * 1.20), name: 'ATAQUE POTENCIALIZADO' };
-  return { mode: 'one', damage: base, name: 'ATAQUE DE ENERGIA' };
+  if (phase >= 4) return { mode: 'all', isBeam: true, isPhysical: false, damage: Math.floor(base * 1.75), name: 'ENRAGE TOTAL' };
+  if (phase === 3) return { mode: 'two', isBeam: false, isPhysical: true, damage: Math.floor(base * 1.45), name: 'ATAQUE FURIOSO' };
+  if (phase === 2) return { mode: 'one', isBeam: boss.id !== 'jiren', isPhysical: boss.id === 'jiren', damage: Math.floor(base * 1.20), name: 'ATAQUE POTENCIALIZADO' };
+  return { mode: 'one', isBeam: boss.id !== 'jiren', isPhysical: boss.id === 'jiren', damage: base, name: boss.id === 'jiren' ? 'IMPACTO DE COMBATE' : 'ATAQUE DE ENERGIA' };
 }
 
 export function raidRewardForBoss(bossId) {

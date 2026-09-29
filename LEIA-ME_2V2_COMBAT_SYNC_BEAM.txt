@@ -1,0 +1,110 @@
+DBCLASH — 2v2 COMBAT PRESENTATION + SYNC + BEAM CLASH
+======================================================
+
+PROBLEMAS CORRIGIDOS
+--------------------
+1. Carta jogada nao aparecia no centro da arena.
+2. Carta de resposta inimiga nao aparecia ao lado da carta atacante.
+3. 2v2 nao possuia reaction window autoritativa como o 1v1.
+4. Beam contra Beam nao criava Beam Clash real.
+5. HP/estado dos quatro jogadores podia divergir visualmente entre clientes.
+
+NOVO FLUXO DE ATAQUE
+--------------------
+A joga Kamehameha em C
+        ↓
+Servidor cria pending attack
+        ↓
+Todos os quatro clientes recebem a MESMA snapshot versionada
+        ↓
+Kamehameha aparece no drop-zone oficial
+        ↓
+C recebe janela de reacao
+        ↓
+C pode usar Defesa / Esquiva / Counter / Beam
+        ↓
+Resposta aparece ao lado da carta de A
+        ↓
+Servidor resolve o dano
+        ↓
+Todos recebem o mesmo HP final
+
+BEAM CLASH
+----------
+Se a resposta a um Beam for outro Beam:
+
+  [ KAMEHAMEHA ]  VS  [ FINAL FLASH ]
+
+o servidor cria um clash autoritativo.
+
+- beam-clash-overlay oficial abre em todas as telas;
+- somente os dois envolvidos podem apertar EMPURRAR BEAM;
+- mash vai ao servidor;
+- servidor atualiza progress;
+- todos os clientes veem o mesmo progress;
+- servidor decide vencedor;
+- dano final sai de uma unica fonte autoritativa.
+
+SYNC
+----
+A sala agora possui room.stateVersion.
+
+Cada sendTeamState:
+  room.stateVersion += 1
+  snapshotVersion = room.stateVersion
+
+e TODOS os quatro jogadores recebem essa mesma versao.
+
+Cada projection continua escondendo apenas a mao privada, mas:
+  teams.A
+  teams.B
+  HP
+  Ki
+  pending attacks
+  Beam Clash
+  logs
+
+sao derivados da mesma fotografia canonica.
+
+O cliente rejeita:
+- team_state de outra room;
+- team_state de outra matchId;
+- stateVersion antigo;
+- team_result antigo.
+
+BOT CPU
+-------
+Bots agora:
+- reconhecem pending attack;
+- escolhem Defesa / Evade / Counter;
+- podem responder Beam com Beam;
+- fazem mash no Beam Clash;
+- nao tentam atacar um alvo que ja esta resolvendo outro ataque.
+
+APLICAR
+-------
+Em C:\dbclash:
+
+  .\PATCH_2V2_COMBAT_SYNC_BEAM.ps1
+
+NAO RODE NOVAMENTE OS PATCHES GRANDES ANTERIORES.
+
+SMOKE TEST IMPORTANTE
+---------------------
+Abra duas telas/contas na MESMA partida.
+
+1. Anote HP de A/B/C/D nas duas telas.
+2. A ataque C.
+3. Antes da resposta:
+   - HP de C ainda deve ser igual nas duas telas;
+   - carta de A deve aparecer no centro nas duas telas.
+4. C use uma defesa:
+   - defesa deve aparecer ao lado;
+   - dano final deve ser identico nas duas telas.
+5. Compare novamente HP A/B/C/D.
+6. Ataque Beam em um jogador que tenha Beam na mao.
+7. Responda com Beam.
+8. Beam Clash deve abrir em AMBAS as telas.
+9. Mash em ambos os participantes.
+10. Barra deve acompanhar o mesmo resultado nos clientes.
+11. Ao finalizar, o mesmo jogador perde o mesmo HP em todas as telas.

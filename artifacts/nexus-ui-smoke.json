@@ -1,0 +1,126 @@
+{
+  "date": "2026-09-29T03:28:30.939Z",
+  "application": "http://127.0.0.1:5173",
+  "runtime": "Playwright with installed Chrome, headless isolated guest context",
+  "checks": {
+    "pressStart": true,
+    "loreChapters": [
+      "O universo virou um baralho.",
+      "Cada carta guarda um poder.",
+      "A próxima jogada é sua."
+    ],
+    "collectionPagination": {
+      "total": 714,
+      "renderedPerPage": 36,
+      "pages": 20
+    },
+    "searchKamehameha": {
+      "matches": 3
+    },
+    "archetypeAggro": {
+      "matches": 188
+    },
+    "confirmedGuestBooster": {
+      "cards": 3
+    },
+    "npcExpertPiccolo": {
+      "configured": true,
+      "hand": 5
+    },
+    "inspector": {
+      "open": true,
+      "fullArtShown": true,
+      "escapeCloses": true
+    },
+    "mobile": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "hub": {
+        "width": 390,
+        "scrollWidth": 390,
+        "height": 844,
+        "scrollHeight": 990
+      },
+      "deck": {
+        "width": 390,
+        "scrollWidth": 390
+      },
+      "arena": {
+        "width": 390,
+        "scrollWidth": 390,
+        "height": 844,
+        "scrollHeight": 844
+      }
+    }
+  },
+  "pageErrors": [],
+  "screenshots": [
+    "nexus-title-qa.png",
+    "nexus-intro-qa.png",
+    "nexus-hub-qa.png",
+    "nexus-deck-qa.png",
+    "nexus-shop-qa.png",
+    "nexus-arena-qa.png",
+    "nexus-mobile-hub-qa.png",
+    "nexus-mobile-deck-qa.png",
+    "nexus-mobile-arena-qa.png",
+    "nexus-fighters-qa.png",
+    "nexus-quests-qa.png",
+    "nexus-chat-qa.png",
+    "nexus-dojos-qa.png",
+    "nexus-ranking-qa.png",
+    "nexus-settings-qa.png",
+    "nexus-auth-qa.png",
+    "nexus-market-guest-qa.png",
+    "nexus-inspector-qa.png",
+    "nexus-full-art-qa.png"
+  ],
+  "additionalScreens": {
+    "fighters": {
+      "scene": "scene-fighter-select",
+      "visible": true,
+      "horizontalOverflow": false
+    },
+    "quests": {
+      "scene": "scene-quests",
+      "visible": true,
+      "horizontalOverflow": false
+    },
+    "chat": {
+      "scene": "scene-chat",
+      "visible": true,
+      "horizontalOverflow": false
+    },
+    "dojos": {
+      "scene": "scene-dojos",
+      "visible": true,
+      "horizontalOverflow": false
+    },
+    "ranking": {
+      "open": true,
+      "message": "Ranking indisponivel no momento."
+    },
+    "settings": {
+      "open": true
+    },
+    "auth": {
+      "open": true,
+      "submitted": false
+    },
+    "marketGuest": {
+      "message": "Entre em uma conta online para acessar o mercado e as trocas entre jogadores.",
+      "createDisabled": true
+    },
+    "mobileDeckFix": {
+      "columns": "163px 163px",
+      "status": "714 cartas · 1 / 20",
+      "overflow": false
+    },
+    "inspector": {
+      "fullArtObjectFit": "contain",
+      "description": "[Combo] Sequência rápida de golpes. Causa 20 HP de dano. Mantém a iniciativa para combo."
+    }
+  }
+}

@@ -2,8 +2,9 @@ import crypto from 'node:crypto';
 import { User } from './user-model.js';
 import { Dojo } from './dojo-model.js';
 import { GameEngine as ServerGameEngine } from './server-engine.js';
-import { TagTeamEngine } from './tag-team-engine.js';
-import { BOT_FILL_DELAY_MS, createBotProfile, DuelBotController, TagTeamBotController, isBotUid } from './bot-ai.js';
+import { SquadBattleEngine } from './squad-battle-engine.js';
+import { BOT_FILL_DELAY_MS, createBotProfile, DuelBotController, isBotUid } from './bot-ai.js';
+import { SquadBotController } from './realtime-bot-controllers.js';
 import { requireSession } from './auth-session.js';
 import { getStarterDeckForLeader } from '../js/card-database.js';
 import { migrateLegacyInventory, validateDeck, inventoryToOwnedCards } from '../js/economy-rules.js';
@@ -437,14 +438,24 @@ export function registerProductModes(app, io) {
   // ---- Tag Team 2v2 --------------------------------------------------
   function sendTeamState(roomCode) {
     const room = teamRooms.get(roomCode);
-    if (!room) return;
+    if (!room?.engine) return;
+
+    room.stateVersion += 1;
+    const snapshotVersion = room.stateVersion;
+    const serverNow = Date.now();
+
     for (const slot of Object.values(room.slots)) {
       if (!slot.connected || !slot.socketId) continue;
+
       const state = room.engine.getStateFor(slot.uid);
       if (!state) continue;
+
       state.roomCode = roomCode;
       state.matchId = room.matchId;
       state.ranked = room.ranked;
+      state.stateVersion = snapshotVersion;
+      state.serverNow = serverNow;
+
       io.to(slot.socketId).emit('team_state', state);
     }
   }
@@ -453,9 +464,12 @@ export function registerProductModes(app, io) {
     const room = teamRooms.get(roomCode);
     if (!room || room.finalized) return;
     room.finalized = true;
+    room.botController?.dispose?.();
+    room.engine?.dispose?.();
     sendTeamState(roomCode);
 
     for (const slot of Object.values(room.slots)) {
+      if (slot.isBot) continue;
       let user = await User.findOne({ uid: slot.uid });
       const won = slot.side === winnerSide;
       if (room.ranked) user = await updateRankedTeamUser(slot.uid, won);
@@ -465,7 +479,17 @@ export function registerProductModes(app, io) {
           ranked: room.ranked,
           winnerSide,
           user: user.toPublicJSON(),
-          state: room.engine.getStateFor(slot.uid)
+          state: (() => {
+            const state = room.engine.getStateFor(slot.uid);
+            if (state) {
+              state.roomCode = roomCode;
+              state.matchId = room.matchId;
+              state.ranked = room.ranked;
+              state.stateVersion = room.stateVersion;
+              state.serverNow = Date.now();
+            }
+            return state;
+          })()
         });
       }
     }
@@ -493,7 +517,17 @@ export function registerProductModes(app, io) {
       ranked: room.ranked,
       teamSide: slot.side,
       nextActionSeq: room.lastSeq[slot.uid] || 0,
-      state: room.engine.getStateFor(slot.uid)
+      state: (() => {
+        const state = room.engine.getStateFor(slot.uid);
+        if (state) {
+          state.roomCode = roomCode;
+          state.matchId = room.matchId;
+          state.ranked = room.ranked;
+          state.stateVersion = room.stateVersion;
+          state.serverNow = Date.now();
+        }
+        return state;
+      })()
     });
 
     socket.to(roomCode).emit('team_teammate_reconnected', { uid: slot.uid, username: slot.username });
@@ -514,9 +548,12 @@ export function registerProductModes(app, io) {
       matchId,
       ranked,
       finalized: false,
+      stateVersion: 0,
+      fxSeq: 0,
       lastSeq: {},
       slots: {},
-      engine: null
+      engine: null,
+      botController: null
     };
 
     for (const [side, team] of [['A', teamA], ['B', teamB]]) {
@@ -535,28 +572,38 @@ export function registerProductModes(app, io) {
       }
     }
 
-    room.engine = new TagTeamEngine({
+    teamRooms.set(code, room);
+    room.engine = new SquadBattleEngine({
       teamA,
       teamB,
       onState: () => {
         sendTeamState(code);
         room.botController?.poke();
       },
-      onFx: (type, data) => io.to(code).emit('game_fx', { type, data }),
+      onFx: (type, data) => {
+        room.fxSeq += 1;
+        io.to(code).emit('game_fx', {
+          type,
+          data: {
+            ...(data || {}),
+            roomFxSeq: room.fxSeq,
+            matchId: room.matchId
+          }
+        });
+      },
       onComplete: winnerSide => finalizeTeamRoom(code, winnerSide).catch(console.error)
     });
 
-    room.botController = new TagTeamBotController({ teamEngine: room.engine });
+    room.botController = new SquadBotController({ engine: room.engine });
     room.botController.poke();
+    sendTeamState(code);
 
-    teamRooms.set(code, room);
     for (const entry of members) {
       const socket = io.sockets.sockets.get(entry.socketId);
       if (socket) attachTeamSocket(socket, code, false);
     }
     return room;
   }
-
   function emitPrivateLobbyStatus(lobby) {
     const required = lobby.mode === '2v2' ? 4 : 2;
     for (const member of lobby.members) {

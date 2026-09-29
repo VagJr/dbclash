@@ -12,7 +12,8 @@ import {
   craftCardState,
   unlockLeaderState,
   openPackState,
-  rollPack
+  rollPack,
+  normalizeInventory
 } from './economy-rules.js';
 import { getStarterDeckForLeader } from './card-database.js';
 import { socketManager } from './socket-config.js';
@@ -86,6 +87,7 @@ export class AuthManager {
       selectedLeader: unlockedLeaders.includes(raw.selectedLeader) ? raw.selectedLeader : unlockedLeaders[0],
       customDecks: raw.customDecks && typeof raw.customDecks === 'object' ? raw.customDecks : {},
       cardInventory,
+      escrowInventory: normalizeInventory(raw.escrowInventory),
       ownedCards: inventoryToOwnedCards(cardInventory),
       raidTrophies: Math.max(0, Number(raw.raidTrophies) || 0),
       zeni: Math.max(0, Number(raw.zeni) || 0),

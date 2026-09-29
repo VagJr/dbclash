@@ -1987,3 +1987,461 @@
   .game-result-content { padding: 30px 32px; }
   .result-btn { font-size: 0.85rem; padding: 12px 30px; }
 }
+
+
+/* ==========================================================================
+   2v2 REALTIME — Official Arena Integration
+   Extends the existing arena language instead of drawing a second game screen.
+   ========================================================================== */
+
+#scene-arena.squad-realtime-mode .arena-zone-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 7px 12px;
+  align-items: start;
+}
+
+#scene-arena.squad-realtime-mode #turn-phase-bar {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+
+#scene-arena.squad-realtime-mode #p2-leader-box {
+  grid-column: 1;
+  grid-row: 2;
+  margin: 0 0 0 auto;
+}
+
+#scene-arena.squad-realtime-mode #squad-enemy-secondary-hud {
+  grid-column: 2;
+  grid-row: 2;
+  margin: 0 auto 0 0;
+}
+
+#scene-arena.squad-realtime-mode .arena-zone-bot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:
+    "player ally"
+    "actions actions"
+    "hand hand";
+  gap: 7px 12px;
+  align-items: end;
+}
+
+#scene-arena.squad-realtime-mode #p1-leader-box {
+  grid-area: player;
+  margin: 0 0 0 auto;
+}
+
+#scene-arena.squad-realtime-mode #squad-ally-secondary-hud {
+  grid-area: ally;
+  margin: 0 auto 0 0;
+}
+
+#scene-arena.squad-realtime-mode .arena-zone-bot > .action-row {
+  grid-area: actions;
+}
+
+#scene-arena.squad-realtime-mode #p1-hand {
+  grid-area: hand;
+}
+
+#scene-arena.squad-realtime-mode .fighter-hud {
+  max-width: 480px;
+}
+
+.squad-secondary-hud {
+  appearance: none;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: default;
+}
+
+.squad-secondary-hud.hud-opponent:not(:disabled),
+#scene-arena.squad-realtime-mode #p2-leader-box {
+  cursor: crosshair;
+}
+
+.squad-secondary-hud:disabled {
+  opacity: 1;
+}
+
+.squad-target-selected {
+  border-color: #ffd700 !important;
+  box-shadow:
+    0 0 22px rgba(255, 215, 0, 0.65),
+    inset 0 1px 0 rgba(255,255,255,.18) !important;
+}
+
+.squad-target-selected::after {
+  content: 'TARGET';
+  position: absolute;
+  top: -8px;
+  right: 18px;
+  z-index: 12;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #090909;
+  font-size: .56rem;
+  font-weight: 1000;
+  letter-spacing: .08em;
+  box-shadow: 0 0 12px rgba(255,215,0,.65);
+}
+
+.squad-ko {
+  opacity: .52 !important;
+  filter: grayscale(.75);
+}
+
+.squad-cpu-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 5px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgba(34,211,238,.14);
+  border: 1px solid rgba(34,211,238,.55);
+  color: #67e8f9;
+  font-size: .5rem;
+  font-weight: 1000;
+  vertical-align: middle;
+}
+
+.squad-name {
+  display: flex !important;
+  gap: 5px;
+  align-items: center;
+  min-width: 0;
+}
+
+.squad-player-label,
+.squad-user-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.squad-user-label {
+  color: rgba(255,255,255,.62);
+  font-size: .62rem;
+}
+
+.squad-state-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(16,185,129,.14);
+  border: 1px solid rgba(52,211,153,.38);
+  color: #86efac;
+  font-size: .55rem;
+  font-weight: 1000;
+  white-space: nowrap;
+}
+
+.squad-state-pill.ko {
+  background: rgba(239,68,68,.16);
+  border-color: rgba(248,113,113,.45);
+  color: #fca5a5;
+}
+
+#scene-arena.squad-realtime-mode .squad-phase {
+  max-width: 760px;
+}
+
+#scene-arena.squad-realtime-mode .squad-target-indicator {
+  pointer-events: none;
+  min-width: 270px;
+  justify-content: center;
+}
+
+.squad-partner-status {
+  padding-left: 10px;
+  margin-left: 3px;
+  border-left: 1px solid rgba(255,255,255,.18);
+  color: #7dd3fc;
+  font-size: .64rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+#scene-arena.squad-realtime-mode .card.card-phase-disabled {
+  pointer-events: none !important;
+}
+
+#scene-arena.squad-realtime-mode .battle-log {
+  z-index: 65;
+}
+
+.squad-hit-flash {
+  animation: squadHitFlash .42s ease-out !important;
+}
+
+@keyframes squadHitFlash {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  30% {
+    transform: scale(1.035);
+    filter: brightness(2.2) saturate(1.4);
+    box-shadow: 0 0 38px rgba(255,70,70,.9);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+@media (max-width: 900px) {
+  #scene-arena.squad-realtime-mode .arena-zone-top,
+  #scene-arena.squad-realtime-mode .arena-zone-bot {
+    gap: 5px 7px;
+  }
+
+  #scene-arena.squad-realtime-mode .fighter-hud {
+    padding: 7px 8px;
+    gap: 7px;
+  }
+
+  #scene-arena.squad-realtime-mode .hud-portrait {
+    width: 42px;
+    height: 42px;
+  }
+
+  #scene-arena.squad-realtime-mode .hud-name {
+    font-size: .72rem;
+  }
+
+  #scene-arena.squad-realtime-mode .ki-pip {
+    width: 7px;
+    height: 14px;
+  }
+
+  .squad-user-label,
+  .squad-partner-status {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  #scene-arena.squad-realtime-mode .arena-zone-top {
+    grid-template-columns: 1fr 1fr;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+  }
+
+  #scene-arena.squad-realtime-mode .arena-zone-bot {
+    grid-template-columns: 1fr 1fr;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+  }
+
+  #scene-arena.squad-realtime-mode .fighter-hud {
+    min-width: 0;
+    padding: 5px 6px;
+    border-width: 1px;
+  }
+
+  #scene-arena.squad-realtime-mode .hud-portrait {
+    width: 34px;
+    height: 34px;
+  }
+
+  #scene-arena.squad-realtime-mode .hp-text,
+  #scene-arena.squad-realtime-mode .ki-label {
+    font-size: .53rem;
+  }
+
+  #scene-arena.squad-realtime-mode .ki-pips {
+    gap: 1px;
+  }
+
+  #scene-arena.squad-realtime-mode .ki-pip {
+    width: 5px;
+    height: 10px;
+  }
+
+  #scene-arena.squad-realtime-mode .shields-row {
+    display: none;
+  }
+
+  #scene-arena.squad-realtime-mode .squad-target-indicator {
+    min-width: 0;
+    max-width: 92vw;
+    padding: 5px 9px;
+  }
+}
+
+
+
+/* ==========================================================================
+   2v2 Combat Presentation — attack/response cards + Beam Clash
+   ========================================================================== */
+
+#scene-arena.squad-realtime-mode #drop-zone {
+  width: min(520px, 92vw);
+  height: 292px;
+  justify-content: center;
+  overflow: visible;
+}
+
+.squad-combat-center {
+  position: relative;
+  width: 100%;
+  min-height: 272px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 45;
+}
+
+.squad-center-banner {
+  margin-bottom: 8px;
+  max-width: 430px;
+}
+
+.squad-center-cards {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 205px;
+}
+
+.squad-center-card {
+  position: relative;
+  animation: squadCardEnter .26s cubic-bezier(.2,.9,.3,1.2) both;
+}
+
+.squad-center-card.response {
+  animation-name: squadResponseEnter;
+}
+
+.squad-center-card .card {
+  width: 128px !important;
+  height: auto !important;
+  aspect-ratio: 5 / 7;
+  transform: none !important;
+  pointer-events: none !important;
+  box-shadow:
+    0 14px 35px rgba(0,0,0,.88),
+    0 0 24px rgba(255,215,0,.25) !important;
+}
+
+.squad-center-card.response .card {
+  box-shadow:
+    0 14px 35px rgba(0,0,0,.88),
+    0 0 28px rgba(34,211,238,.4) !important;
+}
+
+.squad-center-label {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: rgba(3,7,18,.94);
+  border: 1px solid #ffd700;
+  color: #ffd700;
+  font-size: .52rem;
+  font-weight: 1000;
+  letter-spacing: .08em;
+}
+
+.squad-center-card.response .squad-center-label {
+  color: #67e8f9;
+  border-color: #22d3ee;
+}
+
+.squad-center-card-name {
+  position: absolute;
+  top: 5%;
+  left: 20%;
+  right: 5%;
+  z-index: 12;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.squad-vs-mark {
+  font-family: var(--font-header);
+  font-size: 1.55rem;
+  font-weight: 1000;
+  font-style: italic;
+  color: #fff;
+  text-shadow:
+    0 0 10px #ff3d6e,
+    0 0 20px #ffd700;
+  animation: reactionPulse .7s infinite alternate;
+}
+
+.squad-combat-center.clash .squad-center-cards {
+  filter: brightness(1.13) saturate(1.16);
+}
+
+#beam-clash-overlay.active {
+  z-index: 15000 !important;
+}
+
+#scene-arena.squad-realtime-mode #reaction-banner.active {
+  opacity: 1;
+}
+
+@keyframes squadCardEnter {
+  from {
+    opacity: 0;
+    transform: translateX(-90px) rotate(-8deg) scale(.72);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotate(0) scale(1);
+  }
+}
+
+@keyframes squadResponseEnter {
+  from {
+    opacity: 0;
+    transform: translateX(90px) rotate(8deg) scale(.72);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotate(0) scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  #scene-arena.squad-realtime-mode #drop-zone {
+    width: 96vw;
+    height: 230px;
+  }
+
+  .squad-center-cards {
+    gap: 9px;
+    min-height: 170px;
+  }
+
+  .squad-center-card .card {
+    width: 94px !important;
+  }
+
+  .squad-vs-mark {
+    font-size: 1.05rem;
+  }
+
+  .squad-center-banner {
+    transform: scale(.86);
+    transform-origin: center;
+    margin-bottom: 2px;
+  }
+}
+

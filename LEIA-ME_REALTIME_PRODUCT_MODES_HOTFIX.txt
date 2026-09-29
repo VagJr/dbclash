@@ -1,0 +1,39 @@
+DBCLASH — REALTIME PRODUCT MODES HOTFIX
+=======================================
+
+ERRO CORRIGIDO
+--------------
+server/product-modes.js:563
+  } = {}) {
+    ^
+SyntaxError: Unexpected token '='
+
+CAUSA
+-----
+O patcher anterior encontrou o primeiro "{" de:
+
+  function startTeamRoom(entries, { ranked = true, roomCode = null } = {}) {
+
+e tratou o brace do parametro destructuring como se fosse a abertura
+do corpo da funcao.
+
+A nova startTeamRoom foi inserida, mas o restante da funcao antiga ficou
+logo depois dela, iniciando em:
+
+  = {}) {
+
+ESTE HOTFIX
+-----------
+- remove apenas o rabo antigo duplicado;
+- preserva a nova SquadBattleEngine;
+- preserva SquadBotController;
+- confirma que so existe uma startTeamRoom;
+- confirma que TagTeamEngine antigo nao continua sendo instanciado;
+- roda node --check em todo o ciclo;
+- roda test:raid, test:social, test:bot-ai e rc:check.
+
+NAO RODE NOVAMENTE:
+  PATCH_REALTIME_SQUAD_RAID.ps1
+
+APLICAR:
+  .\PATCH_REALTIME_PRODUCT_MODES_HOTFIX.ps1

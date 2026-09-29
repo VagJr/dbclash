@@ -1,0 +1,72 @@
+DBCLASH — REALTIME SQUAD 2v2 + RAID
+===================================
+
+CORRECAO DO CRASH RAID
+----------------------
+O RaidRoomEngine antigo chamava onState() ainda dentro do construtor.
+Nesse instante room.engine ainda era null, entao emitRaidState() quebrava
+em room.engine.getStateFor(). O tick depois encontrava a sala quebrada e
+caia de novo em room.engine.tick().
+
+O novo ciclo:
+- nao emite estado dentro do construtor do Raid engine;
+- protege emitRaidState quando room.engine ainda nao existe;
+- protege o tick contra engine nulo;
+- emite o primeiro estado somente depois da atribuicao da engine;
+- encerra controller de bot no finalize.
+
+NOVO 2v2
+--------
+Nao existe mais ATIVO + RESERVA.
+
+Agora:
+- A e B ficam simultaneamente em campo;
+- C e D ficam simultaneamente em campo;
+- os 4 possuem HP, Ki, mao e cooldown independentes;
+- qualquer jogador vivo pode agir quando seu cooldown termina;
+- ataques exigem targetUid inimigo valido;
+- UI mostra os quatro HUDs ao mesmo tempo;
+- clicar em C ou D seleciona explicitamente o alvo;
+- CPUs escolhem alvo e carta de forma independente;
+- vencer exige derrubar os dois integrantes do time inimigo.
+
+NOVO RAID COOP
+--------------
+- 1 humano ja pode entrar na fila;
+- busca dura 15 segundos;
+- CPUs completam a equipe para 4;
+- os quatro aliados permanecem ativos simultaneamente;
+- cada aliado possui cooldown proprio;
+- o chefe possui seu proprio relogio de ataque;
+- nao existe currentPlayerUid/revezamento entre aliados;
+- boss AI continua escolhendo alvos por threat, HP, Ki e fase;
+- CPUs jogam de forma independente.
+
+APLICAR
+-------
+Em C:\dbclash:
+
+  .\PATCH_REALTIME_SQUAD_RAID.ps1
+
+SMOKE RAID
+----------
+1. npm start
+2. entrar sozinho no Raid
+3. aguardar 15 segundos
+4. devem entrar 3 CPUs
+5. Raid deve abrir sem derrubar Node
+6. todos os 4 HUDs devem aparecer
+7. voce e CPUs devem poder agir sem esperar uns pelos outros
+8. chefe deve atacar pelo proprio contador
+
+SMOKE 2v2
+----------
+1. entrar sozinho no Ranked 2v2
+2. aguardar 15 segundos
+3. CPUs completam as quatro vagas
+4. UI deve mostrar A/B contra C/D
+5. clicar em C ou D muda ALVO SELECIONADO
+6. jogar carta de ataque deve atingir exatamente o alvo selecionado
+7. A e B podem agir independentemente
+8. C e D podem agir independentemente
+9. partida termina apenas quando um time perde os dois lutadores

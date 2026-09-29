@@ -26,6 +26,10 @@ export class SceneManager {
     this.currentScene = GAME_SCENES.SPLASH;
     this.previousScene = null;
     this.transitionOverlay = null;
+    this.transitionVersion = 0;
+    this.pendingSceneId = null;
+    this.enterTimer = null;
+    this.exitTimer = null;
     this.unlockedFeatures = {
       fighterSelect: true,
       arenaVsAi: true,
@@ -51,7 +55,7 @@ export class SceneManager {
   }
 
   switchScene(targetSceneId, options = {}) {
-    if (this.currentScene === targetSceneId && !options.force) return;
+    if (this.currentScene === targetSceneId && !options.force && !this.pendingSceneId) return;
 
     const targetEl = document.getElementById(targetSceneId);
 
@@ -59,6 +63,11 @@ export class SceneManager {
       console.warn(`[SceneManager] Target scene element not found: ${targetSceneId}`);
       return;
     }
+
+    const transitionVersion = ++this.transitionVersion;
+    clearTimeout(this.enterTimer);
+    clearTimeout(this.exitTimer);
+    this.pendingSceneId = targetSceneId;
 
     if (!options.silent) soundEngine.playClick();
 
@@ -68,30 +77,35 @@ export class SceneManager {
     if (this.transitionOverlay && !options.skipTransition) {
       this.transitionOverlay.classList.add('active');
       
-      setTimeout(() => {
+      this.enterTimer = setTimeout(() => {
+        if (transitionVersion !== this.transitionVersion) return;
         try {
           allScenes.forEach(s => s.classList.remove('active'));
           targetEl.classList.add('active');
 
           this.previousScene = this.currentScene;
           this.currentScene = targetSceneId;
+          this.pendingSceneId = null;
 
           this.onSceneEnter(targetSceneId, options);
         } catch (err) {
           console.error('[SceneManager] Error during scene transition:', err);
         } finally {
-          setTimeout(() => {
+          this.exitTimer = setTimeout(() => {
+            if (transitionVersion !== this.transitionVersion) return;
             if (this.transitionOverlay) this.transitionOverlay.classList.remove('active');
           }, 300);
         }
       }, 350);
     } else {
       try {
+        this.transitionOverlay?.classList.remove('active');
         allScenes.forEach(s => s.classList.remove('active'));
         targetEl.classList.add('active');
 
         this.previousScene = this.currentScene;
         this.currentScene = targetSceneId;
+        this.pendingSceneId = null;
 
         this.onSceneEnter(targetSceneId, options);
       } catch (err) {
@@ -101,13 +115,18 @@ export class SceneManager {
   }
 
   onSceneEnter(sceneId, options) {
-    // Fire specific audio & visual triggers per AAA scene with safe optional chaining
-    if (sceneId === GAME_SCENES.TITLE) {
-      if (typeof soundEngine.playMenuTheme === 'function') soundEngine.playMenuTheme();
-    } else if (sceneId === GAME_SCENES.ARENA) {
-      if (typeof soundEngine.playBattleTheme === 'function') soundEngine.playBattleTheme();
+    // Audio director follows the scene instead of leaving battle/menu tracks orphaned.
+    if (sceneId === GAME_SCENES.ARENA) {
+      soundEngine.playBattleTheme?.();
+      soundEngine.startAmbience?.('battle');
       if (typeof document !== 'undefined') document.body.classList.add('arena-active');
+    } else if (sceneId === GAME_SCENES.RANKED) {
+      soundEngine.playQueueTheme?.();
+      soundEngine.startAmbience?.('queue');
+      if (typeof document !== 'undefined') document.body.classList.remove('arena-active');
     } else {
+      soundEngine.playMenuTheme?.();
+      soundEngine.startAmbience?.('menu');
       if (typeof document !== 'undefined') document.body.classList.remove('arena-active');
     }
 

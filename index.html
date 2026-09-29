@@ -22,6 +22,8 @@
   <link rel="stylesheet" href="styles/multiplayer.css?v=realtime_firebase_v3">
   <link rel="stylesheet" href="styles/animations.css?v=realtime_firebase_v3">
   <link rel="stylesheet" href="styles/atmosphere.css?v=realtime_firebase_v3">
+  <link rel="stylesheet" href="styles/rework.css?v=nexus-v1">
+  <link rel="stylesheet" href="styles/exchange.css?v=nexus-v1">
   <script>
     window.addEventListener('load', function () {
       if ('serviceWorker' in navigator) {
@@ -506,6 +508,8 @@
 
 <script type="module">
     import { UIManager } from './js/ui-manager.js';
+    import './js/rework-presentation.js';
+    import './js/exchange-manager.js';
     function boot() { window.uiManager = new UIManager(); }
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', boot);

@@ -1,0 +1,83 @@
+DBCLASH — 2v2 OFFICIAL ARENA UI
+================================
+
+OBJETIVO
+--------
+O motor 2v2 realtime continua exatamente como esta.
+Este ciclo remove a aparencia de prototipo fullscreen e integra o modo
+dentro da arena oficial do jogo.
+
+LAYOUT
+------
+TOPO:
+  [ HUD inimigo C ] [ HUD inimigo D ]
+
+CENTRO:
+  arena oficial + fx-canvas + drop-zone + indicador de alvo
+
+BASE:
+  [ HUD voce A ] [ HUD parceiro B ]
+  [ botoes oficiais CARREGAR KI / REPOSICIONAR ]
+  [ p1-hand oficial com artes reais das cartas ]
+
+ALVO
+----
+- C e D sao clicaveis.
+- O alvo selecionado ganha borda TARGET dourada.
+- O alvo selecionado sempre ocupa p2-leader-box.
+- Isso preserva compatibilidade com os vetores/FX oficiais que usam P2.
+
+CARTAS
+------
+A mao usa:
+- .card
+- .playable
+- .super-rare
+- .card-ki-cost
+- .card-type-tag
+- .card-power-badge
+- assetLoader.renderCardArtHTML(card)
+
+Ou seja: mesmas cartas e linguagem visual do 1v1 oficial.
+
+CONTROLES
+---------
+Os botoes existentes:
+  #charge-ki-btn
+  #pass-turn-btn
+  #drop-zone
+
+sao reutilizados. Durante 2v2 eles enviam team_action; fora do 2v2
+continuam funcionando normalmente no motor 1v1.
+
+FX
+--
+squad_attack e roteado ao TeamBattleUI:
+- hit flash no HUD atingido;
+- screen shake;
+- Beam Damage para ataques de Ki;
+- Punch para ataques fisicos.
+
+RESPONSIVO
+----------
+Desktop: 2 HUDs em cima + 2 HUDs embaixo.
+Mobile: os mesmos quatro HUDs compactados, mantendo a arena ao centro.
+
+APLICAR
+-------
+Em C:\dbclash:
+
+  .\PATCH_2V2_OFFICIAL_ARENA_UI.ps1
+
+SMOKE TEST
+----------
+1. entrar no 2v2;
+2. confirmar background oficial da arena;
+3. confirmar que nao aparece mais overlay/tela prototipo;
+4. confirmar C e D no topo;
+5. confirmar voce e parceiro na parte inferior;
+6. clicar em C e depois em D;
+7. confirmar TARGET dourado e troca do P2;
+8. confirmar cartas oficiais em p1-hand;
+9. atacar o alvo selecionado;
+10. confirmar FX/hit flash no HUD certo.

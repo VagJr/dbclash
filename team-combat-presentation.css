@@ -1,0 +1,165 @@
+/* ==========================================================================
+   2v2 Combat Presentation — attack/response cards + Beam Clash
+   ========================================================================== */
+
+#scene-arena.squad-realtime-mode #drop-zone {
+  width: min(520px, 92vw);
+  height: 292px;
+  justify-content: center;
+  overflow: visible;
+}
+
+.squad-combat-center {
+  position: relative;
+  width: 100%;
+  min-height: 272px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 45;
+}
+
+.squad-center-banner {
+  margin-bottom: 8px;
+  max-width: 430px;
+}
+
+.squad-center-cards {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 205px;
+}
+
+.squad-center-card {
+  position: relative;
+  animation: squadCardEnter .26s cubic-bezier(.2,.9,.3,1.2) both;
+}
+
+.squad-center-card.response {
+  animation-name: squadResponseEnter;
+}
+
+.squad-center-card .card {
+  width: 128px !important;
+  height: auto !important;
+  aspect-ratio: 5 / 7;
+  transform: none !important;
+  pointer-events: none !important;
+  box-shadow:
+    0 14px 35px rgba(0,0,0,.88),
+    0 0 24px rgba(255,215,0,.25) !important;
+}
+
+.squad-center-card.response .card {
+  box-shadow:
+    0 14px 35px rgba(0,0,0,.88),
+    0 0 28px rgba(34,211,238,.4) !important;
+}
+
+.squad-center-label {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: rgba(3,7,18,.94);
+  border: 1px solid #ffd700;
+  color: #ffd700;
+  font-size: .52rem;
+  font-weight: 1000;
+  letter-spacing: .08em;
+}
+
+.squad-center-card.response .squad-center-label {
+  color: #67e8f9;
+  border-color: #22d3ee;
+}
+
+.squad-center-card-name {
+  position: absolute;
+  top: 5%;
+  left: 20%;
+  right: 5%;
+  z-index: 12;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.squad-vs-mark {
+  font-family: var(--font-header);
+  font-size: 1.55rem;
+  font-weight: 1000;
+  font-style: italic;
+  color: #fff;
+  text-shadow:
+    0 0 10px #ff3d6e,
+    0 0 20px #ffd700;
+  animation: reactionPulse .7s infinite alternate;
+}
+
+.squad-combat-center.clash .squad-center-cards {
+  filter: brightness(1.13) saturate(1.16);
+}
+
+#beam-clash-overlay.active {
+  z-index: 15000 !important;
+}
+
+#scene-arena.squad-realtime-mode #reaction-banner.active {
+  opacity: 1;
+}
+
+@keyframes squadCardEnter {
+  from {
+    opacity: 0;
+    transform: translateX(-90px) rotate(-8deg) scale(.72);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotate(0) scale(1);
+  }
+}
+
+@keyframes squadResponseEnter {
+  from {
+    opacity: 0;
+    transform: translateX(90px) rotate(8deg) scale(.72);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotate(0) scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  #scene-arena.squad-realtime-mode #drop-zone {
+    width: 96vw;
+    height: 230px;
+  }
+
+  .squad-center-cards {
+    gap: 9px;
+    min-height: 170px;
+  }
+
+  .squad-center-card .card {
+    width: 94px !important;
+  }
+
+  .squad-vs-mark {
+    font-size: 1.05rem;
+  }
+
+  .squad-center-banner {
+    transform: scale(.86);
+    transform-origin: center;
+    margin-bottom: 2px;
+  }
+}

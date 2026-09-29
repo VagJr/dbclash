@@ -27,6 +27,8 @@ function makeFighterSnapshot(entry) {
 
   const fighter = clone(temp.player);
   fighter.name = entry.username || fighter.name;
+  fighter.botDifficulty = entry.botDifficulty || 'normal';
+  fighter.botIdentity = entry.leader;
   return fighter;
 }
 
@@ -75,6 +77,7 @@ export class TagTeamEngine {
     );
 
     this.engine.reset();
+    this.engine.isAiMatch = false;
     this.engine.player = clone(this.teams.A[0].fighter);
     this.engine.opponent = clone(this.teams.B[0].fighter);
     this.engine.state = 'FREE_ACTION';

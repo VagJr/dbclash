@@ -42,7 +42,7 @@ export class MultiplayerManager {
       action: (action, data) => this.broadcastRaidAction(action, data),
       cancel: () => this.leaveRaid()
     });
-    teamBattleUI.bind({ onTag: () => this.broadcastTeamAction('tag', {}) });
+    teamBattleUI.bind({ onAction: (action, data) => this.broadcastTeamAction(action, data) });
     this.initSocketListeners();
   }
 
@@ -82,6 +82,15 @@ export class MultiplayerManager {
 
     socketManager.on('game_fx', payload => {
       if (!this.isMultiplayer || !payload) return;
+
+      if (
+        this.teamRoomCode &&
+        String(payload?.type || '').startsWith('squad_')
+      ) {
+        if (payload?.data?.matchId && payload.data.matchId !== this.teamMatchId) return;
+        teamBattleUI.handleFx(payload);
+        return;
+      }
       const fxData = { ...(payload.data || {}) };
 
       if (!this.isHost) {
@@ -189,6 +198,9 @@ export class MultiplayerManager {
 
     socketManager.on('team_state', payload => {
       if (!payload || !this.teamRoomCode) return;
+      if (payload.roomCode && payload.roomCode !== this.teamRoomCode) return;
+      if (this.teamMatchId && payload.matchId && payload.matchId !== this.teamMatchId) return;
+
       const version = Number(payload.stateVersion ?? -1);
       if (version >= 0 && version < this.latestTeamStateVersion) return;
       if (version >= 0) this.latestTeamStateVersion = version;
@@ -196,12 +208,20 @@ export class MultiplayerManager {
     });
 
     socketManager.on('team_result', payload => {
+      if (payload?.state?.matchId && this.teamMatchId && payload.state.matchId !== this.teamMatchId) return;
+
       if (payload?.user) {
         authManager.user = authManager.normalizeUser(payload.user);
         authManager.user.isGuest = false;
         authManager.saveLocalCache();
       }
-      if (payload?.state) this.applyTeamState(payload.state);
+      if (payload?.state) {
+        const version = Number(payload.state.stateVersion ?? -1);
+        if (version < 0 || version >= this.latestTeamStateVersion) {
+          if (version >= 0) this.latestTeamStateVersion = version;
+          this.applyTeamState(payload.state);
+        }
+      }
     });
 
     socketManager.on('team_error', payload => {
@@ -490,8 +510,6 @@ export class MultiplayerManager {
   applyTeamState(payload) {
     this.teamSide = payload.teamSide || this.teamSide;
     this.isHost = this.teamSide === 'A';
-    const duel = payload.duel || payload.state?.duel;
-    if (duel) this.engine.applyFullSyncState(this.normalizeServerState(duel));
     teamBattleUI.applyState(payload, authManager.user?.uid);
   }
 

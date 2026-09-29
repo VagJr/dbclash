@@ -101,8 +101,7 @@ export class UIManager {
     const hpBarId = defenderKey === 'player' ? 'p1-hp-bar-wrapper' : 'p2-hp-bar-wrapper';
     this.triggerHpBarImpactFlash(hpBarId, damage);
 
-    if (typeof soundEngine.playPunch === 'function') soundEngine.playPunch();
-    else if (typeof soundEngine.playBeamBlast === 'function') soundEngine.playBeamBlast();
+    soundEngine.playImpact?.(attackType, damage);
   }
 
   triggerHpBarImpactFlash(barWrapperId, damage) {
@@ -159,6 +158,7 @@ export class UIManager {
   }
 
   showGameResult(isPlayerWinner) {
+    soundEngine.playResult?.(isPlayerWinner);
     const existing = document.getElementById('game-result-overlay');
     if (existing) existing.remove();
 
@@ -517,7 +517,7 @@ export class UIManager {
         attackName: cardTitle,
         targetEl: targetBox,
         onImpact: () => {
-          soundEngine.playBeamBlast();
+          soundEngine.playSolarFlare?.();
         }
       });
     } else if (type === 'timeSkip') {
@@ -530,7 +530,7 @@ export class UIManager {
         attackName: cardTitle,
         targetEl: targetBox,
         onImpact: () => {
-          soundEngine.playZVanish();
+          soundEngine.playTimeSkip?.();
         }
       });
     } else if (type === 'counter') {
@@ -576,14 +576,12 @@ export class UIManager {
     const defTitle = (defCardObj?.name || (mode === 'evade' ? 'Z-VANISH' : (mode === 'defense' ? 'DEFESA' : 'Z-COUNTER'))).toUpperCase();
 
     // Audio SFX per mode
-    if (mode === 'evade') {
+    if (typeof soundEngine.playReaction === 'function') {
+      soundEngine.playReaction(mode);
+    } else if (mode === 'evade') {
       soundEngine.playZVanish();
-    } else if (mode === 'defense') {
-      soundEngine.playCardClash();
-      soundEngine.playBeamDamage();
     } else {
       soundEngine.playCardClash();
-      soundEngine.playClashPunches(700);
     }
     this.triggerScreenShake();
 

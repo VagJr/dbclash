@@ -1,5 +1,7 @@
+import { createNexusCollection } from './collection-nexus.js';
+
 /* ==========================================================================
-   Dragon Ball Clash Action TCG — Expanded Card & Leader Database (70 Cards)
+   Dragon Ball Clash Action TCG — Nexus Card & Leader Database (714 Cards; 70 Legacy)
    Full PT-BR & EN Translations, Synergies & Thematic Starter Decks
    ========================================================================== */
 
@@ -111,7 +113,7 @@ export const LEADERS = {
 /* ==========================================================================
    70 CARDS DATABASE (PT-BR & EN Descriptions)
    ========================================================================== */
-export const CARD_DATABASE = [
+export const LEGACY_CARD_DATABASE = [
   // --- RED ATTACK CARDS (1 - 28) ---
   {
     id: 'atk_01',
@@ -797,8 +799,8 @@ export const CARD_DATABASE = [
     rarity: 'common',
     synergyGroup: 'evade',
     icon: '🔥',
-    descPt: '[Esquiva] Esquiva com impulso de aura.',
-    descEn: 'Explosive aura dodge. Evades attack.'
+    descPt: '[Esquiva] Esquiva com impulso de aura e ganha 1 Ki (máximo 10).',
+    descEn: 'Explosive aura dodge. Evades the attack and gains 1 Ki (maximum 10).'
   },
   {
     id: 'evd_09',
@@ -1035,8 +1037,11 @@ export const CARD_DATABASE = [
   }
 ];
 
+export const CARD_DATABASE = createNexusCollection(LEGACY_CARD_DATABASE);
+const CARD_BY_ID = new Map(CARD_DATABASE.map(card => [card.id, card]));
+
 export function getCardById(cardId) {
-  return CARD_DATABASE.find(c => c.id === cardId) || null;
+  return CARD_BY_ID.get(cardId) || null;
 }
 
 /* ==========================================================================
@@ -1082,3 +1087,5 @@ export function getStarterDeckForLeader(leaderId) {
 export function getDefaultStarterDeck() {
   return getStarterDeckForLeader('goku');
 }
+
+

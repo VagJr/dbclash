@@ -8,6 +8,7 @@ import {
   isImmediateTechnique
 } from '../js/content-rules.js';
 import { raidBossAttackProfile } from '../js/raid-rules.js';
+import { chooseNpcDuelAction, npcOptionsFor, npcThinkDelay, NPC_DIFFICULTIES } from '../js/npc-ai.js';
 
 export const BOT_FILL_DELAY_MS = 15_000;
 export const BOT_THINK_MIN_MS = 380;
@@ -134,52 +135,7 @@ function reactionScore(engine, botKey, card) {
 }
 
 export function chooseDuelBotAction(engine, botKey = 'opponent') {
-  if (!engine || engine.state === 'GAME_OVER') return null;
-  const actor = fighterFor(engine, botKey);
-  if (!actor) return null;
-
-  if (engine.state === 'BEAM_CLASH') {
-    return { action: 'mashBeamClash' };
-  }
-
-  if (engine.state === 'ATTACK_PENDING') {
-    const defenderKey = otherKey(engine.pendingAttack?.attackerKey);
-    if (defenderKey !== botKey) return null;
-
-    const options = actor.hand
-      .map((card, index) => ({ card, index }))
-      .filter(({ card }) => card && engine.getCardCost(botKey, card) <= actor.ki)
-      .filter(({ card }) => engine.isReactionCardLegal(botKey, card, engine.pendingAttack?.card))
-      .map(item => ({ ...item, score: reactionScore(engine, botKey, item.card) }))
-      .sort((a, b) => b.score - a.score);
-
-    if (!options.length) return null;
-    return { action: 'playCard', cardIndex: options[0].index, cardId: options[0].card.id };
-  }
-
-  if (engine.state !== 'FREE_ACTION' || engine.initiative !== botKey) return null;
-
-  const playable = actor.hand
-    .map((card, index) => ({ card, index }))
-    .filter(({ card }) => card && getEffectiveCardCost(actor, card) <= actor.ki)
-    .filter(({ card }) => isAttackAction(card) || isImmediateTechnique(card))
-    .map(item => ({
-      ...item,
-      score: isImmediateTechnique(item.card)
-        ? scoreTechnique(engine, botKey, item.card)
-        : scoreAttack(engine, botKey, item.card)
-    }))
-    .sort((a, b) => b.score - a.score);
-
-  const best = playable[0];
-
-  if (best && (best.score >= 18 || actor.ki >= 8 || hpRatio(actor) <= 0.35)) {
-    return { action: 'playCard', cardIndex: best.index, cardId: best.card.id };
-  }
-
-  if (actor.ki < 10) return { action: 'chargeKi' };
-  if (best) return { action: 'playCard', cardIndex: best.index, cardId: best.card.id };
-  return { action: 'passTurn' };
+  return chooseNpcDuelAction(engine, botKey, () => randomInt(1000000) / 1000000);
 }
 
 function randomThinkDelay() {
@@ -187,11 +143,16 @@ function randomThinkDelay() {
 }
 
 export class DuelBotController {
-  constructor({ engine, botKey = 'opponent' } = {}) {
+  constructor({ engine, botKey = 'opponent', difficulty = null, identity = null } = {}) {
     this.engine = engine;
     this.botKey = botKey;
     this.timer = null;
     this.disposed = false;
+    const actor = engine?.[botKey];
+    if (actor) {
+      actor.botDifficulty = difficulty || actor.botDifficulty || engine.npcOptions?.difficulty || 'normal';
+      actor.botIdentity = identity || actor.botIdentity || actor.leader?.id;
+    }
   }
 
   _isActionable() {
@@ -216,7 +177,9 @@ export class DuelBotController {
     }
     if (this.timer) return;
 
-    const delay = this.engine.state === 'BEAM_CLASH' ? 120 + randomInt(80) : randomThinkDelay();
+    const options = npcOptionsFor(fighterFor(this.engine, this.botKey), this.engine);
+    const remaining = this.engine.state === 'ATTACK_PENDING' ? (this.engine.reactionDeadline || Infinity) - Date.now() : Infinity;
+    const delay = this.engine.state === 'BEAM_CLASH' ? NPC_DIFFICULTIES[options.difficulty].mashMs : npcThinkDelay(options, () => randomInt(1000000) / 1000000, remaining);
     this.timer = setTimeout(() => {
       this.timer = null;
       this.act();
@@ -296,7 +259,9 @@ export class TagTeamBotController {
     }
     if (this.timer) return;
 
-    const delay = this.teamEngine.engine.state === 'BEAM_CLASH' ? 130 + randomInt(80) : randomThinkDelay();
+    const options = npcOptionsFor(active.member.fighter, this.teamEngine.engine);
+    const remaining = this.teamEngine.engine.state === 'ATTACK_PENDING' ? (this.teamEngine.engine.reactionDeadline || Infinity) - Date.now() : Infinity;
+    const delay = this.teamEngine.engine.state === 'BEAM_CLASH' ? NPC_DIFFICULTIES[options.difficulty].mashMs : npcThinkDelay(options, () => randomInt(1000000) / 1000000, remaining);
     this.timer = setTimeout(() => {
       this.timer = null;
       const current = this._activeBot();

@@ -1,0 +1,71 @@
+DBCLASH — AUDIO + SFX + ATMOSPHERE
+==================================
+
+O QUE FOI CORRIGIDO
+-------------------
+1. Os MP3/WAV de /music agora usam URL robusta baseada em import.meta.url.
+2. Service Worker nao intercepta audio nem requests Range.
+3. Cache version sobe para dbclash-release-v2-audio para limpar cache antigo.
+4. Menu, matchmaking e arena trocam BGM corretamente.
+5. battle1.mp3 e battle2.mp3 voltam a ser usados em combate/fila.
+6. Impactos nao usam mais sempre o mesmo punch generico.
+7. Cada familia de ataque possui perfil SFX proprio, usando camadas,
+   playbackRate, volume e timing diferentes.
+8. Reacoes defense/evade/counter possuem identidade sonora diferente.
+9. Solar Flare e Time Skip recebem assinatura propria.
+10. Win/Loss, card play, Ki charge, awaken e Beam Clash recebem reforco.
+11. Ambiencia WebAudio discreta por menu, fila e batalha.
+12. Preferencias de mute/master volume ficam persistentes.
+
+ARQUIVOS DE AUDIO USADOS
+------------------------
+music/soundtrack.mp3
+music/battle1.mp3
+music/battle2.mp3
+music/awakening.mp3
+music/carregar_ki.mp3
+music/clash_punchs.mp3
+music/dano_do_beam.mp3
+music/dbz-beam-fx.wav
+music/dragonball-z-heavy-kick-fx.wav
+music/kamehameha.mp3
+music/teleport_vanish.wav
+
+PERFIS DE ATAQUE
+----------------
+punch, kamehameha, genkidama, finalFlash, deathBeam, specialBeam,
+masenko, bigBang, burningAttack, supernova, kienzan, kikoho,
+dragonFist, meteorCombination, spiritSword e kiBlast.
+
+APLICAR
+-------
+Em C:\dbclash:
+
+  .\PATCH_AUDIO_SFX_ATMOSPHERE.ps1
+
+DEPOIS
+------
+1. Reinicie o servidor estatico do frontend.
+2. Abra DevTools > Application > Service Workers.
+3. Clique Unregister UMA VEZ.
+4. Ctrl+Shift+R.
+5. Clique/t toque no jogo para liberar audio do navegador.
+
+SMOKE TEST
+----------
+- Menu: soundtrack.mp3 tocando.
+- Ranked/fila: battle1 em volume mais baixo + ambiencia de tensao.
+- Arena: battle1/battle2.
+- Charge Ki: carregar_ki.mp3.
+- Vanish: teleport_vanish.wav.
+- Punch: heavy kick.
+- Kamehameha/beam: dbz-beam + dano_do_beam/kamehameha.
+- Awaken: awakening.mp3.
+- Testar Final Flash, Death Beam, Special Beam, Genki Dama, Kienzan,
+  Kikoho, Dragon Fist, Meteor Combination e Spirit Sword para confirmar
+  que os impactos nao soam iguais.
+
+IMPORTANTE
+----------
+O navegador continua respeitando as politicas de autoplay. O audio e
+desbloqueado na primeira interacao real do usuario. Isso e intencional.

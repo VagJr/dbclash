@@ -38,14 +38,20 @@ export function inventoryToOwnedCards(inventory = {}) {
     .map(([cardId]) => cardId);
 }
 
-export function addCardCopies(inventory, cardId, amount = 1, overflowToDust = true) {
+export function totalCardCopies(profile, cardId) {
+  return (normalizeInventory(profile?.cardInventory)[cardId] || 0) +
+    (normalizeInventory(profile?.escrowInventory)[cardId] || 0);
+}
+
+export function addCardCopies(inventory, cardId, amount = 1, overflowToDust = true, escrowInventory = {}) {
   const card = getCardById(cardId);
   if (!card) return { inventory: normalizeInventory(inventory), added: 0, overflow: 0, dust: 0 };
 
   const next = normalizeInventory(inventory);
   const before = next[cardId] || 0;
   const requested = Math.max(0, Math.floor(Number(amount) || 0));
-  const capacity = Math.max(0, MAX_CARD_COPIES - before);
+  const reserved = normalizeInventory(escrowInventory)[cardId] || 0;
+  const capacity = Math.max(0, MAX_CARD_COPIES - before - reserved);
   const added = Math.min(capacity, requested);
   const overflow = Math.max(0, requested - added);
 
@@ -73,6 +79,7 @@ export function createDefaultInventory(unlockedLeaders = DEFAULT_UNLOCKED_LEADER
 
 export function migrateLegacyInventory(userLike = {}) {
   let inventory = normalizeInventory(userLike.cardInventory || {});
+  const escrow = normalizeInventory(userLike.escrowInventory);
 
   if (Array.isArray(userLike.ownedCards)) {
     for (const cardId of userLike.ownedCards) {
@@ -87,7 +94,7 @@ export function migrateLegacyInventory(userLike = {}) {
 
   const starter = createDefaultInventory(leaders);
   for (const [cardId, count] of Object.entries(starter)) {
-    inventory[cardId] = Math.max(inventory[cardId] || 0, count);
+    inventory[cardId] = Math.max(inventory[cardId] || 0, Math.min(count, MAX_CARD_COPIES - (escrow[cardId] || 0)));
   }
 
   return normalizeInventory(inventory);
@@ -133,7 +140,7 @@ export function craftCardState(profile, cardId) {
   if (!card) return { ok: false, code: 'UNKNOWN_CARD' };
 
   const inventory = normalizeInventory(profile.cardInventory);
-  if ((inventory[cardId] || 0) >= MAX_CARD_COPIES) {
+  if (totalCardCopies(profile, cardId) >= MAX_CARD_COPIES) {
     return { ok: false, code: 'COPY_LIMIT' };
   }
 
@@ -141,7 +148,7 @@ export function craftCardState(profile, cardId) {
   const dust = Math.max(0, Number(profile.dust) || 0);
   if (dust < cost) return { ok: false, code: 'NOT_ENOUGH_DUST', cost };
 
-  const result = addCardCopies(inventory, cardId, 1, false);
+  const result = addCardCopies(inventory, cardId, 1, false, profile.escrowInventory);
   return {
     ok: true,
     cardId,
@@ -175,7 +182,7 @@ export function unlockLeaderState(profile, leaderId) {
   current.push(leaderId);
   let inventory = normalizeInventory(profile.cardInventory);
   for (const cardId of getStarterDeckForLeader(leaderId)) {
-    inventory = addCardCopies(inventory, cardId, 1, false).inventory;
+    inventory = addCardCopies(inventory, cardId, 1, false, profile.escrowInventory).inventory;
   }
 
   return {
@@ -219,7 +226,7 @@ export function openPackState(profile, cardIds) {
   const results = [];
 
   for (const cardId of cardIds) {
-    const result = addCardCopies(inventory, cardId, 1, true);
+    const result = addCardCopies(inventory, cardId, 1, true, profile.escrowInventory);
     inventory = result.inventory;
     dust += result.dust;
     results.push({
@@ -247,6 +254,7 @@ export function publicEconomySnapshot(userLike = {}) {
     gems: Math.max(0, Number(userLike.gems) || 0),
     dust: Math.max(0, Number(userLike.dust) || 0),
     cardInventory,
+    escrowInventory: normalizeInventory(userLike.escrowInventory),
     ownedCards: inventoryToOwnedCards(cardInventory)
   };
 }

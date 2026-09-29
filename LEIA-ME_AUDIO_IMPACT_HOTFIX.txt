@@ -1,0 +1,21 @@
+DBCLASH — AUDIO IMPACT HOTFIX
+=============================
+
+Falha corrigida:
+  FAIL impactos da UI usam attackType em vez de punch generico
+
+Causa:
+O novo roteamento playImpact(attackType, damage) estava correto, mas o
+bloco ainda continha o fallback legado playPunch(). Como o novo
+SoundEngine sempre fornece playImpact(), o fallback era redundante e
+mantinha a possibilidade de voltar ao SFX generico.
+
+Este hotfix altera somente:
+  js/ui-manager.js
+
+Depois executa:
+  npm run test:audio
+  npm run rc:check
+
+Aplicar:
+  .\PATCH_AUDIO_IMPACT_HOTFIX.ps1

@@ -1,3 +1,5 @@
+import { NEXUS_CARD_RULES } from './collection-nexus.js';
+
 export const CARD_RULES = Object.freeze({
   atk_01: { retainInitiative: true },
   atk_04: { defensePierce: 0.5 },
@@ -22,6 +24,7 @@ export const CARD_RULES = Object.freeze({
   evd_05: { draw: 1 },
   evd_06: { kiGain: 3, draw: 2 },
   evd_07: { stealInitiative: true },
+  evd_08: { kiGain: 1 },
   evd_09: { stealInitiative: true },
 
   ctr_02: { counterDamage: 20 },
@@ -41,7 +44,8 @@ export const CARD_RULES = Object.freeze({
   tch_06: { kiGain: 5, heal: 30 },
   tch_07: { heal: 60 },
   tch_08: { draw: 2, kiGain: 1 },
-  tch_09: { heal: 40, draw: 2 }
+  tch_09: { heal: 40, draw: 2 },
+  ...NEXUS_CARD_RULES
 });
 
 export const SPECIAL_RULE_IDS = Object.freeze(Object.keys(CARD_RULES));
@@ -58,19 +62,19 @@ export function getCardRule(cardOrId) {
 }
 
 export function isAttackAction(card) {
-  return !!card && (card.type === 'attack' || card.id === 'tch_03');
+  return !!card && (card.type === 'attack' || getCardRule(card).attackLike === true);
 }
 
 export function isImmediateTechnique(card) {
-  return !!card && card.type === 'tech' && card.id !== 'tch_03';
+  return !!card && card.type === 'tech' && !isAttackAction(card);
 }
 
 export function isPhysicalAttack(card) {
-  return !!card && card.type === 'attack' && card.isCombo === true;
+  return !!card && card.type === 'attack' && (card.damageKind === 'physical' || card.isCombo === true);
 }
 
 export function isKiAttack(card) {
-  return !!card && (card.isBeam === true || EXTRA_KI_ATTACK_IDS.has(card.id));
+  return !!card && (card.isBeam === true || card.damageKind === 'ki' || card.damageKind === 'beam' || EXTRA_KI_ATTACK_IDS.has(card.id));
 }
 
 export function getEffectiveCardCost(fighter, card) {
@@ -156,3 +160,4 @@ export function canUseReaction(defender, attackCard, reactionCard) {
 
   return false;
 }
+

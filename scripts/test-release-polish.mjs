@@ -108,17 +108,33 @@ test('leaderboard nao interpola displayName em HTML', () => {
   assert.equal(block.includes('lbContainer.innerHTML = topList.map'), false);
 });
 
-test('Tag Team nao usa innerHTML com username', () => {
+test('Squad HUD realtime escapa dados dinamicos antes de usar innerHTML', () => {
   const src = fs.readFileSync(new URL('../js/team-ui.js', import.meta.url), 'utf8');
-  assert.ok(src.includes('nameEl.textContent'));
+
+  assert.ok(src.includes("import { escapeHtml } from './safe-dom.js';"));
+
+  // User-controlled strings must be escaped before entering template HTML.
+  assert.ok(src.includes('escapeHtml(member.username)'));
+  assert.ok(src.includes('escapeHtml(member.uid)'));
+  assert.ok(src.includes("escapeHtml(member.leader?.name || '')"));
+  assert.ok(src.includes("escapeHtml(you.username || 'Voce')"));
+  assert.ok(src.includes("escapeHtml(you.leader?.name || '')"));
+  assert.ok(src.includes("escapeHtml(card.name)"));
+  assert.ok(src.includes("escapeHtml(log.text || '')"));
+
+  // The old unsafe pattern must not return.
   assert.equal(src.includes('${member.username}'), false);
+  assert.equal(src.includes('${you.username}'), false);
+  assert.equal(src.includes('${card.name}'), false);
 });
 
 test('Raid escapa nomes e logs antes de templates HTML', () => {
   const src = fs.readFileSync(new URL('../js/raid-engine.js', import.meta.url), 'utf8');
   assert.ok(src.includes("from './safe-dom.js'"));
   assert.ok(src.includes('escapeHtml(player.username)'));
-  assert.ok(src.includes('escapeHtml(log.text)'));
+  assert.match(src, /escapeHtml\(log\.text(?:\s*\|\|\s*['"][^'"]*['"])?\)/);
+  assert.equal(src.includes('${log.text}'), false);
+
 });
 
 test('painel dev e bloqueado fora de localhost/dev mode', () => {

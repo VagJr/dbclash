@@ -4,6 +4,7 @@
    ========================================================================== */
 
 import express from 'express';
+import { registerExchange } from './server/exchange-service.js';
 import {
   installHttpSecurity,
   socketCorsOptions,
@@ -15,7 +16,8 @@ import { Server } from 'socket.io';
 import mongoose from 'mongoose';
 import { GameEngine as ServerGameEngine } from './server/server-engine.js';
 import { RaidRoomEngine } from './server/raid-room-engine.js';
-import { BOT_FILL_DELAY_MS, createBotProfile, DuelBotController, RaidBotController, isBotUid } from './server/bot-ai.js';
+import { BOT_FILL_DELAY_MS, createBotProfile, DuelBotController, isBotUid } from './server/bot-ai.js';
+import { RaidRealtimeBotController } from './server/realtime-bot-controllers.js';
 import { registerProductModes } from './server/product-modes.js';
 import { applyQuestEventToUser } from './js/daily-quest-rules.js';
 import { getStarterDeckForLeader } from './js/card-database.js';
@@ -51,6 +53,7 @@ validateProductionEnvironment();
 // HTTP security, CORS allowlist and API rate limits
 installHttpSecurity(app);
 app.use(express.json({ limit: '64kb', strict: true }));
+registerExchange(app);
 
 // ── MONGODB ATLAS CONNECTION ──
 mongoose.connect(MONGODB_URI)
@@ -693,7 +696,7 @@ function findRaidRoomByUid(uid) {
 
 function emitRaidState(roomCode) {
   const room = activeRaidRooms[roomCode];
-  if (!room) return;
+  if (!room?.engine) return;
 
   for (const slot of Object.values(room.slots)) {
     if (!slot.connected || !slot.socketId) continue;
@@ -725,10 +728,12 @@ async function finalizeRaidRoom(roomCode, result) {
   const room = activeRaidRooms[roomCode];
   if (!room || room.finalized) return;
   room.finalized = true;
+  room.botController?.dispose?.();
 
   emitRaidState(roomCode);
 
   for (const slot of Object.values(room.slots)) {
+    if (slot.isBot) continue;
     let reward = { zeni: 0, xp: 0, trophies: 0, gems: 0 };
     let user = await User.findOne({ uid: slot.uid });
 
@@ -773,7 +778,7 @@ function clearRaidReconnect(slot) {
 
 function attachSocketToRaid(socket, roomCode, resumed = false) {
   const room = activeRaidRooms[roomCode];
-  if (!room || room.finalized) return false;
+  if (!room?.engine || room.finalized) return false;
 
   const slot = room.slots[socket.authUid];
   if (!slot) return false;
@@ -851,6 +856,7 @@ async function startRaidFromQueue(bossId) {
     matchId,
     bossId,
     engine: null,
+    botController: null,
     finalized: false,
     lastSeq: {},
     slots: {}
@@ -887,8 +893,9 @@ async function startRaidFromQueue(bossId) {
     }
   });
 
-  room.botController = new RaidBotController({ engine: room.engine });
+  room.botController = new RaidRealtimeBotController({ engine: room.engine });
   room.botController.poke();
+  emitRaidState(roomCode);
 
   for (const entry of team) {
     const socket = io.sockets.sockets.get(entry.socketId);
@@ -917,7 +924,7 @@ function scheduleRaidQueueStart(bossId) {
 const raidTickInterval = setInterval(() => {
   const now = Date.now();
   for (const room of Object.values(activeRaidRooms)) {
-    if (!room.finalized) room.engine.tick(now);
+    if (!room.finalized && room.engine) room.engine.tick(now);
   }
 }, 1000);
 if (raidTickInterval.unref) raidTickInterval.unref();
@@ -1041,6 +1048,9 @@ io.on('connection', socket => {
         break;
       case 'passTurn':
         room.engine.passTurn(slot.uid);
+        break;
+      case 'mashBeamClash':
+        room.engine.mashBeamClash(slot.uid);
         break;
       default:
         break;

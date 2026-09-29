@@ -1,0 +1,21 @@
+DBCLASH — AUDIO TEST OPTIONAL CALL HOTFIX
+=========================================
+
+Falha corrigida:
+  FAIL impactos da UI usam attackType em vez de punch generico
+
+Causa:
+O runtime correto usa:
+  soundEngine.playImpact?.(attackType, damage)
+
+O teste antigo exigia:
+  soundEngine.playImpact(attackType, damage)
+
+Este hotfix altera SOMENTE:
+  scripts/test-release-audio.mjs
+
+A nova assercao aceita chamada direta ou optional chaining, mas continua
+falhando se playPunch() voltar a aparecer dentro de triggerImpactEffects().
+
+Aplicar:
+  .\PATCH_AUDIO_TEST_OPTIONAL_CALL_HOTFIX.ps1

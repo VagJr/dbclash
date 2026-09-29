@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { GameEngine } from '../server/server-engine.js';
-import { CARD_DATABASE, LEADERS, getCardById } from '../js/card-database.js';
-import { SPECIAL_RULE_IDS, getEffectiveCardCost, getBeamMashPower, getChargeAmount } from '../js/content-rules.js';
+import { CARD_DATABASE, LEGACY_CARD_DATABASE, LEADERS, getCardById } from '../js/card-database.js';
+import { SPECIAL_RULE_IDS, getCardRule, getEffectiveCardCost, getBeamMashPower, getChargeAmount } from '../js/content-rules.js';
 
 function makeEngine() {
   const e = new GameEngine(() => {}, () => {});
@@ -23,9 +23,10 @@ function test(name, fn) {
   catch (err) { console.error('FAIL', name); throw err; }
 }
 
-test('banco contem exatamente 70 cartas nas cinco categorias', () => {
-  assert.equal(CARD_DATABASE.length, 70);
-  const counts = CARD_DATABASE.reduce((acc, c) => { acc[c.type] = (acc[c.type] || 0) + 1; return acc; }, {});
+test('banco Nexus contem 714 cartas e preserva as 70 originais', () => {
+  assert.equal(CARD_DATABASE.length, 714);
+  assert.equal(LEGACY_CARD_DATABASE.length, 70);
+  const counts = LEGACY_CARD_DATABASE.reduce((acc, c) => { acc[c.type] = (acc[c.type] || 0) + 1; return acc; }, {});
   assert.equal(counts.attack, 28);
   assert.equal(counts.defense, 15);
   assert.equal(counts.evade, 9);
@@ -83,7 +84,7 @@ test('Vegeta recebe +10 com 3 ataques na mao', () => {
   e.clearReactionTimer(); e.reset();
 });
 
-test('todas as 28 cartas de ataque entram em ATTACK_PENDING sem estado invalido', () => {
+test('todas as cartas de ataque entram em ATTACK_PENDING sem estado invalido', () => {
   for (const original of CARD_DATABASE.filter(c => c.type === 'attack')) {
     const e = makeEngine();
     e.player.ki = 10;
@@ -96,7 +97,7 @@ test('todas as 28 cartas de ataque entram em ATTACK_PENDING sem estado invalido'
   }
 });
 
-test('as 8 tecnicas instantaneas resolvem sem criar ataque fantasma', () => {
+test('todas as tecnicas instantaneas resolvem sem criar ataque fantasma', () => {
   for (const original of CARD_DATABASE.filter(c => c.type === 'tech' && c.id !== 'tch_03')) {
     const e = makeEngine();
     e.player.hp = 300;
@@ -191,7 +192,7 @@ test('Death Ball drena Ki e Scatter Shot queima uma defesa ao acertar', () => {
   e.reset();
 });
 
-test('todas as 15 defesas resolvem como resposta valida', () => {
+test('todas as defesas resolvem como resposta valida', () => {
   for (const original of CARD_DATABASE.filter(c => c.type === 'defense')) {
     const e = makeEngine();
     e.state = 'ATTACK_PENDING';
@@ -213,10 +214,10 @@ test('Full Power Deflect reflete 10 HP', () => {
   e.reset();
 });
 
-test('todas as 9 esquivas resolvem; Afterimage exige golpe fisico', () => {
+test('todas as esquivas resolvem; Afterimage exige golpe fisico', () => {
   for (const original of CARD_DATABASE.filter(c => c.type === 'evade')) {
     const e = makeEngine();
-    const atk = original.id === 'evd_02' ? card('atk_01') : card('atk_03');
+    const atk = getCardRule(original).physicalOnly ? card('atk_01') : card('atk_03');
     e.state = 'ATTACK_PENDING'; e.pendingAttack = { attackerKey: 'player', card: { ...atk, resolvedPower: atk.power } };
     e.opponent.ki = 10; e.opponent.hand = [{ ...original, instanceId: 'x' }];
     assert.equal(e._playCard('opponent', 0), true, original.id);
@@ -229,10 +230,10 @@ test('todas as 9 esquivas resolvem; Afterimage exige golpe fisico', () => {
   e.reset();
 });
 
-test('todas as 9 counters resolvem e aplicam dano quando descrito', () => {
+test('todos os counters resolvem e aplicam dano quando descrito', () => {
   for (const original of CARD_DATABASE.filter(c => c.type === 'counter')) {
     const e = makeEngine();
-    const atk = original.id === 'ctr_08' ? card('atk_01') : card('atk_03');
+    const atk = getCardRule(original).physicalOnly ? card('atk_01') : card('atk_03');
     e.state = 'ATTACK_PENDING'; e.pendingAttack = { attackerKey: 'player', card: { ...atk, resolvedPower: atk.power } };
     e.opponent.ki = 10; e.opponent.hand = [{ ...original, instanceId: 'x' }];
     const before = e.player.hp;

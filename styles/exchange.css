@@ -1,0 +1,17 @@
+.nexus-exchange-dialog{width:min(960px,94vw);max-height:90dvh;padding:28px;background:#091525;color:#edf6ff;border:1px solid #4e91ba;border-radius:16px;box-shadow:0 30px 100px #000a;font-family:var(--font-body,system-ui)}
+.nexus-exchange-dialog::backdrop{background:#020a17d9;backdrop-filter:blur(8px)}
+.nexus-exchange-dialog h2{margin:5px 0 0;font-size:1.65rem;color:#fff}
+.nexus-exchange-dialog p{font-size:.85rem;color:#aac0d4;line-height:1.55}
+.nexus-exchange-head{display:flex;justify-content:space-between;align-items:center;gap:16px}.nexus-exchange-head small{color:#62d7f5;letter-spacing:.16em;font-size:.65rem}
+.nexus-exchange-dialog button{cursor:pointer;border:1px solid #376181;background:#142b42;color:#e2f4ff;border-radius:6px;padding:10px 14px;font-weight:700}.nexus-exchange-dialog button:hover{border-color:#75d8ff;background:#254761}
+.nexus-exchange-dialog button:disabled{opacity:.45;cursor:default}.nexus-exchange-head [data-close]{font-size:1.3rem;padding:6px 14px}
+.nexus-exchange-tabs{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:24px 0 10px}.nexus-exchange-tabs [aria-pressed=true]{background:#df8332;color:#111c26;border-color:#ffc28c}
+.nexus-exchange-tabs label{font-size:.8rem;display:flex;gap:8px;align-items:center}.nexus-exchange-tabs [data-refresh]{margin-left:auto}
+.nexus-exchange-form{display:grid;grid-template-columns:2fr 1fr auto;gap:12px;align-items:end;border:1px solid #28405e;padding:16px;border-radius:10px;margin:18px 0}
+.nexus-exchange-form label{display:grid;gap:7px;font-size:.75rem;font-weight:700;color:#aebed2}.nexus-exchange-form label[hidden]{display:none}
+.nexus-exchange-form input,.nexus-exchange-form select{min-width:0;width:100%;border:1px solid #395574;border-radius:6px;padding:10px;background:#101e30;color:#f0f8ff;font:inherit}
+.nexus-exchange-list{display:grid;gap:8px}.nexus-exchange-list article{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 16px;background:#14253a;border:1px solid #28405e;border-radius:8px}
+.nexus-exchange-list strong{font-size:.85rem}.nexus-exchange-list small{display:block;margin-top:5px;font-size:.73rem;color:#aac0d4}.nexus-exchange-status{min-height:1.5em}
+.nexus-exchange-dialog :focus-visible{outline:3px solid #ffa251;outline-offset:4px}
+#nexus-exchange-button{position:relative;z-index:2;margin:14px 0}
+@media(max-width:640px){.nexus-exchange-dialog{padding:18px}.nexus-exchange-form{grid-template-columns:1fr}.nexus-exchange-list article{align-items:flex-start;flex-direction:column}.nexus-exchange-tabs [data-refresh]{margin-left:0}}

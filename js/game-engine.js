@@ -5,6 +5,7 @@
 
 import { LEADERS, getCardById, getStarterDeckForLeader } from './card-database.js';
 import { getCardRule, isAttackAction, isImmediateTechnique, getEffectiveCardCost, getLeaderAttackBonus, getChargeAmount, getOpenGuardDurationMs, getBeamMashPower, getReactionSeconds, getDefenseBlockMultiplier, canUseReaction } from './content-rules.js';
+import { chooseNpcDuelAction, normalizeNpcOptions, npcThinkDelay, NPC_DIFFICULTIES } from './npc-ai.js';
 
 export class GameEngine {
   checkGameOver() {
@@ -60,6 +61,11 @@ export class GameEngine {
   }
 
   reset() {
+      this.matchEpoch = (this.matchEpoch || 0) + 1;
+      for (const timer of this.aiTimers || []) clearTimeout(timer);
+      this.aiTimers = new Set();
+      this.npcOptions = this.npcOptions || normalizeNpcOptions();
+      this.reactionDeadline = 0;
     if (this.remoteReactionTimer) {
       clearInterval(this.remoteReactionTimer);
       this.remoteReactionTimer = null;
@@ -109,6 +115,25 @@ export class GameEngine {
       active: this.state === 'BEAM_CLASH',
       playerClicks: this.beamClashData ? this.beamClashData.p1Progress : 50
     };
+  }
+
+  configureNpc(options = {}) {
+    this.npcOptions = normalizeNpcOptions(options, this.opponent?.leader?.id);
+    this.npcIdentityExplicit = !!options.identity;
+    return { ...this.npcOptions };
+  }
+
+  _scheduleAi(minimumDelay = 0) {
+    if (!this.isAiMatch || this.state === 'GAME_OVER') return;
+    const epoch = this.matchEpoch;
+    const remaining = this.state === 'ATTACK_PENDING' ? this.reactionDeadline - Date.now() : Infinity;
+    const delay = Math.min(Math.max(minimumDelay, npcThinkDelay(this.npcOptions)), Number.isFinite(remaining) ? Math.max(30, remaining - 80) : Infinity);
+    const timer = setTimeout(() => {
+      this.aiTimers.delete(timer);
+      if (this.matchEpoch === epoch && this.isAiMatch) this.executeAiTurn();
+    }, delay);
+    timer.unref?.();
+    this.aiTimers.add(timer);
   }
 
   clearOpenGuardTimers() {
@@ -169,7 +194,7 @@ export class GameEngine {
 
   _healFighter(key, amount) {
       const fighter = this._fighter(key);
-      if (!fighter || amount <= 0) return 0;
+      if (!fighter || fighter.hp <= 0 || amount <= 0) return 0;
       const before = fighter.hp;
       fighter.hp = Math.min(fighter.maxHp, fighter.hp + amount);
       fighter.shields = Math.ceil(fighter.hp / 50);
@@ -210,7 +235,7 @@ export class GameEngine {
       const actor = this._fighter(actorKey);
       let bonus = getLeaderAttackBonus(actor, card, handBeforePlay);
   
-      if (card.type === 'attack' && actor.nextAttackBonus > 0) {
+      if (isAttackAction(card) && actor.nextAttackBonus > 0) {
         bonus += actor.nextAttackBonus;
         actor.nextAttackBonus = 0;
       }
@@ -242,7 +267,7 @@ export class GameEngine {
         if (drained) this.log(`${card.name}: drenou ${drained} Ki.`, 'info');
       }
   
-      if (rule.burnDefense) {
+      for (let count = 0; count < Number(rule.burnDefense || 0); count++) {
         const idx = defender.hand.findIndex(c => c?.type === 'defense');
         if (idx >= 0) {
           const [burned] = defender.hand.splice(idx, 1);
@@ -264,7 +289,7 @@ export class GameEngine {
         this.log(`${card.name}: iniciativa mantida para continuar o combo.`, 'info');
         this.notifyState();
         if (this.isAiMatch && attackerKey === 'opponent') {
-          setTimeout(() => this.executeAiTurn(), 350);
+          this._scheduleAi(350);
         }
         return;
       }
@@ -409,6 +434,7 @@ export class GameEngine {
 
     this.player.leader = { ...LEADERS[pKey] };
     this.opponent.leader = { ...LEADERS[oKey] };
+    if (!this.npcIdentityExplicit) this.npcOptions = normalizeNpcOptions({ difficulty: this.npcOptions.difficulty, identity: oKey });
 
     this.player.maxHp = this.player.leader.maxHp || 400;
     this.player.hp = this.player.maxHp;
@@ -448,7 +474,7 @@ export class GameEngine {
     this.log(`Batalha Iniciada! ${this.initiative === 'player' ? 'Sua' : 'Do Oponente'} Iniciativa!`, 'info');
     
     if (this.isAiMatch && this.initiative === 'opponent') {
-      setTimeout(() => this.executeAiTurn(), 1000);
+      this._scheduleAi(1000);
     }
 
     this.notifyState();
@@ -528,7 +554,7 @@ export class GameEngine {
     
     this.notifyState();
     if (this.isAiMatch && this.initiative === 'opponent') {
-      setTimeout(() => this.executeAiTurn(), 1000);
+      this._scheduleAi(1000);
     }
   }
 
@@ -552,7 +578,8 @@ export class GameEngine {
       let actualIndex = Number.isInteger(handIndex) ? handIndex : -1;
       if (remoteCardId) {
         const foundIndex = actor.hand.findIndex(c => c.id === remoteCardId);
-        if (foundIndex !== -1) actualIndex = foundIndex;
+        if (foundIndex === -1) return false;
+        actualIndex = foundIndex;
       }
       if (actualIndex < 0 || actualIndex >= actor.hand.length) return false;
   
@@ -569,6 +596,7 @@ export class GameEngine {
         else return false;
       } else if (this.state === 'ATTACK_PENDING') {
         if (!this.pendingAttack) return false;
+        if (this.reactionDeadline && Date.now() >= this.reactionDeadline) return false;
         const defenderKey = this._otherKey(this.pendingAttack.attackerKey);
         if (actorKey !== defenderKey) return false;
         if (!this.isReactionCardLegal(actorKey, card, this.pendingAttack.card)) return false;
@@ -596,7 +624,7 @@ export class GameEngine {
         if (runtimeCard.isBeam) this.fx('attackCharging', { card: runtimeCard, attackerKey: actorKey });
         this.startReactionTimer(getReactionSeconds(runtimeCard));
   
-        if (this.isAiMatch && actorKey === 'player') setTimeout(() => this.executeAiTurn(), 250);
+        if (this.isAiMatch && actorKey === 'player') this._scheduleAi(250);
         this.notifyState();
         return true;
       }
@@ -627,6 +655,7 @@ export class GameEngine {
     }
 
   clearReactionTimer() {
+    this.reactionDeadline = 0;
     if (this.reactionTimer) {
       clearInterval(this.reactionTimer);
       this.reactionTimer = null;
@@ -769,7 +798,7 @@ export class GameEngine {
         this.state = 'FREE_ACTION';
         this.initiative = defenderKey;
         this.notifyState();
-        if (this.isAiMatch && defenderKey === 'opponent') setTimeout(() => this.executeAiTurn(), 350);
+        if (this.isAiMatch && defenderKey === 'opponent') this._scheduleAi(350);
         return true;
       }
   
@@ -784,7 +813,7 @@ export class GameEngine {
         this.state = 'FREE_ACTION';
         this.initiative = defenderKey;
         this.notifyState();
-        if (this.isAiMatch && defenderKey === 'opponent') setTimeout(() => this.executeAiTurn(), 350);
+        if (this.isAiMatch && defenderKey === 'opponent') this._scheduleAi(350);
         return true;
       }
   
@@ -834,6 +863,10 @@ export class GameEngine {
         playerPower: attackerKey === 'player' ? attackerPower : defenderPower,
         opponentPower: attackerKey === 'opponent' ? attackerPower : defenderPower
       };
+      this.beamClashData.deadline = Date.now() + 6000;
+      this.beamClashData.attackerCard = { ...this.pendingAttack.card };
+      this.beamClashData.defenderCard = { ...defenderCard };
+      this.beamClashData.p1Progress = Math.max(35, Math.min(65, 50 + (this.beamClashData.playerPower - this.beamClashData.opponentPower) * 0.16));
       this.lastMashAt = { player: 0, opponent: 0 };
       this.log('DISPUTA DE BEAM iniciada.', 'info');
   
@@ -843,13 +876,15 @@ export class GameEngine {
           this.clearBeamClashLoop();
           return;
         }
-        this.beamClashData.timer = Math.max(0, this.beamClashData.timer - 0.1);
+        this.beamClashData.timer = Math.max(0, (this.beamClashData.deadline - Date.now()) / 1000);
+        if (this.isAiMatch && Date.now() - (this.lastMashAt?.opponent || 0) >= NPC_DIFFICULTIES[this.npcOptions.difficulty].mashMs) this._mashBeamClash('opponent');
+        if (!this.beamClashData) return;
         this.notifyState();
   
         if (this.beamClashData.p1Progress <= 0) this.resolveBeamClashWinner('opponent');
         else if (this.beamClashData.p1Progress >= 100) this.resolveBeamClashWinner('player');
         else if (this.beamClashData.timer <= 0) {
-          this.resolveBeamClashWinner(this.beamClashData.p1Progress >= 50 ? 'player' : 'opponent');
+          this.resolveBeamClashWinner(this.beamClashData.p1Progress === 50 ? this.beamClashData.attackerKey : this.beamClashData.p1Progress > 50 ? 'player' : 'opponent');
         }
       }, 100);
       return true;
@@ -974,6 +1009,7 @@ export class GameEngine {
 
   _mashBeamClash(actorKey = 'player') {
       if (this.state !== 'BEAM_CLASH' || !this.beamClashData) return false;
+      if (this.beamClashData.deadline && Date.now() >= this.beamClashData.deadline) return false;
       if (!['player', 'opponent'].includes(actorKey)) return false;
   
       const now = Date.now();
@@ -1005,13 +1041,18 @@ export class GameEngine {
       const originalAttacker = data.attackerKey;
       const loserKey = this._otherKey(winnerKey);
       const winner = this._fighter(winnerKey);
-      const damage = winnerKey === 'player' ? data.playerPower : data.opponentPower;
+      const winningCard = winnerKey === data.attackerKey ? data.attackerCard : data.defenderCard;
+      let damage = winnerKey === 'player' ? data.playerPower : data.opponentPower;
+      const loser = this._fighter(loserKey);
+      if (loser.isOpenGuard) damage = Math.floor(damage * 1.5);
+      damage = this._forceShieldBreakDamage(loser, damage, winningCard);
   
       this.clearBeamClashLoop();
       this.beamClashData = null;
       this.pendingAttack = null;
   
       const result = this._applyDirectDamage(loserKey, damage, winnerKey);
+      this._applyAttackPostHit(winnerKey, loserKey, winningCard, result.damage);
       this.fx('kamehameha', { attackerKey: winnerKey, isGolden: true, damage: result.damage });
       this.log(`DISPUTA DE BEAM vencida por ${winner.name}: ${result.damage} de dano.`, 'damage');
   
@@ -1022,7 +1063,7 @@ export class GameEngine {
     }
 
   checkAwaken(fighter) {
-      if (!fighter || fighter.isAwakened) return false;
+      if (!fighter || fighter.hp <= 0 || fighter.isAwakened) return false;
       if (fighter.hp > (fighter.leader.awakenThresholdHp || 200)) return false;
   
       fighter.isAwakened = true;
@@ -1040,34 +1081,13 @@ export class GameEngine {
 
   // ── AI TURN EXECUTION WITH FAILSAFE PASS ─────────────────────────────
   executeAiTurn() {
-      if (this.state === 'FREE_ACTION' && this.initiative === 'opponent') {
-        const playable = this.opponent.hand.findIndex(card => {
-          if (!card || (!isAttackAction(card) && !isImmediateTechnique(card))) return false;
-          return this.getCardCost('opponent', card) <= this.opponent.ki;
-        });
-  
-        if (playable !== -1) this.playCard('opponent', playable);
-        else if (this.opponent.ki < 10) this.chargeKi('opponent');
-        else this.passTurn('opponent');
-        return;
-      }
-  
-      if (this.state === 'ATTACK_PENDING' && this.pendingAttack?.attackerKey === 'player') {
-        const defIdx = this.opponent.hand.findIndex(card => {
-          if (!card || this.getCardCost('opponent', card) > this.opponent.ki) return false;
-          return this.isReactionCardLegal('opponent', card, this.pendingAttack.card);
-        });
-  
-        if (defIdx !== -1) {
-          this.playCard('opponent', defIdx);
-        } else {
-          setTimeout(() => {
-            if (this.state === 'ATTACK_PENDING' && this.pendingAttack?.attackerKey === 'player') {
-              this.clearReactionTimer();
-              this.resolveUnansweredAttack();
-            }
-          }, 1000);
-        }
-      }
+      if (!this.isAiMatch) return false;
+      const decision = chooseNpcDuelAction(this, 'opponent');
+      if (!decision) return false;
+      if (decision.action === 'playCard') return this._playCard('opponent', decision.cardIndex, decision.cardId);
+      if (decision.action === 'chargeKi') return this._chargeKi('opponent');
+      if (decision.action === 'mashBeamClash') return this._mashBeamClash('opponent');
+      this._passTurn('opponent');
+      return true;
     }
 }

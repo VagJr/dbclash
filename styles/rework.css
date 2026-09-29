@@ -1,0 +1,449 @@
+/* Project NEXUS — digital action TCG presentation, loaded after legacy styles. */
+:root {
+  --nexus-ink: #050c16;
+  --nexus-panel: #0b1b2d;
+  --nexus-cyan: #60e7ff;
+  --nexus-orange: #ff943f;
+  --nexus-border: rgba(130, 210, 239, .2);
+  --nexus-muted: #a7bfd0;
+  --nexus-hero-art: url('../assets/backgrounds/landing_hero.png');
+  --nexus-ui-art: linear-gradient(135deg, #122d46, #091421);
+}
+.nexus-ui {
+  --ki-yellow: #ffae62;
+  --arcade-gold: #ffae62;
+  --arcade-cyan: #60e7ff;
+  --text-secondary: #a7bfd0;
+  --font-title: 'Outfit', 'Inter', sans-serif;
+  --font-header: 'Outfit', 'Inter', sans-serif;
+  --bg-panel: linear-gradient(145deg, rgba(17, 38, 59, .96), rgba(7, 18, 32, .97));
+  background: var(--nexus-ink);
+  color: #f3f8ff;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.nexus-ui button, .nexus-ui input, .nexus-ui select { font: inherit; }
+.nexus-ui button { cursor: pointer; }
+.nexus-ui button:disabled { cursor: not-allowed; opacity: .48; }
+.nexus-ui :is(button, input, select, [tabindex]):focus-visible {
+  outline: 3px solid var(--nexus-cyan) !important;
+  outline-offset: 4px;
+  box-shadow: 0 0 0 7px rgba(96, 231, 255, .12) !important;
+}
+.nexus-ui .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.nexus-ui .game-scene { height: 100dvh; isolation: isolate; }
+.nexus-ui .game-scene.active { height: 100dvh; }
+.nexus-ui .glass { background: var(--bg-panel); border: 1px solid var(--nexus-border) !important; box-shadow: 0 20px 70px #0007, inset 0 1px 0 #ffffff0b !important; border-radius: 18px; }
+.nexus-ui .glass:hover { border-color: #44677f !important; box-shadow: 0 20px 70px #0007, inset 0 1px 0 #ffffff0b !important; }
+.nexus-ui :is(.btn-ki, .nexus-primary, .btn-charge) {
+  background: linear-gradient(105deg, #ffb85f, #ff883a) !important;
+  border: 1px solid #ffd79c !important;
+  border-radius: 7px;
+  box-shadow: 0 4px 22px #ff92362b, inset 0 1px 0 #fff8 !important;
+  color: #1d130c !important;
+  font-family: 'Outfit', sans-serif;
+  font-size: .86rem;
+  font-weight: 900;
+  letter-spacing: .05em;
+  padding: 14px 22px;
+  transition: background .2s, transform .2s, box-shadow .2s;
+}
+.nexus-ui :is(.btn-ki, .nexus-primary, .btn-charge):hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 7px 26px #ff923650 !important; }
+.nexus-ui :is(.btn-ghost, .btn-pass) { background: #0b1d2f !important; border: 1px solid #45677c !important; border-radius: 7px; color: #d9f5ff; padding: 12px 20px; font-weight: 800; font-size: .78rem; letter-spacing: .03em; box-shadow: none !important; }
+.nexus-ui :is(.btn-ghost, .btn-pass):hover:not(:disabled) { border-color: var(--nexus-cyan) !important; background: #163247 !important; }
+.nexus-ui .btn-ghost::before { display: none; }
+.nexus-has-texture :is(.nexus-primary, .btn-ki) { background-image: linear-gradient(105deg, #ffb85ff0, #ff883adb), url('../assets/rework/ui/primary-button.png') !important; background-size: cover !important; }
+.nexus-has-texture .glass { background-image: linear-gradient(145deg, #11263bf2, #071220f2), url('../assets/rework/ui/panel-cyan.png'); background-size: cover; }
+.nexus-eyebrow { font: 700 .61rem/1.5 'Inter', sans-serif; letter-spacing: .18em; color: var(--nexus-cyan); }
+.nexus-signal { display: inline-block; width: 6px; height: 6px; background: var(--nexus-cyan); border-radius: 50%; box-shadow: 0 0 10px var(--nexus-cyan); margin-right: 8px; vertical-align: 1px; }
+.nexus-ui .scene-transition-curtain { background: radial-gradient(ellipse at center, #67dcf4 0, #0b2548 45%, #050d1c 80%); }
+
+/* Console boot and press start. */
+.nexus-ui #scene-splash { background: radial-gradient(ellipse at 50% 35%, #123757, #040c18 65%); }
+.nexus-ui .splash-loading-label { font: 700 .66rem/1.7 'Inter', sans-serif; color: #b1cee0; letter-spacing: .15em; text-align: center; text-shadow: none; }
+.nexus-ui .splash-loading-fill { background: linear-gradient(90deg, #1c8fb7, var(--nexus-cyan)); box-shadow: 0 0 12px #50d8ff55; }
+.nexus-ui #scene-title { background: #081624 !important; }
+.nexus-ui .title-scene-bg { background: linear-gradient(180deg, #020a1640, #030a19f2), var(--nexus-hero-art) 50% 38% / cover; position: absolute; inset: 0; z-index: -1; transform: scale(1.04); animation: nexus-title-pan 18s ease-in-out infinite alternate; opacity: 1; }
+.nexus-ui #scene-title::after { content: ''; position: absolute; inset: 0; z-index: -1; background: repeating-linear-gradient(0deg, transparent 0 3px, #05152317 3px 4px); pointer-events: none; }
+.nexus-ui .title-inner { width: min(860px, 92%); padding: 32px; gap: 24px; z-index: 1; text-align: center; }
+.nexus-title-kicker { color: #c8f6ff; font: 700 .65rem/1.5 'Inter', sans-serif; letter-spacing: .4em; margin-bottom: 20px; }
+.nexus-ui .title-official-logo { width: min(540px, 80vw); height: auto; max-height: 260px; object-fit: contain; filter: drop-shadow(0 10px 15px #0009); animation: none; }
+.nexus-ui .hero-sub-subtitle { color: #e2f5ff; font: 600 .68rem/1.5 'Inter', sans-serif; letter-spacing: .28em; margin-top: 16px; text-shadow: 0 2px 10px #000; }
+.nexus-ui .press-start-container { margin-top: 45px; }
+.nexus-ui .btn-press-start { padding: 16px 48px; border: 1px solid #72e3ff8c; border-radius: 5px; background: linear-gradient(90deg, #052038bb, #153e54d9, #052038bb); box-shadow: 0 0 40px #25b9dc20, inset 0 1px 0 #93efff3b; animation: none; }
+.nexus-ui .ps-glow { color: #f0fcff; font: 900 1.12rem/1.5 'Outfit', sans-serif; letter-spacing: .26em; text-shadow: 0 0 15px #39caed8c; animation: nexus-start-pulse 2.8s ease-in-out infinite; }
+.nexus-ui .press-start-sub { color: #a6c3d0; font: 600 .55rem/1.5 'Inter', sans-serif; letter-spacing: .15em; margin-top: 18px; }
+.nexus-title-footer { margin-top: 60px; color: #718ca1; font-size: .55rem; letter-spacing: .22em; }
+
+/* NEXUS hub. Existing mode buttons retain their original actions. */
+.nexus-ui #scene-main-menu { background: radial-gradient(ellipse at 30% 40%, #123453 0%, #091b30 42%, #050c18 100%) !important; overflow-y: auto; }
+.nexus-ui #scene-main-menu.active { align-items: stretch; justify-content: flex-start; }
+.nexus-ui .menu-hub-bg { position: absolute; inset: 0; z-index: -1; opacity: .2; background-image: linear-gradient(#71d8ff0c 1px, transparent 1px), linear-gradient(90deg, #71d8ff0c 1px, transparent 1px); background-size: 72px 72px; }
+.nexus-ui .game-hud-top { flex: 0 0 76px; height: 76px; padding: 0 clamp(20px, 3.5vw, 65px); background: linear-gradient(90deg, #07101fe6, #11273fc9, #07101fe6); border-bottom: 1px solid var(--nexus-border); box-shadow: none; position: relative; }
+.nexus-ui .ghud-profile { gap: 14px; max-width: none; }
+.nexus-ui .ghud-logo-mini { width: 70px; height: 48px; filter: none; }
+.nexus-ui .ghud-username { font-size: .86rem; }
+.nexus-profile-progress { padding-left: 18px; border-left: 1px solid #2b4e66; min-width: 142px; color: #b1c9da; font-size: .58rem; letter-spacing: .05em; }
+.nexus-xp-track { width: 135px; height: 3px; background: #253c4f; margin-top: 7px; overflow: hidden; border-radius: 4px; }
+#nexus-xp-fill { height: 100%; background: var(--nexus-cyan); border-radius: inherit; transition: width .4s; }
+.nexus-ui .currency-pill { background: #0b1b2f; border: 1px solid #294b65; color: #f1be7d; border-radius: 5px; padding: 9px 15px; font-family: 'Outfit', sans-serif; font-size: .82rem; box-shadow: inset 0 1px 0 #ffffff08; }
+.nexus-ui .dust-pill { color: #9ee8ff; }
+.nexus-ui .auth-pill { background: #143248; border: 1px solid #4b7289; border-radius: 5px; min-height: 38px; padding: 8px 13px; }
+.nexus-ui .menu-hub-arc-layout { flex: 1 0 auto; display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(310px, 1fr); align-items: stretch; gap: 24px; padding: 26px clamp(20px, 3.5vw, 65px) 18px; max-width: 1700px; min-height: 470px; width: 100%; }
+.nexus-feature { position: relative; min-height: 500px; overflow: hidden; background: linear-gradient(135deg, #0f2d46, #11233b); border: 1px solid #365d72; border-radius: 14px; isolation: isolate; }
+.nexus-feature::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #071528f7 0%, #09192ddb 44%, #07142600 84%), linear-gradient(0deg, #081325 0%, transparent 50%); z-index: -1; }
+.nexus-feature::after { content: ''; position: absolute; left: 0; top: 0; width: 90px; height: 2px; background: var(--nexus-cyan); box-shadow: 0 0 18px #3fe0ff; }
+.nexus-feature-art { position: absolute; inset: 0; background: var(--nexus-hero-art) 65% center / cover; z-index: -2; opacity: .8; }
+.nexus-feature-content { position: relative; z-index: 2; width: 67%; padding: clamp(24px, 3vw, 50px); }
+.nexus-feature h1 { font-family: 'Outfit', sans-serif; font-size: clamp(2.5rem, 4.6vw, 5.2rem); font-weight: 900; line-height: .96; letter-spacing: -.035em; margin: 28px 0 20px; color: #f6fbff; text-shadow: 0 5px 25px #0005; }
+.nexus-feature h1 span { color: #ffab61; }
+.nexus-feature-content > p:not(.nexus-npc-description) { max-width: 350px; font-size: .8rem; line-height: 1.8; color: #b6cedd; }
+.nexus-ui #menu-leader-card-slot { position: absolute; right: 16px; bottom: 34px; z-index: 1; transform: rotate(9deg); width: 29%; pointer-events: none; opacity: .72; }
+.nexus-ui .leader-official-card-frame { width: 100%; height: auto; aspect-ratio: 5/7; border-radius: 9px; border: 1px solid #73c2db66; box-shadow: 0 20px 45px #000b; }
+.nexus-ui .leader-official-card-img { object-fit: cover; }
+.nexus-training-controls { display: flex; gap: 10px; margin-top: 26px; max-width: 370px; }
+.nexus-training-controls label { font-size: .52rem; letter-spacing: .12em; color: #83b7cd; flex: 1; min-width: 0; }
+.nexus-ui select, .nexus-ui input:not([type=checkbox]) { background: #061629; border: 1px solid #33526a; color: #dbeef8; border-radius: 5px; padding: 10px 12px; font-size: .74rem; min-height: 40px; }
+.nexus-training-controls select { display: block; width: 100%; margin-top: 5px; }
+.nexus-npc-description { color: #7ba0b7; font-size: .58rem; margin: 8px 0 18px; }
+.nexus-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.nexus-hero-actions .nexus-primary { display: flex; align-items: center; gap: 22px; }
+.nexus-lore-btn { color: #b2d1e2; font-size: .6rem !important; font-weight: 800 !important; letter-spacing: .07em; padding: 12px 0; }
+.nexus-lore-btn span { color: #75ddf7; margin-left: 7px; font-size: .85rem; }
+.nexus-training-note { display: block; font-size: .5rem; color: #668ba4; margin-top: 14px; line-height: 1.4; }
+.nexus-mode-panel { display: flex; flex-direction: column; gap: 12px; }
+.nexus-panel-heading { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 7px 0 5px; font: 800 .76rem 'Outfit', sans-serif; letter-spacing: .03em; }
+.nexus-panel-heading .nexus-eyebrow { font-size: .48rem; letter-spacing: .1em; color: #5f889d; }
+.nexus-ui :is(.menu-arc-left, .menu-arc-right) { display: flex; flex-direction: column; width: 100%; gap: 12px; }
+.nexus-ui .aaa-mode-card { min-height: 102px; padding: 18px 22px; background: linear-gradient(115deg, #142c45eb, #0b1c2ee8) !important; border: 1px solid #2c4c66 !important; border-radius: 10px; box-shadow: inset 0 1px 0 #ffffff07; transition: transform .2s, border-color .2s, background .2s; gap: 6px; }
+.nexus-ui .aaa-mode-card::before { content: ''; position: absolute; left: 0; top: 20%; bottom: 20%; width: 2px; background: #478aa8; transition: background .2s; }
+.nexus-ui .aaa-mode-card:hover { transform: translateX(-3px); background: linear-gradient(115deg, #1c3d57, #11273e) !important; border-color: #62cbe5 !important; box-shadow: 0 7px 25px #0002; }
+.nexus-ui .aaa-mode-card:hover::before { background: var(--nexus-orange); }
+.nexus-ui .amc-badge { font: 700 .5rem 'Inter', sans-serif; color: #73b6d1; letter-spacing: .12em; }
+.nexus-ui .amc-title, .nexus-ui .aaa-mode-card:hover .amc-title { font: 900 1.14rem 'Outfit', sans-serif; color: #edf8ff; }
+.nexus-ui .amc-sub { font: 400 .65rem/1.5 'Inter', sans-serif; color: #8daec3; padding-right: 12px; }
+.nexus-mode-arrow { position: absolute; right: 19px; top: 19px; color: #74a6be; font: 500 1.3rem 'Inter', sans-serif; }
+.nexus-hub-status { display: flex; justify-content: space-between; gap: 15px; color: #668ea4; padding: 0 clamp(20px, 3.5vw, 65px) 20px; max-width: 1700px; width: 100%; margin: 0 auto; font-size: .53rem; letter-spacing: .1em; }
+.nexus-ui .menu-bottom-nav { height: auto; min-height: 70px; flex: 0 0 auto; justify-content: center; gap: 3px; padding: 10px 20px max(10px, env(safe-area-inset-bottom)); background: #07111fed; border-top: 1px solid #274257; margin-top: auto; }
+.nexus-ui .bnav-item { border: 1px solid transparent; border-radius: 5px; background: transparent; color: #7a9cb3; font: 700 .59rem 'Inter', sans-serif; letter-spacing: .045em; padding: 12px 14px; gap: 7px; box-shadow: none; }
+.nexus-ui .bnav-icon { font-size: 1rem; filter: saturate(.55); }
+.nexus-ui .bnav-item:hover, .nexus-ui .bnav-item.active { color: #b1f3ff; border-color: #345d72; background: #163046; text-shadow: none; box-shadow: none; }
+
+/* Motion intro with a persistent, keyboard accessible skip action. */
+.nexus-ui #scene-intro { padding: 30px !important; background: #020914 !important; }
+.nexus-ui .cinematic-backdrop { position: absolute; inset: 0; background: linear-gradient(90deg, #020a14ec 0%, #061326b3 42%, #07142714), linear-gradient(0deg, #020711dc, transparent 70%), var(--nexus-hero-art) 65% center / cover; opacity: 1; z-index: -1; transition: filter 1.2s, background-position 6s; }
+.nexus-ui #scene-intro[data-chapter="1"] .cinematic-backdrop { background-position: center, center, 46% center; filter: saturate(1.25); }
+.nexus-ui #scene-intro[data-chapter="2"] .cinematic-backdrop { background-position: center, center, 80% center; filter: hue-rotate(8deg); }
+.nexus-ui #scene-intro::before, .nexus-ui #scene-intro::after { content: ''; position: absolute; left: 0; right: 0; height: 8vh; background: #030913; z-index: 4; pointer-events: none; }
+.nexus-ui #scene-intro::before { top: 0; border-bottom: 1px solid #203446; }
+.nexus-ui #scene-intro::after { bottom: 0; border-top: 1px solid #203446; }
+.nexus-ui .cinematic-box.glass, .nexus-ui .cinematic-box.glass:hover { position: relative; width: min(680px, 85%); margin-right: auto; margin-left: max(3vw, 15px); padding: 25px; text-align: left; background: transparent; border: none !important; border-radius: 0; box-shadow: none !important; backdrop-filter: none; }
+.nexus-ui .intro-heading { color: #f5fbff; font: 900 clamp(2.2rem, 4vw, 4rem)/1.06 'Outfit', sans-serif; letter-spacing: -.025em; margin: 24px 0 30px; max-width: 550px; text-shadow: 0 3px 22px #0008; }
+.nexus-intro-speaker { color: #ffb477; font: 700 .58rem/1.6 'Inter', sans-serif; letter-spacing: .1em; margin-bottom: 12px; }
+.nexus-ui .intro-narrative { color: #d2e5ef; font-size: .94rem; line-height: 1.85; font-weight: 400; max-width: 530px; min-height: 84px; }
+.nexus-intro-note { color: #88acc1; font-size: .7rem; line-height: 1.8; max-width: 530px; margin-top: 16px; }
+.nexus-intro-timeline { display: flex; gap: 10px; margin: 32px 0; }
+.nexus-intro-timeline button { width: 68px; height: 24px; padding: 10px 0; }
+.nexus-intro-timeline span { display: block; height: 3px; width: 100%; background: #35536a; border-radius: 10px; }
+.nexus-intro-timeline .current span { background: var(--nexus-orange); box-shadow: 0 0 12px #ff943f40; }
+.nexus-intro-timeline .complete span { background: var(--nexus-cyan); }
+.nexus-ui .intro-actions { display: flex; align-items: center; justify-content: flex-start; gap: 16px; }
+.nexus-ui .intro-actions .btn-ghost { border: none !important; background: transparent !important; padding: 12px; color: #92b1c2; font-size: .62rem; }
+.nexus-chapter-enter .cinematic-box > :not(.intro-actions):not(.nexus-intro-timeline) { animation: nexus-chapter-in .7s ease-out both; }
+
+/* One template, all card types. Numeric rules and effect text stay in HTML. */
+.nexus-ui .card { --card-accent: #ffad63; width: 140px; aspect-ratio: 5/7; border: 1px solid #527287; border-radius: 9px; background: linear-gradient(155deg, #24465d, #101d2f 22%, #08111f 65%, #1b3044); box-shadow: inset 0 0 0 3px #061221, inset 0 0 0 4px #65798955, 0 7px 18px #0006; container-type: inline-size; touch-action: pan-y; }
+.nexus-ui .card.type-attack { border-color: #c88a58 !important; }
+.nexus-ui .card.type-defense { --card-accent: #70c6ff; border-color: #4e8ead !important; }
+.nexus-ui .card.type-evade { --card-accent: #68ddac; border-color: #4b9d87 !important; }
+.nexus-ui .card.type-counter { --card-accent: #b79aff; border-color: #8b77be !important; }
+.nexus-ui .card.type-tech { --card-accent: #ffdc75; border-color: #bba068 !important; }
+.nexus-ui .card::after { background: linear-gradient(115deg, transparent 35%, #abf4ff10 49%, #ffe2ba16 52%, transparent 64%); }
+.nexus-ui .card .card-full-art-img, .nexus-ui .card .nexus-card-art { position: absolute; inset: 19% 5% 32%; width: 90%; height: 49%; object-fit: contain !important; object-position: center; border-radius: 4px; z-index: 1; }
+.nexus-ui .card .nexus-card-art { overflow: hidden; background-color: #18344b; background-size: cover; border: 1px solid #9ec9de35; }
+.nexus-ui .card .nexus-card-art .card-full-art-img { inset: 0; width: 100%; height: 100%; border: none; }
+.nexus-ui .card-header-banner { top: 4%; left: 28%; right: 7%; height: 13%; z-index: 5; }
+.nexus-ui .card-title-text { font: 800 clamp(8px, 5.8cqw, 16px)/1.15 'Outfit', sans-serif; color: #f2f7fc; text-shadow: 0 1px 2px #000; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.nexus-ui .card-header { top: 4%; left: 5%; z-index: 6; }
+.nexus-ui .card-ki-cost { width: clamp(23px, 20cqw, 44px); height: clamp(23px, 20cqw, 44px); color: #211b0d; font: 900 clamp(11px, 9cqw, 23px) 'Outfit', sans-serif; border: 1px solid #f7d9a4; background: radial-gradient(circle at 30% 20%, #fff2b7, #f9bd63 55%, #d37b30); box-shadow: 0 2px 6px #0007, inset 0 0 0 2px #4928063d; }
+.nexus-ui .card-type-tag { left: 7%; bottom: auto; top: 65%; font: 800 clamp(7px, 4.4cqw, 12px)/1.4 'Outfit', sans-serif; letter-spacing: .02em; border: 1px solid color-mix(in srgb, var(--card-accent) 60%, transparent); color: var(--card-accent); background: #061223eb; border-radius: 2px; padding: 1px 5px; z-index: 7; }
+.nexus-ui .card-power-badge { display: none; }
+.nexus-ui .card-desc-overlay { inset: 73% 7% 7%; padding: 0; background: transparent; justify-content: flex-start; }
+.nexus-ui .card-desc-text { font: 500 clamp(7px, 4.6cqw, 13px)/1.24 'Inter', sans-serif; color: #c8dbe7; -webkit-line-clamp: 4; }
+.nexus-card-meta { position: absolute; left: 7%; right: 7%; bottom: 2.5%; color: #7d9aad; font-size: clamp(5px, 3.1cqw, 9px); letter-spacing: .015em; display: flex; justify-content: space-between; gap: 3px; z-index: 6; }
+.nexus-card-power { position: absolute; display: block; right: 7%; top: 65%; z-index: 7; font: 900 clamp(7px, 4.6cqw, 14px)/1.4 'Outfit', sans-serif; color: #ffe5b9; background: #07121df5; border: 1px solid #9a744a; padding: 1px 4px; border-radius: 2px; }
+.nexus-card-archetype { position: absolute; left: 8%; top: 21%; color: #d7f2ff; font-size: clamp(6px, 3.5cqw, 10px); z-index: 3; background: #071321bf; padding: 2px 4px; border-radius: 2px; text-transform: uppercase; }
+.nexus-ui .card.super-rare { border: 1px solid #d1b575 !important; }
+.nexus-ui .card.super-rare::before { background: conic-gradient(from 0deg, #ffbf70, #8ddff1, #cca8ec, #ffd48e); opacity: .22; animation-duration: 14s; }
+.nexus-ui .card.playable { border-color: #87e8f5 !important; box-shadow: 0 0 12px #4bd4ec35, 0 5px 16px #0006 !important; animation: none; }
+.nexus-ui .card.unplayable { opacity: .72; filter: saturate(.65); }
+.nexus-ui .card:hover, .nexus-ui .card.touch-hover { transform: translateY(-18px) scale(1.08) !important; box-shadow: 0 12px 35px #000c, 0 0 16px #60e7ff35 !important; }
+.nexus-ui #card-inspect-preview .card { width: 270px; max-width: 75vw; }
+.nexus-ui #card-inspect-preview .card:hover { transform: none !important; }
+.nexus-ui #card-inspect-preview[hidden], .nexus-ui .nexus-inspect-full-art[hidden] { display: none; }
+.nexus-inspect-modal { z-index: 16000; }
+.nexus-inspect-panel { width: min(820px, calc(100vw - 32px)); max-height: 90dvh; overflow-y: auto; padding: 32px; position: relative; }
+.nexus-inspect-layout { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 32px; align-items: center; }
+.nexus-ui #card-inspect-close { position: absolute; right: 14px; top: 12px; padding: 3px 10px; font-size: 1.3rem; }
+.nexus-inspect-details h2 { font: 900 1.8rem/1.2 'Outfit', sans-serif; color: #f2fbff; margin: 12px 0 16px; }
+.nexus-ui #inspect-card-type { display: inline-block; padding: 6px 10px; border: 1px solid #52758c; background: #132d43; color: #9edcef; border-radius: 4px; font: 800 .62rem 'Inter', sans-serif; }
+.nexus-inspect-stats { display: flex; gap: 10px; margin: 24px 0 18px; font: 900 .86rem 'Outfit', sans-serif; }
+.nexus-inspect-stats span { border: 1px solid #927450; border-radius: 5px; color: #ffd09f; background: #392e22; padding: 9px 14px; }
+.nexus-ui #inspect-card-desc { color: #d0e4ef; font-size: .84rem; line-height: 1.85; user-select: text; }
+.nexus-inspect-tip { color: #749db5; font-size: .66rem; line-height: 1.7; border-top: 1px solid #31516a; margin-top: 24px; padding-top: 16px; }
+.nexus-ui #nexus-inspect-art-toggle { width: 100%; margin-top: 16px; font-size: .59rem; }
+.nexus-inspect-full-art { min-height: 350px; display: flex; align-items: center; justify-content: center; background: #050d17; border-radius: 9px; border: 1px solid #33576c; }
+.nexus-inspect-full-art img { display: block; width: 100%; max-height: 480px; object-fit: contain; }
+
+/* Collection navigation remains light with 36 cards per page. */
+.nexus-ui #scene-deck-lab { padding: 22px !important; background: radial-gradient(ellipse at top left, #173047, #081321 65%) !important; }
+.nexus-ui .deck-lab-container { width: min(1440px, 100%); height: 100%; max-height: none; display: flex; flex-direction: column; gap: 16px; }
+.nexus-ui .deck-lab-header { flex: 0 0 65px; padding: 12px 20px; border-radius: 10px; }
+.nexus-ui .dl-header-title { color: #e4f7ff; font-size: .92rem; letter-spacing: .03em; }
+.nexus-ui #scene-deck-lab .deck-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); flex: 1; min-height: 0; max-height: none; gap: 18px; margin: 0 !important; width: 100%; }
+.nexus-ui .deck-sidebar { padding: 20px 14px; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+.nexus-ui .deck-sidebar-title { font: 900 .82rem 'Outfit', sans-serif; color: #b5ddee; margin: 0 0 18px; }
+.nexus-ui .deck-list-scroll { flex: 1; min-height: 0; overflow-y: auto; }
+.nexus-ui .deck-entry-capsule { display: flex; align-items: center; gap: 8px; padding: 0; margin-bottom: 7px; border: 1px solid #27465c; border-radius: 6px; background: #102438; min-height: 40px; }
+.nexus-ui .de-capsule-info { display: flex; flex: 1; min-width: 0; gap: 9px; align-items: center; padding: 10px 8px; color: #d5e8f2; text-align: left; }
+.nexus-ui .de-ki-badge { border-radius: 3px; background: #473425; border: 1px solid #94653a; color: #ffcc94; padding: 3px 5px; font: 900 .57rem 'Outfit', sans-serif; white-space: nowrap; }
+.nexus-ui .de-card-name { font-size: .65rem; line-height: 1.5; white-space: normal; }
+.nexus-ui .de-remove-btn { background: transparent; color: #8fb2c9; border: none; padding: 6px 10px; font-size: 1.1rem; margin: 0; }
+.nexus-ui .collection-panel { display: flex; flex-direction: column; padding: 22px; min-width: 0; min-height: 0; overflow: hidden; }
+.nexus-ui .collection-title { color: #e2f1ff; font: 900 .94rem 'Outfit', sans-serif; padding-bottom: 15px; }
+.nexus-collection-tools { display: grid; grid-template-columns: minmax(150px, 1.5fr) 1fr 1fr; gap: 8px; align-items: center; margin: 0 0 16px; }
+.nexus-collection-tools select, .nexus-collection-tools input[type=search] { width: 100%; min-width: 0; }
+.nexus-owned-label { grid-column: 1 / -1; color: #8fb2c8; font-size: .62rem; display: flex; gap: 8px; align-items: center; margin-top: 3px; }
+.nexus-owned-label input { accent-color: #60e7ff; width: 14px; height: 14px; }
+.nexus-ui .collection-scroll-area { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 8px 5px 10px; }
+.nexus-ui #collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 22px 16px; }
+.nexus-collection-cell { display: flex; flex-direction: column; align-items: stretch; min-width: 0; gap: 7px; }
+.nexus-ui .nexus-collection-cell .card { width: 100%; max-width: 220px; align-self: center; }
+.nexus-ui .nexus-collection-cell .card:hover { transform: translateY(-4px) !important; }
+.nexus-ui .nexus-collection-cell .card.unowned .nexus-card-art { filter: saturate(.65); }
+.nexus-collection-count { text-align: center; color: #7da2b9; font-size: .5rem; letter-spacing: .04em; }
+.nexus-ui :is(.nexus-collection-add, .nexus-collection-craft) { border: 1px solid #416f86; border-radius: 4px; padding: 9px 4px; color: #a7e8fc; background: #133549; font: 800 .58rem 'Outfit', sans-serif; letter-spacing: .03em; }
+.nexus-ui .nexus-collection-craft { color: #f7c692; background: #30251f; border-color: #785a3d; }
+.nexus-collection-pager { display: flex; justify-content: center; align-items: center; gap: 18px; padding-top: 14px; border-top: 1px solid #27465c; font-size: .64rem; color: #9ec3d8; }
+.nexus-ui .nexus-collection-pager button { padding: 6px 14px; font-size: 1rem; }
+.nexus-collection-pager #nexus-page-status { white-space: nowrap; }
+.nexus-empty { color: #98bacd; font-size: .82rem; padding: 30px; grid-column: 1/-1; }
+
+/* The seal breaks only after an account-confirmed booster result. */
+.nexus-ui #scene-shop { padding: 25px !important; background: radial-gradient(ellipse at 50% 30%, #153957, #071321 70%) !important; overflow-y: auto; }
+.nexus-ui #scene-shop .store-inner { max-width: 1040px; padding: 28px 35px; max-height: calc(100dvh - 50px); overflow-y: auto; text-align: center; border-radius: 16px; }
+.nexus-ui .store-title { font: 900 clamp(1.3rem, 2.3vw, 2rem) 'Outfit', sans-serif; color: #ecf8ff; margin: 12px 0; }
+.nexus-ui .store-sub { color: #90b5c9; font-size: .75rem; line-height: 1.7; margin: 0 0 20px; }
+.nexus-pack-display { position: relative; width: 124px; height: 168px; margin: 0 auto 15px; perspective: 800px; }
+.nexus-pack { width: 116px; height: 160px; padding: 10px 12px; border: 1px solid #6fc9e0; border-radius: 4px; background: linear-gradient(140deg, #214c6c, #0c243b 48%, #28445a); box-shadow: 0 12px 28px #0009, inset 0 0 0 3px #091426, inset 0 0 0 4px #87c5d766; transform: rotate(-7deg); position: relative; z-index: 1; animation: nexus-pack-float 5s ease-in-out infinite; text-align: center; }
+.nexus-pack::before { content: ''; position: absolute; inset: 22px 9px 30px; background: repeating-linear-gradient(-30deg, transparent 0 10px, #69e3fa09 10px 13px); pointer-events: none; }
+.nexus-pack > span { position: relative; color: #a1ecfa; letter-spacing: .27em; font: 800 .45rem 'Inter', sans-serif; }
+.nexus-pack-orb { width: 43px; height: 43px; border-radius: 50%; background: radial-gradient(circle at 35% 25%, #ffdaa1, #fb9b45 55%, #924c21); color: #9b4e17; border: 1px solid #ffe8b0; font-size: 1.4rem; line-height: 40px; margin: 13px auto; box-shadow: 0 0 25px #ff963547; }
+.nexus-pack strong { font: 900 1rem/.95 'Outfit', sans-serif; color: #eafaff; letter-spacing: -.02em; }
+.nexus-pack small { display: block; font-size: .31rem; letter-spacing: .07em; color: #80abc0; margin-top: 12px; }
+.nexus-pack-shadow { width: 94px; height: 12px; background: #0008; border-radius: 50%; filter: blur(6px); position: absolute; bottom: -4px; left: 18px; }
+.nexus-has-texture .nexus-pack { background-image: linear-gradient(140deg, #214c6ccb, #0c243bba 48%, #28445add), url('../assets/rework/ui/booster.png'); background-size: cover; }
+.nexus-pack-display.opening .nexus-pack { animation: nexus-pack-open .8s ease-out; }
+.nexus-shop-status { color: #85b8cc; font-size: .68rem; min-height: 20px; line-height: 1.7; margin-top: 20px; }
+.nexus-ui .pack-reveal { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; overflow: visible; margin: 24px 0 0; }
+.nexus-ui .pack-reveal:empty { display: none; }
+.nexus-reveal-heading { width: 100%; text-align: center; color: #ade9fa; font: 700 .59rem 'Inter', sans-serif; letter-spacing: .18em; padding: 12px 0; border-top: 1px solid #37566b; }
+.nexus-ui .pack-reveal .card { width: 164px; }
+.nexus-card-reveal { opacity: 0; transform: rotateY(90deg) translateY(15px); }
+.nexus-card-reveal.revealed { animation: nexus-card-flip .7s cubic-bezier(.16,1,.3,1) both; }
+
+/* Arena polish preserves specialized team and raid layouts. */
+.nexus-ui #scene-arena { background: radial-gradient(ellipse at 50% 40%, #183b50, #091a2c 45%, #030b17 100%) !important; }
+.nexus-ui #scene-arena::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(#76dfff09 1px, transparent 1px), linear-gradient(90deg, #76dfff09 1px, transparent 1px); background-size: 60px 60px; pointer-events: none; z-index: 0; }
+.nexus-has-texture #scene-arena::after { content: ''; position: absolute; inset: 0; background: url('../assets/rework/ui/portal.png') center 42% / min(37vh, 360px) auto no-repeat; opacity: .18; pointer-events: none; z-index: 0; }
+.nexus-ui #scene-arena.active:not(.squad-realtime-mode) { display: grid; grid-template-rows: auto minmax(80px, 1fr) auto; align-items: stretch; justify-content: stretch; }
+.nexus-ui #scene-arena:not(.squad-realtime-mode) :is(.arena-zone-top, .arena-zone-bot) { width: 100%; padding: 12px 24px; gap: 9px; }
+.nexus-ui #scene-arena:not(.squad-realtime-mode) .arena-zone-top { align-items: center; }
+.nexus-ui #scene-arena:not(.squad-realtime-mode) .arena-zone-bot { display: flex; flex-direction: column; align-items: center; padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+.nexus-ui #scene-arena:not(.squad-realtime-mode) .fighter-hud { width: min(570px, 95%); min-height: 100px; border-radius: 11px; border: 1px solid #457d985f; background: linear-gradient(110deg, #142d46f5, #071526ec) !important; box-shadow: 0 6px 26px #0005; padding: 12px 18px; }
+.nexus-ui #scene-arena:not(.squad-realtime-mode) .hud-opponent { border-color: #c8915e70; }
+.nexus-ui .scouter-ear-cap { display: none; }
+.nexus-ui .scouter-lockon-ring { border-color: #68d4ef6b; box-shadow: none; animation-duration: 18s; }
+.nexus-ui .scouter-scanlines { opacity: .08; }
+.nexus-ui .hud-name { color: #e1f5ff; font: 900 .9rem 'Outfit', sans-serif; text-shadow: none; }
+.nexus-ui .hp-text { color: #a4d9ec; font-size: .7rem; }
+.nexus-ui .hp-bar-track { height: 8px; background: #021220; border: 1px solid #33546a; border-radius: 3px; box-shadow: none; }
+.nexus-ui .hp-bar-fill { background: linear-gradient(90deg, #1d88ac, #8bf0ef); box-shadow: 0 0 8px #60e7ff33; border-radius: 2px; }
+.nexus-ui .hud-opponent .hp-bar-fill { background: linear-gradient(90deg, #ac693b, #ffd1a0); }
+.nexus-ui .guard-warn { color: #ffb17a; font-size: .5rem; letter-spacing: .07em; background: #6c3e242b; border-color: #c7895050; }
+.nexus-ui .ki-label { color: #85d9f0; font-size: .6rem; text-shadow: none; }
+.nexus-ui #turn-phase-bar { width: min(680px, 96%); border-radius: 5px; min-height: 35px; background: #163c50e8; border: 1px solid #57b5ce6b; padding: 6px 12px; box-shadow: none; }
+.nexus-ui .dbz-phase-bg { opacity: .13; }
+.nexus-ui .dbz-phase-text { font: 900 .74rem 'Outfit', sans-serif; letter-spacing: .06em; color: #d8f7ff; text-shadow: none; }
+.nexus-ui .dbz-phase-badge { font-size: .46rem; color: #78c2d7; }
+.nexus-ui #turn-phase-bar.phase-opponent { background: #503521e8; border-color: #c589565c; }
+.nexus-ui .reaction-strip { background: linear-gradient(90deg, #102e40e8, #183d52e8); border: 1px solid #70d1e56b; border-radius: 6px; box-shadow: 0 5px 30px #0005; }
+.nexus-ui .reaction-label { color: #b0f0ff; font: 900 .9rem 'Outfit', sans-serif; letter-spacing: .05em; text-shadow: none; }
+.nexus-ui .timer-fill { background: linear-gradient(90deg, #64e0f2, #ffb06b); }
+.nexus-ui .drop-zone { border: 1px dashed #66c5de5c; background: #05152735; border-radius: 12px; box-shadow: inset 0 0 40px #2c7b9320; min-height: 85px; }
+.nexus-ui .dz-label { font-size: .65rem; color: #9ac4d4; text-shadow: none; letter-spacing: .06em; }
+.nexus-ui .action-row { margin: 0 auto; max-width: 565px; gap: 12px; }
+.nexus-ui :is(.btn-charge, .btn-pass) { transform: none; height: 40px; font-size: .68rem; font-style: normal; letter-spacing: .03em; }
+.nexus-ui :is(.btn-charge, .btn-pass) > * { transform: none; }
+.nexus-ui :is(.btn-charge, .btn-pass):hover:not(:disabled) { transform: translateY(-1px); }
+.nexus-ui .btn-charge::before { display: none; }
+.nexus-ui .hand-zone { min-height: 195px; width: 100%; padding: 14px 12px 4px; gap: 9px; justify-content: center; }
+.nexus-ui .hand-zone .card { width: clamp(92px, 10vw, 136px); max-height: 195px; }
+.nexus-ui .battle-log { font: 400 .57rem/1.65 'Inter', sans-serif; background: #051321cc; border: 1px solid #32536966; border-radius: 7px; color: #9cbcd0; max-width: 220px; max-height: 120px; padding: 10px; }
+.nexus-ui .beam-overlay { background: radial-gradient(ellipse at center, #04111c22, #020a15e6) !important; }
+.nexus-ui .beam-title { color: #b4eeff; text-shadow: 0 0 30px #63c7df55; font: 900 2rem 'Outfit', sans-serif; }
+
+/* Secondary scenes use the same language and accessible controls. */
+.nexus-ui :is(#scene-fighter-select, #scene-dojos, #scene-chat, #scene-ranked, #scene-quests, #scene-profile) { background: radial-gradient(ellipse at top, #17384f, #071321 65%) !important; }
+.nexus-ui .fighter-select-inner { padding: 30px; max-height: 90dvh; overflow-y: auto; }
+.nexus-ui .fs-title { color: #ddf6ff; font: 900 1.5rem 'Outfit', sans-serif; letter-spacing: .015em; }
+.nexus-ui .fs-sub { color: #8fb4c9; font-size: .78rem; }
+.nexus-ui .leader-pick { background: #11283a; border: 1px solid #36586e; border-radius: 10px; box-shadow: 0 5px 14px #0003; }
+.nexus-ui .leader-pick.selected { border-color: #85e5f8; box-shadow: 0 0 20px #60e7ff15; background: #18384f; }
+.nexus-ui .lp-name { color: #eef7fc; font: 900 .9rem 'Outfit', sans-serif; }
+.nexus-ui .modal-overlay { background: #020914d9; backdrop-filter: blur(12px); }
+.nexus-ui .modal-content { background: linear-gradient(145deg, #122b40, #061322); border: 1px solid #476a82; border-radius: 15px; box-shadow: 0 30px 90px #000a; }
+.nexus-ui .modal-title { color: #cdf3ff; text-shadow: none; }
+.nexus-ui #auth-modal { background: linear-gradient(#030a17ad, #030a17df), var(--nexus-hero-art) center/cover !important; }
+.nexus-ui #auth-modal-title { color: #d3f3ff !important; text-shadow: none !important; font-size: 1.6rem !important; }
+.nexus-ui #auth-modal input, .nexus-ui #chat-input { border: 1px solid #456a83 !important; background: #071524 !important; }
+.nexus-ui :is(#scene-dojos, #scene-chat, #scene-quests, #scene-ranked) h2 { color: #d3f3ff !important; }
+.nexus-ui #leaderboard-modal .modal-title { border-bottom: 1px solid #45657a !important; }
+.nexus-ui #leaderboard-modal .modal-title > span { color: #d3f3ff !important; text-shadow: none !important; }
+.nexus-ui .nexus-exchange-dialog { margin: auto; max-height: 90dvh; overflow-y: auto; }
+.nexus-ui .chat-bubble { background: #10283b; border: 1px solid #31536a; }
+.nexus-ui .cb-user { color: #84dcef; }
+
+@keyframes nexus-title-pan { from { transform: scale(1.03); } to { transform: scale(1.1) translateY(-1%); } }
+@keyframes nexus-start-pulse { 0%, 100% { opacity: .78; } 50% { opacity: 1; } }
+@keyframes nexus-chapter-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes nexus-pack-float { 0%, 100% { transform: rotate(-7deg) translateY(0); } 50% { transform: rotate(-3deg) translateY(-6px); } }
+@keyframes nexus-pack-open { 0% { transform: rotate(-7deg); } 25% { transform: rotate(8deg) scale(1.06); filter: brightness(1.7); } 55% { transform: rotate(-8deg) scale(.95); } 100% { transform: rotate(-7deg); } }
+@keyframes nexus-card-flip { from { opacity: 0; transform: rotateY(90deg) translateY(15px); filter: brightness(1.8); } to { opacity: 1; transform: rotateY(0) translateY(0); filter: brightness(1); } }
+
+@media (min-width: 1600px) { .nexus-feature { min-height: 560px; } .nexus-feature-content { padding-top: 62px; } .nexus-ui .aaa-mode-card { min-height: 122px; padding-top: 23px; } }
+@media (max-width: 1050px) {
+  .nexus-ui .menu-hub-arc-layout { grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr); gap: 16px; }
+  .nexus-feature-content { width: 85%; padding: 28px; }
+  .nexus-feature h1 { font-size: 3.5rem; }
+  .nexus-ui #menu-leader-card-slot { opacity: .35; width: 36%; right: 8px; }
+  .nexus-ui .aaa-mode-card { min-height: 109px; padding: 16px; }
+  .nexus-ui .amc-title { font-size: 1rem; }
+  .nexus-profile-progress { min-width: 120px; padding-left: 12px; }
+  .nexus-xp-track { width: 110px; }
+  .nexus-ui #scene-deck-lab .deck-layout { grid-template-columns: 220px minmax(0, 1fr); }
+  .nexus-collection-tools { grid-template-columns: 1fr 1fr; }
+  .nexus-search-label { grid-column: 1/-1; }
+}
+@media (max-width: 760px) {
+  .nexus-inspect-panel { padding: 45px 22px 22px; }
+  .nexus-inspect-layout { grid-template-columns: 1fr; gap: 25px; }
+  .nexus-ui #card-inspect-preview .card { width: min(220px, 60vw); margin: 0 auto; }
+  .nexus-inspect-details h2 { font-size: 1.4rem; }
+  .nexus-inspect-full-art { min-height: 220px; }
+  .nexus-inspect-full-art img { max-height: 350px; }
+  .nexus-ui .game-hud-top { height: 66px; flex-basis: 66px; padding: 0 16px; }
+  .nexus-ui .ghud-logo-mini { width: 49px; height: 36px; }
+  .nexus-ui .ghud-profile { gap: 9px; }
+  .nexus-ui .ghud-username { max-width: 110px; font-size: .72rem; }
+  .nexus-profile-progress { display: none; }
+  .nexus-ui .ghud-currencies { gap: 5px; }
+  .nexus-ui .currency-pill { padding: 7px 9px; font-size: .65rem; }
+  .nexus-ui .auth-pill { min-height: 31px; padding: 5px 9px; }
+  .nexus-ui .menu-hub-arc-layout { display: flex; flex-direction: column; gap: 19px; padding: 18px 16px; min-height: 0; }
+  .nexus-feature { min-height: 425px; }
+  .nexus-feature-content { width: 81%; padding: 25px; }
+  .nexus-feature h1 { font-size: clamp(2.8rem, 9vw, 4rem); margin: 22px 0 18px; }
+  .nexus-feature-content > p:not(.nexus-npc-description) { font-size: .72rem; line-height: 1.7; }
+  .nexus-training-controls { margin-top: 20px; }
+  .nexus-ui #menu-leader-card-slot { width: 27%; bottom: 40px; opacity: .48; }
+  .nexus-mode-panel { gap: 10px; }
+  .nexus-ui :is(.menu-arc-left, .menu-arc-right) { flex-direction: row; gap: 10px; }
+  .nexus-ui .aaa-mode-card { flex: 1; min-width: 0; min-height: 130px; padding: 15px; }
+  .nexus-ui .amc-title { font-size: .93rem; margin: 4px 0; }
+  .nexus-ui .amc-sub { font-size: .6rem; padding-right: 0; }
+  .nexus-mode-arrow { font-size: 1rem; top: 12px; right: 12px; }
+  .nexus-hub-status { padding: 0 16px 16px; font-size: .47rem; letter-spacing: .025em; }
+  .nexus-ui .menu-bottom-nav { justify-content: flex-start; min-height: 62px; position: sticky; bottom: 0; overflow-x: auto; padding: 8px 10px max(8px, env(safe-area-inset-bottom)); }
+  .nexus-ui .bnav-item { padding: 10px; font-size: .56rem; }
+  .nexus-ui #scene-deck-lab { padding: 12px !important; overflow-y: auto; }
+  .nexus-ui .deck-lab-header { padding: 10px 12px; flex-basis: auto; gap: 12px; }
+  .nexus-ui .dl-header-title { font-size: .71rem; }
+  .nexus-ui .dl-logo-icon { display: none; }
+  .nexus-ui .dl-back-btn { padding: 8px 10px; font-size: .6rem; }
+  .nexus-ui #scene-deck-lab .deck-layout { grid-template-columns: 1fr; grid-template-rows: 150px minmax(350px, 1fr); gap: 12px; }
+  .nexus-ui .deck-sidebar { padding: 12px; }
+  .nexus-ui .deck-sidebar-title { margin-bottom: 10px; font-size: .7rem; }
+  .nexus-ui .deck-list-scroll { display: flex; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; gap: 8px; }
+  .nexus-ui .deck-entry-capsule { flex: 0 0 200px; margin: 0; align-self: flex-start; }
+  .nexus-ui .collection-panel { padding: 14px; }
+  .nexus-ui .collection-title { font-size: .8rem; padding-bottom: 12px; }
+  .nexus-ui #scene-deck-lab #collection-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important; gap: 16px 12px !important; justify-items: stretch !important; }
+  .nexus-ui #scene-deck-lab #collection-grid .nexus-collection-cell { width: 100%; }
+  .nexus-ui #scene-deck-lab #collection-grid .card { width: 100% !important; height: auto !important; max-width: none; min-width: 0; }
+  .nexus-ui .nexus-collection-pager { gap: 10px; }
+  .nexus-ui .nexus-collection-pager button { flex: 0 0 44px; width: 44px !important; padding: 5px; }
+  .nexus-ui .nexus-collection-pager #nexus-page-status { font-size: .57rem; }
+  .nexus-ui .cinematic-box.glass { width: 100%; margin-left: 0; padding: 15px; }
+  .nexus-ui .intro-heading { font-size: 2.65rem; }
+  .nexus-ui .intro-narrative { font-size: .84rem; }
+  .nexus-ui .intro-actions { gap: 6px; }
+  .nexus-ui .intro-actions .nexus-primary { padding: 13px 15px; font-size: .69rem; }
+  .nexus-ui #scene-shop { padding: 15px !important; }
+  .nexus-ui #scene-shop .store-inner { max-height: calc(100dvh - 30px); padding: 22px 17px; }
+  .nexus-ui #buy-pack-btn { font-size: .79rem !important; padding: 13px 16px !important; }
+  .nexus-ui #shop-back-btn { margin: 10px 0 0 !important; font-size: .6rem; }
+  .nexus-ui .pack-reveal { gap: 14px; }
+  .nexus-ui .pack-reveal .card { width: 125px; }
+  .nexus-ui #scene-arena:not(.squad-realtime-mode) :is(.arena-zone-top, .arena-zone-bot) { padding: 8px 12px; }
+  .nexus-ui #scene-arena:not(.squad-realtime-mode) .fighter-hud { min-height: 83px; padding: 8px 12px; }
+  .nexus-ui .hud-name { font-size: .76rem; }
+  .nexus-ui .hp-text { font-size: .6rem; }
+  .nexus-ui .dbz-phase-text { font-size: .6rem; }
+  .nexus-ui .hand-zone { min-height: 160px; overflow-x: auto; overflow-y: hidden; justify-content: flex-start; gap: 8px; padding: 10px 4px; }
+  .nexus-ui .hand-zone .card { width: 102px; flex-shrink: 0; margin: 0 !important; transform: none !important; }
+  .nexus-ui .hand-zone .card:hover { transform: translateY(-4px) !important; }
+  .nexus-ui .battle-log { max-width: 180px; max-height: 78px; font-size: .48rem; }
+}
+@media (max-width: 420px) {
+  .nexus-feature-content { width: 100%; padding: 22px; }
+  .nexus-feature-art { opacity: .5; background-position: 70% center; }
+  .nexus-ui #menu-leader-card-slot { display: none; }
+  .nexus-ui .aaa-mode-card { padding: 14px 10px; }
+  .nexus-ui .amc-title { font-size: .81rem; }
+  .nexus-panel-heading .nexus-eyebrow { display: none; }
+  .nexus-hub-status span:first-child { max-width: 40%; }
+  .nexus-ui .title-inner { padding: 10px; }
+  .nexus-title-kicker { font-size: .49rem; letter-spacing: .3em; }
+  .nexus-ui .hero-sub-subtitle { font-size: .5rem; letter-spacing: .15em; }
+  .nexus-ui .btn-press-start { padding: 14px 30px; }
+  .nexus-ui .ps-glow { font-size: .95rem; }
+  .nexus-ui .intro-heading { font-size: 2.2rem; }
+  .nexus-ui .intro-narrative { font-size: .76rem; }
+  .nexus-ui .intro-actions { flex-wrap: wrap; }
+}
+@media (max-height: 680px) and (min-width: 761px) {
+  .nexus-ui .game-hud-top { height: 60px; flex-basis: 60px; }
+  .nexus-ui .menu-hub-arc-layout { min-height: 390px; padding-top: 18px; }
+  .nexus-feature { min-height: 390px; }
+  .nexus-feature-content { padding: 24px 30px; }
+  .nexus-feature h1 { font-size: 3.2rem; margin: 18px 0 13px; }
+  .nexus-training-controls { margin-top: 15px; }
+  .nexus-ui .aaa-mode-card { min-height: 80px; padding: 12px 16px; }
+  .nexus-ui .amc-title { font-size: 1rem; }
+  .nexus-hub-status { padding-bottom: 12px; }
+  .nexus-ui #scene-arena:not(.squad-realtime-mode) .fighter-hud { min-height: 79px; padding: 7px 14px; }
+  .nexus-ui .hand-zone { min-height: 145px; padding-top: 9px; }
+  .nexus-ui .hand-zone .card { width: 95px; }
+  .nexus-ui #scene-arena:not(.squad-realtime-mode) :is(.arena-zone-top, .arena-zone-bot) { padding: 6px 20px; gap: 6px; }
+  .nexus-ui .title-inner { padding: 15px; }
+  .nexus-ui .title-official-logo { max-height: 150px; }
+  .nexus-ui .press-start-container { margin-top: 25px; }
+  .nexus-title-footer { margin-top: 25px; }
+  .nexus-ui .intro-heading { font-size: 2.6rem; margin: 15px 0; }
+  .nexus-intro-timeline { margin: 16px 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nexus-ui *, .nexus-ui *::before, .nexus-ui *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+  .nexus-ui .title-scene-bg, .nexus-ui .nexus-pack { transform: none; }
+  .nexus-ui .nexus-card-reveal { opacity: 1; transform: none; }
+}

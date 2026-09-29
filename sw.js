@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'dbclash-release-v1';
+const CACHE_VERSION = 'dbclash-release-v3-nexus-audio';
 const CORE_CACHE = `${CACHE_VERSION}-core`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -11,7 +11,9 @@ const CORE_ASSETS = [
   './styles/arena.css',
   './styles/multiplayer.css',
   './styles/animations.css',
-  './styles/atmosphere.css'
+  './styles/atmosphere.css',
+  './styles/rework.css',
+  './styles/exchange.css'
 ];
 
 self.addEventListener('install', event => {
@@ -34,11 +36,16 @@ self.addEventListener('activate', event => {
   );
 });
 
-function shouldBypass(url) {
+function shouldBypass(request, url) {
+  const isAudio = /\.(mp3|wav|ogg|m4a|aac)$/i.test(url.pathname);
+  const isRange = request.headers.has('range');
   return (
     url.pathname.startsWith('/api/') ||
     url.pathname.startsWith('/socket.io/') ||
-    url.protocol === 'chrome-extension:'
+    url.protocol === 'chrome-extension:' ||
+    isAudio ||
+    request.cache === 'no-store' ||
+    isRange
   );
 }
 
@@ -78,7 +85,7 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin || shouldBypass(url)) return;
+  if (url.origin !== self.location.origin || shouldBypass(request, url)) return;
 
   if (request.mode === 'navigate') {
     event.respondWith(networkFirst(request));

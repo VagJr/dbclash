@@ -1,6 +1,6 @@
 # Dragon Ball Clash Action TCG - Release Candidate Report
 
-Generated: 2026-09-16T19:37:51.987Z
+Generated: 2026-09-16T20:34:51.291Z
 Version: 1.0.0-rc.1
 
 ## Automated gates

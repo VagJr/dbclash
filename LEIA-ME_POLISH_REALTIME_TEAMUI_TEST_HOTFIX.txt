@@ -1,0 +1,35 @@
+DBCLASH — POLISH REALTIME TEAM UI TEST HOTFIX
+=============================================
+
+Falha corrigida:
+  FAIL Tag Team nao usa innerHTML com username
+
+Causa:
+O teste antigo validava a implementacao anterior do HUD:
+
+  nameEl.textContent = ...
+
+O novo Squad HUD realtime usa template HTML, mas todos os dados
+controlados por usuario sao passados por escapeHtml() antes da
+interpolacao.
+
+Este hotfix altera SOMENTE:
+  scripts/test-release-polish.mjs
+
+A nova verificacao exige:
+- escapeHtml(member.username)
+- escapeHtml(member.uid)
+- escapeHtml(member.leader.name)
+- escapeHtml(you.username)
+- escapeHtml(you.leader.name)
+- escapeHtml(card.name)
+- escapeHtml(log.text)
+
+E tambem falha se interpolacao crua de username/card voltar ao arquivo.
+
+APLICAR:
+  .\PATCH_POLISH_REALTIME_TEAMUI_TEST_HOTFIX.ps1
+
+Depois ele executa:
+  npm run test:polish
+  npm run rc:check
