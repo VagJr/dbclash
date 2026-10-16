@@ -1,6 +1,6 @@
 /* ==========================================================================
-   Legacy compatibility adapter.
-   The old local password database is intentionally retired.
+   Dragon Ball Clash Action TCG - Account Management & Auth Database Engine
+   Unified Bridge to MongoDB Cloud AuthManager
    ========================================================================== */
 
 import { authManager } from './auth-manager.js';
@@ -11,35 +11,43 @@ export class AuthDatabase {
   }
 
   getCurrentUser() {
-    const user = authManager.user;
-    return {
-      ...user,
-      username: user?.displayName || 'Guest Fighter',
-      wins: user?.victories || 0,
-      zeni: user?.zeni || 0,
-      dust: user?.dust || 0
-    };
+    if (!authManager.user) {
+      return {
+        username: 'Guest Fighter',
+        displayName: 'Guest Fighter',
+        isGuest: true,
+        zeni: 1500,
+        unlockedLeaders: ['goku', 'vegeta', 'gohan', 'frieza'],
+        victories: 0,
+        losses: 0
+      };
+    }
+    return authManager.user;
+  }
+
+  async register(username, password) {
+    const email = username.includes('@') ? username : username.toLowerCase() + '@dbtcg.local';
+    return await authManager.signUp(username, email, password);
+  }
+
+  async login(username, password) {
+    const email = username.includes('@') ? username : username.toLowerCase() + '@dbtcg.local';
+    return await authManager.login(email, password);
   }
 
   loginAsGuest() {
-    return authManager.createGuestUser();
+    authManager.createGuestUser();
+    return authManager.user;
   }
 
   logout() {
-    authManager.logout();
+    authManager.createGuestUser();
   }
 
-  updateProfileStats() {
-    console.warn('[AuthDatabase] updateProfileStats retired; server owns progression/economy.');
-    return false;
-  }
-
-  register() {
-    throw new Error('AuthDatabase.register retired. Use AuthManager.signUp().');
-  }
-
-  login() {
-    throw new Error('AuthDatabase.login retired. Use AuthManager.login().');
+  updateProfileStats(statsUpdate) {
+    if (!authManager.user) return;
+    authManager.user = { ...authManager.user, ...statsUpdate };
+    authManager.saveUser();
   }
 }
 

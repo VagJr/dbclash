@@ -15,7 +15,7 @@ const UserSchema = new mongoose.Schema({
   losses: { type: Number, default: 0 },
   unlockedLeaders: { type: [String], default: ['goku', 'vegeta', 'gohan', 'frieza'] },
   selectedLeader: { type: String, default: 'goku' },
-  customDecks: { type: Object, default: {} },
+  customDecks: { type: mongoose.Schema.Types.Mixed, default: {} },
   ownedCards: { type: [String], default: [] },
   raidTrophies: { type: Number, default: 0 },
   zeni: { type: Number, default: 500 },
@@ -25,16 +25,11 @@ const UserSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Password Hash Pre-save Hook
-UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (err) {
-    next(err);
-  }
+// Password Hash Pre-save Hook (Modern Async Syntax for Mongoose 8)
+UserSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
 // Compare Password Method

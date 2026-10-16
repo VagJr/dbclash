@@ -1,6 +1,9 @@
 import { authManager } from './auth-manager.js';
 import { leaderboardManager } from './leaderboard-manager.js';
 import { raidEngine } from './raid-engine.js';
+import { socketManager } from './socket-config.js';
+import { Mode2v2Engine } from './mode-2v2.js';
+import { ModeRaidEngine } from './mode-raid.js';
 /* ==========================================================================
    Dragon Ball Clash Action TCG — UI Manager (Redesigned Layout Engine)
    Anime action indicators, opponent played card display, touch gesture popups,
@@ -11,8 +14,7 @@ import { GameEngine } from './game-engine.js';
 import { MultiplayerManager } from './multiplayer-manager.js';
 import { deckBuilder } from './deck-builder.js';
 import { packOpener } from './pack-opener.js';
-import { chatManager } from './chat-manager.js';
-import { socialManager } from './social-manager.js';
+import { chatManager, DOJO_RANKINGS } from './chat-manager.js';
 import { FXEngine } from './fx-engine.js';
 import { TutorialManager } from './tutorial-manager.js';
 import { characterUnlocks } from './character-unlocks.js';
@@ -22,6 +24,7 @@ import { ANIMATION_TYPES } from './animation-catalog.js';
 import { soundEngine } from './audio.js';
 import { spriteAnimator } from './sprite-animator.js';
 import { getCardById, LEADERS, getStarterDeckForLeader, CARD_DATABASE } from './card-database.js';
+import { authDatabase } from './auth-database.js';
 import { i18n } from './i18n.js';
 
 import { sceneManager, GAME_SCENES } from './scene-manager.js';
@@ -43,16 +46,38 @@ export class UIManager {
       this.handleFXEvent.bind(this)
     );
 
-    this.gameEngine.onTimerTick = (secondsLeft, maxSec = 3.0) => {
+    const updateTimerBar = (secondsLeft, maxSec = 3.0) => {
       if (this.timerBarFill) {
         const pct = (secondsLeft / maxSec) * 100;
         this.timerBarFill.style.width = `${Math.max(0, pct)}%`;
       }
     };
 
+    this.gameEngine.onTimerTick = updateTimerBar;
+
     this.multiplayer = new MultiplayerManager(this.gameEngine);
-    socialManager.bind({ multiplayer: this.multiplayer });
     this.tutorial = new TutorialManager(this);
+
+    this.activeGameMode = '1v1';
+    this.mode2v2 = new Mode2v2Engine(
+      (state) => this.render2v2Arena(state),
+      (log) => this.renderLogs([log])
+    );
+    this.mode2v2.onTimerTick = updateTimerBar;
+    // Conecta FX do 2v2 ao fxEngine e soundEngine (igual ao 1v1)
+    this.mode2v2.onFx = (type, data) => {
+      this.handleFXEvent(type, data);
+    };
+
+    this.modeRaid = new ModeRaidEngine(
+      (state) => this.renderRaidArena(state),
+      (log) => this.renderLogs([log])
+    );
+    this.modeRaid.onTimerTick = updateTimerBar;
+    // Conecta FX do Raid ao fxEngine e soundEngine (igual ao 1v1)
+    this.modeRaid.onFx = (type, data) => {
+      this.handleFXEvent(type, data);
+    };
 
     this.selectedLeader = 'goku';
     this.draggedCardIndex = null;
@@ -101,7 +126,8 @@ export class UIManager {
     const hpBarId = defenderKey === 'player' ? 'p1-hp-bar-wrapper' : 'p2-hp-bar-wrapper';
     this.triggerHpBarImpactFlash(hpBarId, damage);
 
-    soundEngine.playImpact?.(attackType, damage);
+    if (typeof soundEngine.playPunch === 'function') soundEngine.playPunch();
+    else if (typeof soundEngine.playBeamBlast === 'function') soundEngine.playBeamBlast();
   }
 
   triggerHpBarImpactFlash(barWrapperId, damage) {
@@ -158,7 +184,6 @@ export class UIManager {
   }
 
   showGameResult(isPlayerWinner) {
-    soundEngine.playResult?.(isPlayerWinner);
     const existing = document.getElementById('game-result-overlay');
     if (existing) existing.remove();
 
@@ -192,13 +217,17 @@ export class UIManager {
 
   _getBannerCategoryLabel(actClass) {
     switch (actClass) {
-      case 'act-charge': return 'CARGA DE KI';
-      case 'act-ultimate': return 'GOLPE FINAL SUPREMO';
-      case 'act-special': return 'TÉCNICA DE ATAQUE';
-      case 'act-physical': return 'COMBO FÍSICO';
-      case 'act-evade': return 'EVASÃO TÁTICA';
-      case 'act-awaken': return 'LIMIT BREAK AWAKEN';
-      default: return 'AÇÃO DE BATALHA';
+      case 'act-soco': return '🥊 SOCO (COMBO FÍSICO)';
+      case 'act-ki_blast': return '💥 KI BLAST (FEIXE DE KI)';
+      case 'act-defesa': return '🛡️ DEFESA (GUARDA / BLOQUEIO)';
+      case 'act-efeito': return '⚡ EFEITO SIMPLES (TÁTICO)';
+      case 'act-charge': return '⚡ CARGA DE KI';
+      case 'act-ultimate': return '🔥 GOLPE FINAL SUPREMO';
+      case 'act-special': return '💥 DISPUTA DE BEAM';
+      case 'act-physical': return '🥊 SOCO FÍSICO';
+      case 'act-evade': return '💨 Z-VANISH / ESQUIVA';
+      case 'act-awaken': return '🔥 LIMIT BREAK DESPERTO';
+      default: return '⚔️ AÇÃO DE BATALHA';
     }
   }
 
@@ -232,6 +261,22 @@ export class UIManager {
   /* ── FX Event Handler ──────────────────────────────────────────────── */
   handleFXEvent(type, data = {}) {
     if (!this.fx) return;
+
+    if (type === 'beamClash') {
+      if (this.beamClashFill) this.beamClashFill.style.width = `${data.p1Progress}%`;
+      if (this.fx && this.fx.triggerBeamClash) {
+        this.fx.triggerBeamClash(data.p1Progress, data.p1Color || '#00f2fe', data.p2Color || '#ffd700');
+      }
+      return;
+    }
+
+    const now = Date.now();
+    if (this.lastFxType === type && this.lastFxTime && (now - this.lastFxTime < 600)) {
+      return; // Debounce duplicate cutscene/banner FX
+    }
+    this.lastFxType = type;
+    this.lastFxTime = now;
+
     const attackerKey = data.attackerKey || (this.gameEngine ? this.gameEngine.initiative : 'player');
     const defenderKey = attackerKey === 'player' ? 'opponent' : 'player';
     const leader = (attackerKey === 'opponent' ? this.gameEngine?.opponent?.leader : this.gameEngine?.player?.leader) || {};
@@ -240,18 +285,17 @@ export class UIManager {
 
     if (type === 'kiAura') {
       soundEngine.playKiCharge();
-      this.triggerActionBanner(`CARREGAR KI (+${data.amount || 2} KI)`, 'act-charge', '気力充填');
+      this.triggerActionBanner('CARREGAR KI (+2 KI)', 'act-charge', '気力充填');
       this.fx.spawnKiAura(vec.fromX, vec.fromY, data.color);
     } else if (type === 'attackCharging') {
       const cardTitle = data.card ? data.card.name.toUpperCase() : 'ATAQUE DE KI';
       this.triggerActionBanner(`CARREGANDO ${cardTitle}`, 'act-ultimate', '気力集中・構え');
       soundEngine.playKamehamehaCharge();
       this.fx.spawnKiAura(vec.fromX, vec.fromY, '#ffd700');
-    } else if (type === 'beamClash') {
+    } else if (type === 'beamClashStart') {
       soundEngine.playBeamBlast();
       this.triggerScreenShake();
-      this.triggerActionBanner('BEAM CLASH - DISPARO TRIPLO', 'act-ultimate', 'エネルギー衝突');
-      this.fx.triggerBeamClash(data.p1Progress, data.p1Color, data.p2Color);
+      this.triggerActionBanner('BEAM CLASH - CHOQUE DE PODER', 'act-ultimate', 'エネルギー衝突');
     } else if (type === 'kamehameha') {
       const cardTitle = data.card ? data.card.name.toUpperCase() : 'SUPER KAMEHAMEHA!';
       this.triggerActionBanner(`${cardTitle}`, 'act-ultimate', 'カメハメ波');
@@ -517,7 +561,7 @@ export class UIManager {
         attackName: cardTitle,
         targetEl: targetBox,
         onImpact: () => {
-          soundEngine.playSolarFlare?.();
+          soundEngine.playBeamBlast();
         }
       });
     } else if (type === 'timeSkip') {
@@ -530,7 +574,7 @@ export class UIManager {
         attackName: cardTitle,
         targetEl: targetBox,
         onImpact: () => {
-          soundEngine.playTimeSkip?.();
+          soundEngine.playZVanish();
         }
       });
     } else if (type === 'counter') {
@@ -559,6 +603,38 @@ export class UIManager {
     }
   }
 
+  triggerPlayedCardFX(card, attackerName = '', defenderName = '', damage = 35) {
+    if (!card) return;
+
+    if (soundEngine) {
+      soundEngine.playCardPlay();
+      if (card.isBeam) setTimeout(() => soundEngine.playBeamDamage(), 300);
+      else setTimeout(() => soundEngine.playPunch(), 300);
+    }
+
+    this.triggerActionBanner(`${card.name.toUpperCase()}!`, 'act-attack', attackerName || 'GUERREIRO Z');
+    this.triggerScreenShake();
+
+    const cardNameLower = (card.name || '').toLowerCase();
+    let fxType = 'kiBlast';
+    if (cardNameLower.includes('kamehameha')) fxType = 'kamehameha';
+    else if (cardNameLower.includes('flash')) fxType = 'finalFlash';
+    else if (cardNameLower.includes('dragon')) fxType = 'dragonFist';
+    else if (cardNameLower.includes('spirit') || cardNameLower.includes('genki')) fxType = 'spiritSword';
+    else if (cardNameLower.includes('meteor')) fxType = 'meteorCombination';
+
+    try {
+      this.handleFXEvent(fxType, {
+        card,
+        damage,
+        attackerKey: 'player',
+        defenderKey: 'opponent'
+      });
+    } catch(e) {
+      console.warn('FX playback note:', e);
+    }
+  }
+
   
   /* ── Defense & Counter Reaction Card Clash Animation ────────────────── */
   triggerCardClashAnimation(atkCard, defCard, mode = 'counter', defenderKey = 'opponent') {
@@ -576,12 +652,14 @@ export class UIManager {
     const defTitle = (defCardObj?.name || (mode === 'evade' ? 'Z-VANISH' : (mode === 'defense' ? 'DEFESA' : 'Z-COUNTER'))).toUpperCase();
 
     // Audio SFX per mode
-    if (typeof soundEngine.playReaction === 'function') {
-      soundEngine.playReaction(mode);
-    } else if (mode === 'evade') {
+    if (mode === 'evade') {
       soundEngine.playZVanish();
+    } else if (mode === 'defense') {
+      soundEngine.playCardClash();
+      soundEngine.playBeamDamage();
     } else {
       soundEngine.playCardClash();
+      soundEngine.playClashPunches(700);
     }
     this.triggerScreenShake();
 
@@ -686,7 +764,10 @@ export class UIManager {
       typeEl.textContent = `${card.rarity.toUpperCase()} — ${card.type.toUpperCase()}`;
       typeEl.className = `inspect-type-badge tag-${card.type}`;
     }
-    if (descEl) descEl.textContent = i18n.lang === 'pt' ? (card.descPt || card.description) : (card.descEn || card.description);
+    if (descEl) {
+      const rawText = i18n.lang === 'pt' ? (card.descPt || card.description) : (card.descEn || card.description);
+      descEl.textContent = (rawText || '').replace(/^\[[^\]]+\]\s*/gi, '').trim();
+    }
     if (costEl) costEl.textContent = `⚡ Ki Cost: ${card.cost}`;
     if (powerEl) powerEl.textContent = card.power > 0 ? `💥 Power: ${card.power} ATK` : '🛡️ Special Skill';
 
@@ -830,36 +911,22 @@ export class UIManager {
     // 2. Press Start AAA Console Button
     document.getElementById('title-press-start-btn')?.addEventListener('click', () => {
       soundEngine.playClick();
-
-      if (authManager.isLoggedIn) {
-        soundEngine.playAwaken();
-        sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
-        return;
-      }
-
       const authModal = document.getElementById('auth-modal');
       const authCloseBtn = document.getElementById('auth-close-btn');
       const userInput = document.getElementById('auth-user-input');
 
-      if (userInput && authManager.user?.displayName) {
+      if (userInput && typeof authManager !== 'undefined' && authManager.user && authManager.user.displayName) {
         userInput.value = authManager.user.displayName;
       }
 
-      if (!authModal) {
-        sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
-        return;
+      if (authModal) {
+        authModal.classList.add('active');
+        if (authCloseBtn) authCloseBtn.style.display = 'none';
+        return; // FORCE LOGIN / SIGNUP SCREEN ON EVERY GAME START
       }
 
-      authModal.classList.add('active');
-
-      if (authCloseBtn) {
-        authCloseBtn.style.display = '';
-        authCloseBtn.textContent = 'JOGAR COMO CONVIDADO';
-        authCloseBtn.onclick = () => {
-          authModal.classList.remove('active');
-          sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
-        };
-      }
+      soundEngine.playAwaken();
+      sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
     });
 
     // 3. Cinematic Intro Skip Button
@@ -871,18 +938,20 @@ export class UIManager {
     // 4. Main Menu Mode Card Event Listeners
     document.getElementById('menu-btn-ranked-1v1')?.addEventListener('click', () => {
       soundEngine.playClick();
+      this.activeGameMode = '1v1';
       this.multiplayer.startRanked1v1Matchmaking(this.selectedLeader);
     });
 
     document.getElementById('menu-btn-ranked-2v2')?.addEventListener('click', () => {
       soundEngine.playClick();
-      this.multiplayer.startRanked2v2Matchmaking(this.selectedLeader);
+      this.activeGameMode = '2v2';
+      this.multiplayer.startMatchmaking('2v2', this.selectedLeader);
     });
 
     document.getElementById('menu-btn-coop-raid')?.addEventListener('click', () => {
       soundEngine.playClick();
-      this.multiplayer.startCoOpRaid('cell_max', this.selectedLeader);
-      sceneManager.switchScene(GAME_SCENES.ARENA);
+      this.activeGameMode = 'raid';
+      this.multiplayer.startMatchmaking('raid', this.selectedLeader);
     });
 
     document.getElementById('menu-btn-global-ranking')?.addEventListener('click', () => {
@@ -977,12 +1046,10 @@ export class UIManager {
     });
     document.getElementById('bnav-ranked')?.addEventListener('click', () => {
       soundEngine.playClick();
-      this.renderRankedSummary();
       sceneManager.switchScene(GAME_SCENES.RANKED);
     });
     document.getElementById('bnav-quests')?.addEventListener('click', () => {
       soundEngine.playClick();
-      socialManager.renderQuests();
       sceneManager.switchScene(GAME_SCENES.QUESTS);
     });
     document.getElementById('bnav-settings')?.addEventListener('click', () => {
@@ -1056,8 +1123,8 @@ export class UIManager {
 
     this.authBtn?.addEventListener('click', () => {
       soundEngine.playClick();
-      if (authManager.isLoggedIn) {
-        authManager.logout();
+      if (authDatabase.isLoggedIn() && !authDatabase.getCurrentUser().isGuest) {
+        authDatabase.logout();
         this.updateUserSessionUI();
       } else {
         this.authModal?.classList.add('active');
@@ -1067,38 +1134,99 @@ export class UIManager {
     this.authLoginSubmit?.addEventListener('click', async () => {
       soundEngine.playClick();
       const username = this.authUserInput?.value.trim() || 'GuerreiroZ';
-      const email = username + '@dbtcg.local';
+      const email = username.includes('@') ? username : username.toLowerCase() + '@dbtcg.local';
       const res = await authManager.login(email, this.authPassInput?.value || '');
-      if (res.success) {
-        this.authModal?.classList.remove('active');
+      if (res && res.success) { 
+        this.authModal?.classList.remove('active'); 
         soundEngine.playAwaken();
-        this.updateUserSessionUI();
         sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
+        const nameEl = document.getElementById('display-user-name');
+        if (nameEl) nameEl.textContent = authManager.user.displayName;
       } else {
-        alert(res.message);
+        alert(res?.message || 'Erro ao realizar login.');
       }
     });
     this.authRegisterSubmit?.addEventListener('click', async () => {
       soundEngine.playClick();
       const username = this.authUserInput?.value.trim() || 'GuerreiroZ';
-      const email = username + '@dbtcg.local';
+      const email = username.includes('@') ? username : username.toLowerCase() + '@dbtcg.local';
       const res = await authManager.signUp(username, email, this.authPassInput?.value || '');
-      if (res.success) {
+      if (res && res.success) { 
         this.authModal?.classList.remove('active');
         soundEngine.playAwaken();
-        this.updateUserSessionUI();
         sceneManager.switchScene(GAME_SCENES.MAIN_MENU);
+        const nameEl = document.getElementById('display-user-name');
+        if (nameEl) nameEl.textContent = authManager.user.displayName;
       } else {
-        alert(res.message);
+        alert(res?.message || 'Erro ao cadastrar conta.');
       }
     });
 
-    this.chargeKiBtn?.addEventListener('click', () => this.gameEngine.chargeKi('player'));
-    this.passTurnBtn?.addEventListener('click', () => {
+    this.chargeKiBtn?.addEventListener('click', () => {
+      if (this.isUiLocked()) return;
       soundEngine.playClick();
-      this.gameEngine.passTurn('player');
+      if (this.activeGameMode === '2v2') {
+        const myFighterId2v2 = this._getMyFighterId('2v2');
+        if (this.multiplayer.isMultiplayer && !this.multiplayer.isHost) {
+          socketManager.emit('mode_action_broadcast', { mode: '2v2', action: 'chargeKi', fighterId: myFighterId2v2 });
+        } else {
+          // chargeKi no engine já avança o turno internamente (igual ao 1v1)
+          this.mode2v2.chargeKi(myFighterId2v2);
+        }
+      } else if (this.activeGameMode === 'raid') {
+        const myFighterIdRaid = this._getMyFighterId('raid');
+        if (this.multiplayer.isMultiplayer && !this.multiplayer.isHost) {
+          socketManager.emit('mode_action_broadcast', { mode: 'raid', action: 'chargeKi', fighterId: myFighterIdRaid });
+        } else {
+          // chargeKi no engine já avança o turno internamente (igual ao 1v1)
+          this.modeRaid.chargeKi(myFighterIdRaid);
+        }
+      } else {
+        this.gameEngine.chargeKi('player');
+      }
     });
-    this.clashMashBtn?.addEventListener('click', () => this.gameEngine.mashBeamClash());
+
+    this.passTurnBtn?.addEventListener('click', () => {
+      if (this.isUiLocked()) return;
+      soundEngine.playClick();
+      if (this.activeGameMode === '2v2') {
+        const myFighterId2v2 = this._getMyFighterId('2v2');
+        if (this.multiplayer.isMultiplayer && !this.multiplayer.isHost) {
+          socketManager.emit('mode_action_broadcast', { mode: '2v2', action: 'passTurn', fighterId: myFighterId2v2 });
+        } else {
+          this.mode2v2.passTurn(myFighterId2v2);
+        }
+      } else if (this.activeGameMode === 'raid') {
+        const myFighterIdRaid = this._getMyFighterId('raid');
+        if (this.multiplayer.isMultiplayer && !this.multiplayer.isHost) {
+          socketManager.emit('mode_action_broadcast', { mode: 'raid', action: 'passTurn', fighterId: myFighterIdRaid });
+        } else {
+          this.modeRaid.passTurn(myFighterIdRaid);
+        }
+      } else {
+        this.gameEngine.passTurn('player');
+      }
+    });
+
+    this.clashMashBtn?.addEventListener('click', () => {
+      soundEngine.playClick();
+      if (this.multiplayer && this.multiplayer.isMultiplayer && !this.multiplayer.isHost) {
+        const fighterId = this.activeGameMode === 'raid'
+          ? this.modeRaid.activeFighterId
+          : this.mode2v2.activeFighterId;
+        socketManager.emit('mode_action_broadcast', {
+          mode: this.activeGameMode,
+          action: 'mashBeamClash',
+          fighterId
+        });
+      } else if (this.activeGameMode === '2v2') {
+        this.mode2v2.mashBeamClash(this.mode2v2.activeFighterId);
+      } else if (this.activeGameMode === 'raid') {
+        this.modeRaid.mashBeamClash(this.modeRaid.activeFighterId);
+      } else {
+        this.gameEngine.mashBeamClash();
+      }
+    });
 
     if (this.dropZone) {
       this.dropZone.addEventListener('dragover', e => {
@@ -1109,20 +1237,39 @@ export class UIManager {
       this.dropZone.addEventListener('drop', e => {
         e.preventDefault();
         this.dropZone.classList.remove('drag-over');
+        if (this.isUiLocked(true)) {
+          this.showToast('⚠️ Ação bloqueada no momento!', 'warning');
+          this.draggedCardIndex = null;
+          return;
+        }
         if (this.draggedCardIndex !== null) {
-          this.gameEngine.playCard('player', this.draggedCardIndex);
+          const isNonHost = this.multiplayer && this.multiplayer.isMultiplayer && !this.multiplayer.isHost;
+          if (this.activeGameMode === '2v2') {
+            const myFighterId = this._getMyFighterId('2v2');
+            if (isNonHost) {
+              socketManager.emit('mode_action_broadcast', { mode: '2v2', action: 'playCard', fighterId: myFighterId, handIndex: this.draggedCardIndex, targetId: this.mode2v2.selectedTargetId });
+            } else {
+              // Usa myFighterId correto (não activeFighterId) para reaction window funcionar
+              this.mode2v2.playCard(myFighterId, this.draggedCardIndex, this.mode2v2.selectedTargetId);
+            }
+          } else if (this.activeGameMode === 'raid') {
+            const myFighterId = this._getMyFighterId('raid');
+            if (isNonHost) {
+              socketManager.emit('mode_action_broadcast', { mode: 'raid', action: 'playCard', fighterId: myFighterId, handIndex: this.draggedCardIndex });
+            } else {
+              this.modeRaid.playCard(myFighterId, this.draggedCardIndex);
+            }
+          } else {
+            this.gameEngine.playCard('player', this.draggedCardIndex);
+          }
           this.draggedCardIndex = null;
         }
       });
     }
 
-    document.getElementById('buy-pack-btn')?.addEventListener('click', async () => {
-      const cards = await packOpener.openPack();
-      if (cards) {
-        this.renderPackReveal(cards);
-        this.updateCurrencies();
-        this.renderDeckBuilder();
-      }
+    document.getElementById('buy-pack-btn')?.addEventListener('click', () => {
+      const cards = packOpener.openPack();
+      if (cards) { this.renderPackReveal(cards); this.updateCurrencies(); this.renderDeckBuilder(); }
     });
 
     const sendChatMsg = () => {
@@ -1135,25 +1282,61 @@ export class UIManager {
     };
     document.getElementById('send-chat-btn')?.addEventListener('click', sendChatMsg);
     this.chatInput?.addEventListener('keydown', e => { if (e.key === 'Enter') sendChatMsg(); });
-this.renderDeckBuilder();
+
+    document.getElementById('close-ko-btn')?.addEventListener('click', () => {
+      this.koModal?.classList.remove('active');
+      this.switchTab('lobby');
+    });
+
+    this.renderDeckBuilder();
     this.renderDojos();
     this.renderChat();
   }
 
   /* ── User Session ───────────────────────────────────────────────────── */
+  showToast(msg, icon = '⚡') {
+    const existing = document.getElementById('dbz-toast-notification');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'dbz-toast-notification';
+    toast.className = 'dbz-toast-notification';
+    toast.innerHTML = `<span class="toast-icon">${icon}</span> <span class="toast-text">${msg}</span>`;
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.classList.add('active'), 20);
+    setTimeout(() => {
+      toast.classList.remove('active');
+      setTimeout(() => toast.remove(), 300);
+    }, 2800);
+  }
+
   updateUserSessionUI() {
-    const user = authManager.user;
+    const user = (typeof authManager !== 'undefined' && authManager.user) ? authManager.user : authDatabase.getCurrentUser();
+    const zeniVal = (user && user.zeni !== undefined && !isNaN(user.zeni)) ? user.zeni : 1500;
+    const dustVal = (user && user.gems !== undefined && !isNaN(user.gems)) ? user.gems : ((user && user.dust !== undefined && !isNaN(user.dust)) ? user.dust : 300);
+
+    deckBuilder.zeni = zeniVal;
+    deckBuilder.dust = dustVal;
     this.updateCurrencies();
-    if (this.authBtn) {
-      this.authBtn.textContent = user?.isGuest ? '🔑 Entrar' : `👤 ${user?.displayName || 'Guerreiro Z'}`;
-    }
+
     const nameEl = document.getElementById('display-user-name');
-    if (nameEl) nameEl.textContent = user?.displayName || 'Guerreiro Z';
+    if (nameEl && user) {
+      nameEl.textContent = user.displayName || user.username || 'Guerreiro Z';
+    }
+
+    if (this.authBtn && user) {
+      this.authBtn.textContent = user.isGuest ? '🔑 Entrar' : `👤 ${user.displayName || user.username || 'Guerreiro'}`;
+    }
   }
 
   updateCurrencies() {
-    if (this.zeniDisplay) this.zeniDisplay.textContent = deckBuilder.zeni;
-    if (this.dustDisplay) this.dustDisplay.textContent = deckBuilder.dust;
+    const user = (typeof authManager !== 'undefined' && authManager.user) ? authManager.user : authDatabase.getCurrentUser();
+    const zeniVal = (user && user.zeni !== undefined && !isNaN(user.zeni)) ? user.zeni : (deckBuilder.zeni || 1500);
+    const dustVal = (user && user.gems !== undefined && !isNaN(user.gems)) ? user.gems : ((user && user.dust !== undefined && !isNaN(user.dust)) ? user.dust : 300);
+
+    if (this.zeniDisplay) this.zeniDisplay.textContent = isNaN(zeniVal) ? 1500 : zeniVal;
+    if (this.dustDisplay) this.dustDisplay.textContent = isNaN(dustVal) ? 300 : dustVal;
   }
 
   /* ── i18n Translations ──────────────────────────────────────────────── */
@@ -1211,14 +1394,12 @@ this.renderDeckBuilder();
         soundEngine.playClick();
         if (!characterUnlocks.isUnlocked(leaderId)) {
           if (confirm(`Unlock ${leader.name} for ${leader.unlockCost} Zeni?`)) {
-            characterUnlocks.unlockCharacter(leaderId).then(result => {
-              if (!result.success) {
-                alert(result.message || 'Zeni insuficiente ou falha ao desbloquear.');
-                return;
-              }
+            characterUnlocks.unlockCharacter(leaderId, leader.unlockCost, deckBuilder.zeni, cost => {
+              deckBuilder.zeni -= cost;
+              authDatabase.updateProfileStats({ zeni: deckBuilder.zeni });
               this.updateCurrencies();
               this.renderLeaderSelectionRoster();
-              this.initDevPanel();
+    this.initDevPanel();
             });
           }
           return;
@@ -1234,6 +1415,17 @@ this.renderDeckBuilder();
 
   /* ── Arena Renderer & Active Played Card Display ────────────────────── */
   renderArena(engine) {
+    // When active mode is 2v2 or raid, the GameEngine 1v1 callback should NOT
+    // trigger render2v2Arena/renderRaidArena — those are triggered by their own
+    // onStateChange callbacks. Just return silently to prevent double-rendering.
+    if (this.activeGameMode === '2v2') {
+      return;
+    }
+    if (this.activeGameMode === 'raid') {
+      return;
+    }
+
+    if (!engine) engine = this.gameEngine;
     const p = engine.player;
     const opp = engine.opponent;
 
@@ -1342,7 +1534,7 @@ this.renderDeckBuilder();
     }
 
     // Hand
-    this.renderPlayerHand(p.hand, p.ki, engine.state, engine.initiative, engine.pendingAttack, p.isOpenGuard);
+    this.renderPlayerHand(p.hand, p.ki, engine.state, engine.initiative, engine.pendingAttack, p.isOpenGuard, 'p1');
 
     // Logs
     this.renderLogs(engine.battleLogs);
@@ -1360,6 +1552,345 @@ this.renderDeckBuilder();
       }
     }
   }
+
+  /* ── 2v2 Ranked Arena Renderer (2 Top vs 2 Bottom Side-by-Side) ────── */
+  render2v2Arena(state) {
+    if (this.activeGameMode !== '2v2' || !state || !state.fighters) return;
+    const fighters = state.fighters;
+
+    // Determine my fighter and which team I'm on
+    let myFighterId = 'p1';
+    if (this.multiplayer && this.multiplayer.isMultiplayer && !this.multiplayer.isHost) {
+      if (this.multiplayer.guestIndex === 1) myFighterId = 'p2';
+      else if (this.multiplayer.guestIndex === 2) myFighterId = 'opp1';
+      else if (this.multiplayer.guestIndex === 3) myFighterId = 'opp2';
+    }
+    const myTeam = fighters[myFighterId]?.team || 'A';
+    // Bottom shows allies (my team), top shows enemies (opposing team)
+    const allyAId = myTeam === 'A' ? 'p1' : 'opp1';
+    const allyBId = myTeam === 'A' ? 'p2' : 'opp2';
+    const enemyAId = myTeam === 'A' ? 'opp1' : 'p1';
+    const enemyBId = myTeam === 'A' ? 'opp2' : 'p2';
+
+    const topArea = document.querySelector('.arena-zone-top');
+    if (topArea) {
+      topArea.innerHTML = `
+        <div class="team-row-2v2">
+          <div id="hud-enemy-${enemyAId}" class="hud-compact-2v2 ${state.selectedTargetId === enemyAId ? 'is-targeted' : ''} ${state.activeFighterId === enemyAId ? 'active-turn-glow' : ''}">
+            ${state.selectedTargetId === enemyAId ? '<div class="target-badge-indicator">[ ALVO ]</div>' : ''}
+            <div class="hud-compact-portrait">
+              <img src="assets/leaders/${fighters[enemyAId].leaderKey}.png" alt="${fighters[enemyAId].name}" onerror="this.src='assets/leaders/goku.png';" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+            <div class="hud-compact-info">
+              <div class="hud-compact-name" style="color:${fighters[enemyAId].color}">${fighters[enemyAId].name}</div>
+              <div style="font-size:0.65rem;color:#ffd700;font-weight:700;">HP: ${fighters[enemyAId].hp}/${fighters[enemyAId].maxHp} | KI: ${fighters[enemyAId].ki}</div>
+              <div style="font-size:0.6rem;color:#00ffff;">🛡️ ESCUDOS: ${fighters[enemyAId].shields}</div>
+            </div>
+          </div>
+          <div id="hud-enemy-${enemyBId}" class="hud-compact-2v2 ${state.selectedTargetId === enemyBId ? 'is-targeted' : ''} ${state.activeFighterId === enemyBId ? 'active-turn-glow' : ''}">
+            ${state.selectedTargetId === enemyBId ? '<div class="target-badge-indicator">[ ALVO ]</div>' : ''}
+            <div class="hud-compact-portrait">
+              <img src="assets/leaders/${fighters[enemyBId].leaderKey}.png" alt="${fighters[enemyBId].name}" onerror="this.src='assets/leaders/goku.png';" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+            <div class="hud-compact-info">
+              <div class="hud-compact-name" style="color:${fighters[enemyBId].color}">${fighters[enemyBId].name}</div>
+              <div style="font-size:0.65rem;color:#ffd700;font-weight:700;">HP: ${fighters[enemyBId].hp}/${fighters[enemyBId].maxHp} | KI: ${fighters[enemyBId].ki}</div>
+              <div style="font-size:0.6rem;color:#00ffff;">🛡️ ESCUDOS: ${fighters[enemyBId].shields}</div>
+            </div>
+          </div>
+        </div>
+      `;
+      topArea.querySelector(`#hud-enemy-${enemyAId}`)?.addEventListener('click', () => this.mode2v2.setTarget(enemyAId));
+      topArea.querySelector(`#hud-enemy-${enemyBId}`)?.addEventListener('click', () => this.mode2v2.setTarget(enemyBId));
+    }
+
+    const botLeaderBox = document.getElementById('p1-leader-box');
+    if (botLeaderBox) {
+      botLeaderBox.innerHTML = `
+        <div class="team-row-2v2" style="width:100%;">
+          <div class="hud-compact-2v2 ${state.activeFighterId === allyAId ? 'active-turn-glow' : ''}">
+            <div class="hud-compact-portrait">
+              <img src="assets/leaders/${fighters[allyAId].leaderKey}.png" alt="${fighters[allyAId].name}" onerror="this.src='assets/leaders/goku.png';" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+            <div class="hud-compact-info">
+              <div class="hud-compact-name" style="color:${fighters[allyAId].color}">${fighters[allyAId].name}</div>
+              <div style="font-size:0.65rem;color:#ffd700;font-weight:700;">HP: ${fighters[allyAId].hp}/${fighters[allyAId].maxHp} | KI: ${fighters[allyAId].ki}</div>
+              <div style="font-size:0.6rem;color:#00ffff;">🛡️ ESCUDOS: ${fighters[allyAId].shields}</div>
+            </div>
+          </div>
+          <div class="hud-compact-2v2 ${state.activeFighterId === allyBId ? 'active-turn-glow' : ''}">
+            <div class="hud-compact-portrait">
+              <img src="assets/leaders/${fighters[allyBId].leaderKey}.png" alt="${fighters[allyBId].name}" onerror="this.src='assets/leaders/goku.png';" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+            <div class="hud-compact-info">
+              <div class="hud-compact-name" style="color:${fighters[allyBId].color}">${fighters[allyBId].name}</div>
+              <div style="font-size:0.65rem;color:#ffd700;font-weight:700;">HP: ${fighters[allyBId].hp}/${fighters[allyBId].maxHp} | KI: ${fighters[allyBId].ki}</div>
+              <div style="font-size:0.6rem;color:#00ffff;">🛡️ ESCUDOS: ${fighters[allyBId].shields}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    const canAct = state.activeFighterId === myFighterId && state.state === 'FREE_ACTION';
+    // Reação: o defensor também pode jogar cartas durante ATTACK_PENDING
+    const isDefender = state.state === 'ATTACK_PENDING' && state.pendingAttack?.targetId === myFighterId;
+    if (this.passTurnBtn) this.passTurnBtn.disabled = !canAct;
+    if (this.chargeKiBtn) this.chargeKiBtn.disabled = !canAct;
+
+    // Banner de turno — mostra quem é o lutador ativo
+    if (this.turnPhaseBar) {
+      this.turnPhaseBar.className = 'dbz-phase-banner';
+      const activeFighter = fighters[state.activeFighterId];
+      if (state.state === 'ATTACK_PENDING') {
+        this.turnPhaseBar.classList.add('phase-reaction');
+        if (this.turnPhaseText) {
+          this.turnPhaseText.textContent = isDefender
+            ? '⚡ SEU TURNO DE REAGIR! (3s)'
+            : `⚡ ${fighters[state.pendingAttack?.attackerId]?.name || ''} ATACOU! Janela de Reação...`;
+        }
+      } else if (state.state === 'BEAM_CLASH') {
+        this.turnPhaseBar.classList.add('phase-reaction');
+        if (this.turnPhaseText) this.turnPhaseText.textContent = '🔥 DISPUTA DE BEAM! Pressione!';
+      } else if (canAct) {
+        this.turnPhaseBar.classList.add('phase-player');
+        if (this.turnPhaseText) this.turnPhaseText.textContent = `✅ SEU TURNO! Jogue uma carta ou carregue Ki.`;
+      } else {
+        this.turnPhaseBar.classList.add('phase-opponent');
+        if (this.turnPhaseText) this.turnPhaseText.textContent = `⏳ Turno de ${activeFighter?.name || state.activeFighterId}...`;
+      }
+    }
+
+    // Render Played Card in Drop Zone for 2v2
+    if (this.dropZone) {
+      if (state.pendingAttack && state.pendingAttack.card) {
+        const attackCard = state.pendingAttack.card;
+        const attackerName = state.fighters[state.pendingAttack.attackerId]?.name || 'Guerreiro';
+        this.dropZone.innerHTML = `
+          <div class="dbz-pending-action-badge">
+            <div class="dpab-bg"></div>
+            <div class="dpab-content">
+              <span class="dpab-tag">[ CARTA EM CAMPO ]</span>
+              <span class="dpab-title">${attackCard.name.toUpperCase()}</span>
+              <span class="dpab-sub">POR ${attackerName.toUpperCase()}</span>
+            </div>
+          </div>
+          <div class="played-card-slot">
+            <div class="card type-${attackCard.type}${attackCard.rarity === 'super-rare' ? ' super-rare' : ''}">
+              ${assetLoader.renderCardArtHTML(attackCard)}
+              <div class="card-header"><div class="card-ki-cost">${attackCard.cost || 0}</div></div>
+              <div class="card-title">${attackCard.name.toUpperCase()}</div>
+              <div class="card-type-tag tag-${attackCard.type}">${attackCard.type.toUpperCase()}</div>
+              ${attackCard.power > 0 ? `<div class="card-power-badge">${attackCard.power} ATK</div>` : ''}
+            </div>
+          </div>
+        `;
+      } else {
+        this.dropZone.innerHTML = '';
+      }
+    }
+
+    // Beam Clash UI for 2v2
+    if (state.state === 'BEAM_CLASH' && state.beamClashData) {
+      this.beamClashOverlay?.classList.add('active');
+      if (this.beamClashFill) this.beamClashFill.style.width = `${state.beamClashData.p1Progress}%`;
+      const atkColor = fighters[state.pendingAttack?.attackerId]?.color || '#00f2fe';
+      const defColor = fighters[state.pendingAttack?.targetId]?.color || '#ffd700';
+      this.fx.triggerBeamClash(state.beamClashData.p1Progress, atkColor, defColor);
+    } else {
+      this.beamClashOverlay?.classList.remove('active');
+      if (this.fx && this.fx.activeClash) this.fx.activeClash = null;
+    }
+    const mashBtn2v2 = document.getElementById('clash-mash-btn');
+    if (mashBtn2v2) mashBtn2v2.style.display = state.state === 'BEAM_CLASH' ? 'inline-block' : 'none';
+
+    // Reaction banner
+    if (state.state === 'ATTACK_PENDING') {
+      this.reactionBanner?.classList.add('active');
+    } else {
+      this.reactionBanner?.classList.remove('active');
+    }
+
+    // Renderiza a mão do jogador local com isDefender correto
+    const myFighter = fighters[myFighterId];
+    const initForHand = (canAct || isDefender) ? 'player' : 'opponent';
+    this.renderPlayerHand(myFighter.hand, myFighter.ki, state.state, initForHand, state.pendingAttack, myFighter.isOpenGuard || false, myFighterId);
+
+    // Logs do modo 2v2
+    if (state.battleLogs) this.renderLogs(state.battleLogs);
+
+    // Game Over
+    if (state.state === 'GAME_OVER') {
+      this.koModal?.classList.add('active');
+      if (this.koText) {
+        const myTeamWon = state.winner === (fighters[myFighterId]?.team === 'A' ? 'Team A' : 'Team B');
+        if (myTeamWon) {
+          soundEngine.playAwaken();
+          this.koText.textContent = '🏆 K.O.! VITÓRIA DO SEU TIME!';
+        } else {
+          this.koText.textContent = '💀 K.O.! SEU TIME FOI DERROTADO...';
+        }
+      }
+    }
+  }
+
+  /* ── Raid Co-Op Arena Renderer (1 Boss Top, 4 Players Grid 2x2 Bottom) ── */
+  renderRaidArena(state) {
+    if (this.activeGameMode !== 'raid' || !state || !state.boss || !state.players) return;
+    const boss = state.boss;
+    const players = state.players;
+
+    const topArea = document.querySelector('.arena-zone-top');
+    if (topArea) {
+      const hpPct = Math.max(0, (boss.hp / boss.maxHp) * 100);
+      topArea.innerHTML = `
+        <div class="boss-hud-frame ${boss.isEnraged ? 'enraged' : ''}">
+          <div class="boss-portrait-box">
+            <img src="${boss.portrait}" alt="${boss.name}" onerror="this.src='assets/leaders/frieza_awaken.png';" style="width:100%;height:100%;object-fit:cover;">
+          </div>
+          <div class="boss-info-box">
+            <div class="boss-name-title">
+              <span>🐉 ${boss.name.toUpperCase()}</span>
+              <span>${boss.hp} / ${boss.maxHp} HP</span>
+            </div>
+            <div class="boss-hp-bar">
+              <div class="boss-hp-fill" style="width: ${hpPct}%"></div>
+            </div>
+            <div style="font-size:0.68rem;color:#ff8c00;font-weight:800;">
+              ${boss.isEnraged ? '🔥 EM FÚRIA ABSOLUTA! DANO MULTIPLICADO' : '⚡ KI RECARREGANDO PARA ATAQUE ESPECIAL'}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    const botLeaderBox = document.getElementById('p1-leader-box');
+    if (botLeaderBox) {
+      botLeaderBox.innerHTML = `
+        <div class="players-grid-2x2" style="width:100%;">
+          ${Object.values(players).map(p => `
+            <div class="mini-player-hud ${state.activeFighterId === p.id ? 'active-turn' : ''}">
+              <img src="assets/leaders/${p.leaderKey}.png" alt="${p.name}" onerror="this.src='assets/leaders/goku.png';" style="width:34px;height:34px;border-radius:50%;border:1.5px solid ${p.color};">
+              <div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;">
+                <div style="font-size:0.68rem;font-weight:900;color:${p.color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
+                <div style="font-size:0.6rem;color:#ffd700;">HP: ${p.hp}/${p.maxHp}</div>
+                <div style="font-size:0.55rem;color:#00ffff;">🛡️ ESCUDO: ${p.shields} | KI: ${p.ki}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    let myFighterId = this._getMyFighterId('raid');
+
+    const canAct = state.activeFighterId === myFighterId && state.state === 'FREE_ACTION';
+    // Reação: o defensor pode jogar cartas durante a fase do boss
+    const isDefenderRaid = state.state === 'ATTACK_PENDING' && state.pendingAttack?.targetId === myFighterId;
+    if (this.passTurnBtn) this.passTurnBtn.disabled = !canAct;
+    if (this.chargeKiBtn) this.chargeKiBtn.disabled = !canAct;
+
+    // Banner de turno para Raid
+    if (this.turnPhaseBar) {
+      this.turnPhaseBar.className = 'dbz-phase-banner';
+      const activeFighter = state.activeFighterId === 'boss' ? boss : players[state.activeFighterId];
+      if (state.state === 'ATTACK_PENDING' || state.state === 'BOSS_PHASE') {
+        this.turnPhaseBar.classList.add('phase-reaction');
+        if (this.turnPhaseText) {
+          this.turnPhaseText.textContent = isDefenderRaid
+            ? `⚡ ${boss.name} ATACA VOCÊ! (3s para reagir)`
+            : (state.state === 'BOSS_PHASE' ? `⚠️ FASE DO CHEFE: ${boss.name}!` : `⚡ Janela de Reação...`);
+        }
+      } else if (state.state === 'BEAM_CLASH') {
+        this.turnPhaseBar.classList.add('phase-reaction');
+        if (this.turnPhaseText) this.turnPhaseText.textContent = '🔥 DISPUTA DE BEAM! Pressione!';
+      } else if (canAct) {
+        this.turnPhaseBar.classList.add('phase-player');
+        if (this.turnPhaseText) this.turnPhaseText.textContent = `✅ SEU TURNO! Ataque o Chefe!`;
+      } else {
+        this.turnPhaseBar.classList.add('phase-opponent');
+        if (this.turnPhaseText) this.turnPhaseText.textContent = `⏳ Turno de ${activeFighter?.name || state.activeFighterId}...`;
+      }
+    }
+
+    // Reaction banner
+    if (state.state === 'ATTACK_PENDING' || state.state === 'BOSS_PHASE') {
+      this.reactionBanner?.classList.add('active');
+    } else {
+      this.reactionBanner?.classList.remove('active');
+    }
+
+    // Render Played Card in Drop Zone for Raid
+    if (this.dropZone) {
+      if (state.pendingAttack && state.pendingAttack.card) {
+        const attackCard = state.pendingAttack.card;
+        const attackerName = state.players[state.pendingAttack.attackerId]?.name || 'Guerreiro Z';
+        this.dropZone.innerHTML = `
+          <div class="dbz-pending-action-badge">
+            <div class="dpab-bg"></div>
+            <div class="dpab-content">
+              <span class="dpab-tag">[ CARTA EM CAMPO ]</span>
+              <span class="dpab-title">${attackCard.name.toUpperCase()}</span>
+              <span class="dpab-sub">POR ${attackerName.toUpperCase()}</span>
+            </div>
+          </div>
+          <div class="played-card-slot">
+            <div class="card type-${attackCard.type}${attackCard.rarity === 'super-rare' ? ' super-rare' : ''}">
+              ${assetLoader.renderCardArtHTML(attackCard)}
+              <div class="card-header"><div class="card-ki-cost">${attackCard.cost || 0}</div></div>
+              <div class="card-title">${attackCard.name.toUpperCase()}</div>
+              <div class="card-type-tag tag-${attackCard.type}">${attackCard.type.toUpperCase()}</div>
+              ${attackCard.power > 0 ? `<div class="card-power-badge">${attackCard.power} ATK</div>` : ''}
+            </div>
+          </div>
+        `;
+      } else {
+        this.dropZone.innerHTML = '';
+      }
+    }
+    // Beam Clash UI for Raid
+    if (state.state === 'BEAM_CLASH' && state.beamClashData) {
+      this.beamClashOverlay?.classList.add('active');
+      if (this.beamClashFill) this.beamClashFill.style.width = `${state.beamClashData.p1Progress}%`;
+      const atkColor = players[state.pendingAttack?.attackerId]?.color || '#00f2fe';
+      const defColor = '#ff0055';
+      this.fx.triggerBeamClash(state.beamClashData.p1Progress, atkColor, defColor);
+    } else {
+      this.beamClashOverlay?.classList.remove('active');
+      if (this.fx && this.fx.activeClash) this.fx.activeClash = null;
+    }
+    const mashBtnRaid = document.getElementById('clash-mash-btn');
+    if (mashBtnRaid) mashBtnRaid.style.display = state.state === 'BEAM_CLASH' ? 'inline-block' : 'none';
+
+
+    this.renderPlayerHand(
+      players[myFighterId].hand,
+      players[myFighterId].ki,
+      state.state,
+      (canAct || isDefenderRaid) ? 'player' : 'opponent',
+      state.pendingAttack,
+      false,
+      myFighterId
+    );
+
+    // Logs do modo Raid
+    if (state.battleLogs) this.renderLogs(state.battleLogs);
+
+    // Game Over
+    if (state.state === 'GAME_OVER') {
+      this.koModal?.classList.add('active');
+      if (this.koText) {
+        const playerWon = state.winner === 'Team Z (Players)';
+        if (playerWon) {
+          soundEngine.playAwaken();
+          this.koText.textContent = '🏆 RAID VENCIDA! Chefe Derrotado!';
+        } else {
+          this.koText.textContent = '💀 DERROTA NA RAID... Guerreiros Derrotados.';
+        }
+      }
+    }
+  }
+
 
   renderFighterHUD(prefix, fighter) {
     const portrait = document.getElementById(`${prefix}-portrait`);
@@ -1395,27 +1926,15 @@ this.renderDeckBuilder();
   }
 
   startFighterSpriteLoop() {
-    if (this._fighterLoopStarted) return;
-    this._fighterLoopStarted = true;
-    let lastFrameAt = 0;
-
-    const frame = timestamp => {
-      const arena = document.getElementById('scene-arena');
-      const shouldRender =
-        document.visibilityState === 'visible' &&
-        arena?.classList.contains('active') &&
-        timestamp - lastFrameAt >= 120;
-
-      if (shouldRender && this.gameEngine) {
-        lastFrameAt = timestamp;
+    setInterval(() => {
+      // Only render 1v1 sprites when in 1v1 mode — prevents ghost rendering
+      // in 2v2/raid modes that reconstruct the arena DOM
+      if (this.activeGameMode !== '1v1') return;
+      if (this.gameEngine) {
         this.renderFighterCanvas('p1', this.gameEngine.player);
         this.renderFighterCanvas('p2', this.gameEngine.opponent);
       }
-
-      this._fighterAnimationFrame = requestAnimationFrame(frame);
-    };
-
-    this._fighterAnimationFrame = requestAnimationFrame(frame);
+    }, 130);
   }
 
   renderFighterCanvas(prefix, fighter) {
@@ -1483,75 +2002,134 @@ this.renderDeckBuilder();
   }
 
   /* ── Player Hand & Touch Gesture Slide Pop-up ──────────────────────── */
-  renderPlayerHand(hand, playerKi, gameState, initiative, pendingAttack, isOpenGuard) {
-      if (!this.p1HandContainer) return;
-  
-      const awakened = !!this.gameEngine?.player?.isAwakened;
-      const buff = Number(this.gameEngine?.player?.nextAttackBonus || 0);
-      const renderHash = (hand || []).map(c => c.id).join(',') + `|${playerKi}|${gameState}|${initiative}|${isOpenGuard}|${awakened}|${buff}`;
-      if (this.p1HandContainer.dataset.renderHash === renderHash) return;
-      this.p1HandContainer.dataset.renderHash = renderHash;
-      this.p1HandContainer.innerHTML = '';
-  
-      hand.forEach((card, index) => {
-        if (!card || card.hidden) return;
-        const el = document.createElement('div');
-        const effectiveCost = this.gameEngine.getCardCost('player', card);
-        let isPlayable = false;
-        let reasonText = '';
-  
-        if (playerKi < effectiveCost) {
-          reasonText = i18n.t('reasonNeedKi');
-        } else if (gameState === 'FREE_ACTION' && initiative === 'player') {
-          if (card.type === 'attack' || card.type === 'tech') isPlayable = true;
-          else reasonText = i18n.t('reasonDefenseOnly');
-        } else if (gameState === 'ATTACK_PENDING' && pendingAttack) {
-          if (pendingAttack.attackerKey === 'opponent') {
-            if (this.gameEngine.isReactionCardLegal('player', card, pendingAttack.card)) isPlayable = true;
-            else reasonText = card.type === 'evade' && isOpenGuard ? i18n.t('reasonOpenGuard') : i18n.t('reasonReactionOnly');
+  renderPlayerHand(hand, playerKi, gameState, initiative, pendingAttack, isOpenGuard, myFighterId) {
+    if (!this.p1HandContainer) return;
+    
+    const resolvedHand = (hand || []).slice(0, 7).map(c => typeof c === 'string' ? getCardById(c) : c).filter(Boolean);
+
+    const pHash = pendingAttack ? (pendingAttack.targetId || pendingAttack.attackerId || 'pending') : 'none';
+    const renderHash = resolvedHand.map(c => c.id || c.name || '').join(',') + `|${playerKi}|${gameState}|${initiative}|${isOpenGuard}|${pHash}`;
+    if (this.p1HandContainer.dataset.renderHash === renderHash) return;
+    this.p1HandContainer.dataset.renderHash = renderHash;
+
+    this.p1HandContainer.innerHTML = '';
+
+    if (gameState === 'BEAM_CLASH' || gameState === 'GAME_OVER') {
+      this.p1HandContainer.classList.add('hand-locked');
+    } else {
+      this.p1HandContainer.classList.remove('hand-locked');
+    }
+
+    resolvedHand.forEach((card, index) => {
+      const el = document.createElement('div');
+      const cardType = card.type || 'attack';
+
+      let isPlayable = false;
+      let reasonText = '';
+
+      if (gameState === 'BEAM_CLASH' || gameState === 'GAME_OVER') {
+        isPlayable = false;
+        reasonText = 'Disputa de Feixe de Ki em andamento!';
+      } else if (playerKi < (card.cost || 0)) {
+        reasonText = i18n.t('reasonNeedKi');
+      } else if (cardType === 'evade' && isOpenGuard) {
+        reasonText = i18n.t('reasonOpenGuard');
+      } else if (gameState === 'FREE_ACTION' && initiative === 'player') {
+        if (cardType === 'attack' || cardType === 'tech' || cardType === 'support' || cardType === 'ki_blast') isPlayable = true;
+        else reasonText = i18n.t('reasonDefenseOnly');
+      } else if (gameState === 'ATTACK_PENDING' && pendingAttack) {
+        const attackerKey = pendingAttack.attackerKey || pendingAttack.attackerId || 'player';
+        const isAttacker = attackerKey === 'player' || (myFighterId && attackerKey === myFighterId);
+        if (isAttacker) {
+          isPlayable = false;
+          reasonText = 'Aguardando resposta do oponente ao seu ataque...';
+        } else {
+          const targetFighterId = pendingAttack.targetId || 'p1';
+          const isTargeted = targetFighterId === (myFighterId || 'p1');
+          if (isTargeted) {
+            if (['defense', 'evade', 'counter'].includes(cardType) || card.isBeam) isPlayable = true;
+            else reasonText = i18n.t('reasonReactionOnly');
           } else {
             reasonText = i18n.t('reasonInFlight');
           }
-        } else if (initiative !== 'player') {
-          reasonText = i18n.t('reasonOpponentTurn');
         }
-  
-        el.className = `card type-${card.type}${card.rarity === 'super-rare' ? ' super-rare' : ''} ${isPlayable ? 'playable' : 'unplayable'}`;
-        el.title = isPlayable ? '' : reasonText;
-        el.innerHTML = `
-          ${assetLoader.renderCardArtHTML(card)}
-          <div class="card-header"><div class="card-ki-cost">${effectiveCost}</div></div>
-          <div class="card-type-tag tag-${card.type}">${card.type.toUpperCase()}</div>
-          ${card.power > 0 ? `<div class="card-power-badge">${card.power} ATK</div>` : ''}
-        `;
-  
-        el.draggable = isPlayable;
-        el.addEventListener('dragstart', () => { this.draggedCardIndex = index; });
-        el.addEventListener('touchstart', () => {
-          if (isPlayable) this.draggedCardIndex = index;
-          el.classList.add('touch-hover');
-        }, { passive: true });
-        el.addEventListener('touchmove', e => {
-          if (e.touches?.[0]) {
-            const touch = e.touches[0];
-            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
-            const parentCard = targetEl ? targetEl.closest('.card') : null;
-            this.p1HandContainer.querySelectorAll('.card').forEach(c => c.classList.toggle('touch-hover', c === parentCard));
-          }
-        }, { passive: true });
-        const clearTouchHover = () => this.p1HandContainer.querySelectorAll('.card').forEach(c => c.classList.remove('touch-hover'));
-        el.addEventListener('touchend', clearTouchHover);
-        el.addEventListener('touchcancel', clearTouchHover);
-        el.addEventListener('click', () => {
-          if (isPlayable) {
-            soundEngine.playClick();
-            soundEngine.playCardPlay();
+      } else if (initiative !== 'player') {
+        reasonText = i18n.t('reasonOpponentTurn');
+      }
+
+      el.className = `card type-${cardType}${card.rarity === 'super-rare' ? ' super-rare' : ''} ${isPlayable ? 'playable' : 'unplayable'}`;
+
+      el.innerHTML = assetLoader.renderCardHTML(card);
+
+      el.draggable = isPlayable;
+      el.addEventListener('dragstart', () => { this.draggedCardIndex = index; });
+
+      // Touchscreen Mobile Slide Pop-up Gesture
+      el.addEventListener('touchstart', () => {
+        if (isPlayable) this.draggedCardIndex = index;
+        el.classList.add('touch-hover');
+      }, { passive: true });
+
+      el.addEventListener('touchmove', (e) => {
+        if (e.touches && e.touches[0]) {
+          const touch = e.touches[0];
+          const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+          const parentCard = targetEl ? targetEl.closest('.card') : null;
+          
+          this.p1HandContainer.querySelectorAll('.card').forEach(c => {
+            if (c === parentCard) c.classList.add('touch-hover');
+            else c.classList.remove('touch-hover');
+          });
+        }
+      }, { passive: true });
+
+      const clearTouchHover = () => {
+        this.p1HandContainer.querySelectorAll('.card').forEach(c => c.classList.remove('touch-hover'));
+      };
+      el.addEventListener('touchend', clearTouchHover);
+      el.addEventListener('touchcancel', clearTouchHover);
+
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        const now = Date.now();
+        if (this.lastCardClickTime && (now - this.lastCardClickTime < 500)) {
+          return; // Debounce rapid clicks
+        }
+
+        if (this.isUiLocked(true)) {
+          this.showToast('⚠️ Ação bloqueada no momento!', 'warning');
+          return;
+        }
+
+        this.lastCardClickTime = now;
+
+        if (isPlayable) {
+          soundEngine.playClick();
+          soundEngine.playCardPlay();
+          if (this.activeGameMode === '2v2') {
+            const myFighterId = this._getMyFighterId('2v2');
+            if (this.multiplayer.isMultiplayer && !this.multiplayer.isHost) {
+              socketManager.emit('mode_action_broadcast', { mode: '2v2', action: 'playCard', fighterId: myFighterId, handIndex: index, targetId: this.mode2v2.selectedTargetId });
+            } else {
+              // USA myFighterId (não activeFighterId) para reaction window funcionar corretamente
+              this.mode2v2.playCard(myFighterId, index, this.mode2v2.selectedTargetId);
+            }
+          } else if (this.activeGameMode === 'raid') {
+            const myFighterId = this._getMyFighterId('raid');
+            if (this.multiplayer.isMultiplayer && !this.multiplayer.isHost) {
+              socketManager.emit('mode_action_broadcast', { mode: 'raid', action: 'playCard', fighterId: myFighterId, handIndex: index });
+            } else {
+              this.modeRaid.playCard(myFighterId, index);
+            }
+          } else {
             this.gameEngine.playCard('player', index);
           }
-        });
-        this.p1HandContainer.appendChild(el);
+        }
       });
-    }
+
+      this.p1HandContainer.appendChild(el);
+    });
+  }
 
   /* ── Battle Log ─────────────────────────────────────────────────────── */
   renderLogs(logs) {
@@ -1565,6 +2143,85 @@ this.renderDeckBuilder();
       line.textContent = timeStr ? `[${timeStr}] ${textStr}` : textStr;
       this.battleLogContainer.appendChild(line);
     });
+  }
+
+  /* ── Helper: ID do lutador local (centraliza lógica de guestIndex) ─── */
+  _getMyFighterId(mode) {
+    if (mode === '2v2') {
+      if (this.multiplayer && this.multiplayer.isMultiplayer && !this.multiplayer.isHost) {
+        if (this.multiplayer.guestIndex === 1) return 'p2';
+        if (this.multiplayer.guestIndex === 2) return 'opp1';
+        if (this.multiplayer.guestIndex === 3) return 'opp2';
+      }
+      return 'p1';
+    } else if (mode === 'raid') {
+      if (this.multiplayer && this.multiplayer.isMultiplayer && !this.multiplayer.isHost) {
+        if (this.multiplayer.guestIndex === 1) return 'p2';
+        if (this.multiplayer.guestIndex === 2) return 'p3';
+        if (this.multiplayer.guestIndex === 3) return 'p4';
+      }
+      return 'p1';
+    }
+    return 'player';
+  }
+
+  /* ── UI Interaction Lock ───────────────────────────────────────────── */
+  isUiLocked(checkBeamClash = false) {
+    if (this.activeGameMode === '1v1') {
+      if (this.gameEngine && this.gameEngine.isActionProcessing) return true;
+      if (checkBeamClash && this.gameEngine && this.gameEngine.state === 'BEAM_CLASH') return true;
+      if (this.gameEngine && this.gameEngine.state === 'GAME_OVER') return true;
+      if (this.gameEngine && this.gameEngine.state === 'ATTACK_PENDING' && this.gameEngine.pendingAttack?.attackerKey === 'player') return true;
+    } else if (this.activeGameMode === '2v2') {
+      if (this.mode2v2 && this.mode2v2._isAdvancingTurn) return true;
+      if (checkBeamClash && this.mode2v2 && this.mode2v2.state === 'BEAM_CLASH') return true;
+      if (this.mode2v2 && this.mode2v2.state === 'GAME_OVER') return true;
+      if (this.mode2v2 && this.mode2v2.state === 'ATTACK_PENDING' && this.mode2v2.pendingAttack?.attackerId === this._getMyFighterId('2v2')) return true;
+    } else if (this.activeGameMode === 'raid') {
+      if (this.modeRaid && this.modeRaid._isAdvancingTurn) return true;
+      if (this.modeRaid && this.modeRaid._isBossActing) return true;
+      if (checkBeamClash && this.modeRaid && this.modeRaid.state === 'BEAM_CLASH') return true;
+      if (this.modeRaid && this.modeRaid.state === 'GAME_OVER') return true;
+      if (this.modeRaid && this.modeRaid.state === 'ATTACK_PENDING' && this.modeRaid.pendingAttack?.attackerId === this._getMyFighterId('raid')) return true;
+    }
+    return false;
+  }
+
+  /* ── Cleanup Inactive Mode Engines ─────────────────────────────────── */
+  cleanupInactiveModes(activeMode) {
+    // Kill all timers/intervals in mode engines that are NOT the active mode
+    // This prevents ghost AI actions and state leaks between modes
+    if (activeMode !== '2v2' && this.mode2v2) {
+      if (this.mode2v2.aiTurnTimeout) {
+        clearTimeout(this.mode2v2.aiTurnTimeout);
+        this.mode2v2.aiTurnTimeout = null;
+      }
+      if (this.mode2v2.reactionTimer) {
+        clearInterval(this.mode2v2.reactionTimer);
+        this.mode2v2.reactionTimer = null;
+      }
+      this.mode2v2.clearBeamClashLoop();
+      this.mode2v2.winner = null;
+      this.mode2v2.state = 'FREE_ACTION';
+      this.mode2v2.pendingAttack = null;
+    }
+    if (activeMode !== 'raid' && this.modeRaid) {
+      if (this.modeRaid.aiTurnTimeout) {
+        clearTimeout(this.modeRaid.aiTurnTimeout);
+        this.modeRaid.aiTurnTimeout = null;
+      }
+      if (this.modeRaid.reactionTimer) {
+        clearInterval(this.modeRaid.reactionTimer);
+        this.modeRaid.reactionTimer = null;
+      }
+      this.modeRaid.clearBeamClashLoop();
+      this.modeRaid.winner = null;
+      this.modeRaid.state = 'FREE_ACTION';
+      this.modeRaid.pendingAttack = null;
+    }
+    if (activeMode !== '1v1' && this.gameEngine) {
+      this.gameEngine.reset();
+    }
   }
 
   /* ── Deck Builder & Card Inspect Trigger ───────────────────────────── */
@@ -1606,12 +2263,7 @@ this.renderDeckBuilder();
         const el = document.createElement('div');
         el.className = `card type-${card.type}${card.rarity === 'super-rare' ? ' super-rare' : ''}`;
         el.style.cursor = 'pointer';
-        el.innerHTML = `
-          ${assetLoader.renderCardArtHTML(card)}
-          <div class="card-header"><div class="card-ki-cost">${card.cost}</div></div>
-          <div class="card-type-tag tag-${card.type}">${card.type.toUpperCase()}</div>
-          ${card.power > 0 ? `<div class="card-power-badge">${card.power} ATK</div>` : ''}
-        `;
+        el.innerHTML = assetLoader.renderCardHTML(card);
         el.onclick = () => {
           deckBuilder.addCardToDeck(card.id, this.selectedLeader);
           this.renderDeckBuilder();
@@ -1622,60 +2274,33 @@ this.renderDeckBuilder();
   }
 
   renderDojos() {
-    socialManager.renderDojos();
+    if (!this.dojoListContainer) return;
+    this.dojoListContainer.innerHTML = '';
+    const medals = ['🥇', '🥈', '🥉'];
+    DOJO_RANKINGS.forEach((dojo, i) => {
+      const row = document.createElement('div');
+      row.className = 'dojo-row';
+      row.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="dojo-rank">${medals[i] || `#${i + 1}`}</span>
+          <span>${dojo.icon} ${dojo.name} <span style="color:var(--text-dim)">(${dojo.leader})</span></span>
+        </div>
+        <span class="dojo-power">${dojo.power} PWR</span>
+      `;
+      this.dojoListContainer.appendChild(row);
+    });
   }
 
   /* ── Chat ────────────────────────────────────────────────────────────── */
-  isDevMode() {
-    if (typeof window === 'undefined') return false;
-    const host = window.location?.hostname || '';
-    return window.DBCLASH_DEV_MODE === true || host === 'localhost' || host === '127.0.0.1';
-  }
-
-  appendSafeChatMessage(msg) {
-    if (!this.chatFeed || !msg) return;
-
-    const bubble = document.createElement('div');
-    bubble.className = 'chat-bubble';
-
-    const user = document.createElement('span');
-    user.className = 'cb-user';
-    user.textContent = String(msg.user || 'Guerreiro Z').slice(0, 40);
-
-    const time = document.createElement('span');
-    time.className = 'cb-time';
-    time.textContent = String(msg.time || '').slice(0, 16);
-
-    const br = document.createElement('br');
-    const text = document.createTextNode(String(msg.text || '').slice(0, 300));
-
-    bubble.append(user, time, br, text);
-    this.chatFeed.appendChild(bubble);
-  }
-
-  renderRankedSummary() {
-    const container = document.getElementById('ranked-view-content');
-    if (!container) return;
-
-    container.replaceChildren();
-
-    const card = document.createElement('div');
-    card.style.cssText =
-      'padding:16px;background:rgba(255,215,0,.08);border-radius:8px;' +
-      'border:1px solid rgba(255,215,0,.3);';
-
-    const user = authManager.user;
-    card.textContent = user?.isGuest
-      ? 'Entre em uma conta online para disputar o Ranked.'
-      : `Rank atual: ${user?.division || 'Bronze I'} | ${user?.rankPoints || 0} RP | ${user?.victories || 0}V / ${user?.losses || 0}D`;
-
-    container.appendChild(card);
-  }
-
   renderChat() {
     if (!this.chatFeed) return;
-    this.chatFeed.replaceChildren();
-    chatManager.messages.forEach(msg => this.appendSafeChatMessage(msg));
+    this.chatFeed.innerHTML = '';
+    chatManager.messages.forEach(msg => {
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-bubble';
+      bubble.innerHTML = `<span class="cb-user">${msg.user}</span><span class="cb-time">${msg.time}</span><br>${msg.text}`;
+      this.chatFeed.appendChild(bubble);
+    });
     this.chatFeed.scrollTop = this.chatFeed.scrollHeight;
   }
 
@@ -1687,12 +2312,7 @@ this.renderDeckBuilder();
       const el = document.createElement('div');
       el.className = `card type-${card.type}${card.rarity === 'super-rare' ? ' super-rare' : ''}`;
       el.style.cursor = 'pointer';
-      el.innerHTML = `
-        ${assetLoader.renderCardArtHTML(card)}
-        <div class="card-header"><div class="card-ki-cost">${card.cost}</div></div>
-        <div class="card-type-tag tag-${card.type}">${card.type.toUpperCase()}</div>
-        ${card.power > 0 ? `<div class="card-power-badge">${card.power} ATK</div>` : ''}
-      `;
+      el.innerHTML = assetLoader.renderCardHTML(card);
       el.onclick = () => this.openCardInspectModal(card);
       this.packRevealContainer.appendChild(el);
     });
@@ -1700,10 +2320,6 @@ this.renderDeckBuilder();
 
   /* ── DEV ADMIN PANEL CONTROLLER ────────────────────────────────────── */
   initDevPanel() {
-    if (!this.isDevMode()) {
-      document.getElementById('open-dev-panel-btn')?.remove();
-      return;
-    }
     const modal = document.getElementById('dev-panel-modal');
     const openBtn = document.getElementById('open-dev-panel-btn');
     const closeBtn = document.getElementById('close-dev-modal-btn');
@@ -1773,7 +2389,6 @@ this.renderDeckBuilder();
   }
 
   openDevPanel() {
-    if (!this.isDevMode()) return;
     const modal = document.getElementById('dev-panel-modal');
     if (!modal) return;
     modal.classList.add('active');
@@ -1841,74 +2456,141 @@ this.renderDeckBuilder();
   }
 
   
-  async openLeaderboardModal() {
-    const lbModal = document.getElementById('leaderboard-modal');
-    const lbContainer = document.getElementById('lb-list-container');
-    if (!lbModal || !lbContainer) return;
+  openCardInspectModal(card) {
+    if (!card) return;
+    const modal = document.getElementById('card-inspect-modal');
+    const container = document.getElementById('card-inspect-container');
+    const info = document.getElementById('card-inspect-info');
+    const closeBtn = document.getElementById('close-card-inspect-btn');
 
-    lbModal.classList.add('active');
-    lbContainer.textContent = 'Carregando ranking...';
-
-    try {
-      await leaderboardManager.refresh(true);
-    } catch {}
-
-    const topList = leaderboardManager.getTopRankings();
-    lbContainer.replaceChildren();
-
-    if (!topList.length) {
-      lbContainer.textContent = 'Ranking indisponivel no momento.';
-      return;
+    if (container) {
+      container.innerHTML = `
+        <div class="card type-${card.type || 'attack'} ${card.rarity === 'super-rare' ? 'super-rare' : ''} ${card.isBeam ? 'is-beam' : ''} ${card.isFoil ? 'is-foil' : ''}" style="width: 320px !important; height: 448px !important; min-width: 320px !important; min-height: 448px !important; aspect-ratio: 160 / 224 !important;">
+          ${assetLoader.renderCardHTML(card)}
+        </div>
+      `;
     }
 
-    for (const item of topList) {
-      const row = document.createElement('div');
-      row.className = `lb-item${item.isCurrent ? ' is-current' : ''}`;
+    if (info) {
+      const desc = (i18n.lang === 'pt' ? card.descPt : card.descEn) || card.description || '';
+      info.innerHTML = `
+        <div style="font-weight: 900; color: #ffd700; font-size: 1rem; margin-bottom: 4px;">${card.name.toUpperCase()}</div>
+        <div style="font-weight: 800; color: #38bdf8; font-size: 0.78rem; margin-bottom: 8px;">TIPO: ${(card.isBeam ? 'BEAM CLASH' : card.type).toUpperCase()} | CUSTO: ⚡ ${card.cost} KI ${card.power ? `| PODER: ${card.power} ATK` : ''}</div>
+        <div>${desc}</div>
+      `;
+    }
 
-      const rank = document.createElement('div');
-      rank.className = 'lb-rank';
-      rank.textContent = `#${item.rank}`;
+    if (closeBtn) closeBtn.onclick = () => modal?.classList.remove('active');
+    if (modal) modal.classList.add('active');
+  }
 
-      const info = document.createElement('div');
-      info.className = 'lb-user-info';
-
-      const name = document.createElement('div');
-      name.className = 'lb-name';
-      name.textContent = String(item.name || 'Guerreiro Z').slice(0, 40);
-
-      const division = document.createElement('div');
-      division.className = 'lb-division';
-      division.textContent = String(item.division || 'Bronze I').slice(0, 40);
-
-      info.append(name, division);
-
-      const rp = document.createElement('div');
-      rp.className = 'lb-rp';
-      rp.textContent = `${item.rp || 0} RP (${item.wins || 0}V)`;
-
-      row.append(rank, info, rp);
-      lbContainer.appendChild(row);
+  openLeaderboardModal() {
+    const lbModal = document.getElementById('leaderboard-modal');
+    const lbContainer = document.getElementById('lb-list-container');
+    if (lbModal) {
+      const topList = leaderboardManager.getTopRankings();
+      if (lbContainer) {
+        lbContainer.innerHTML = topList.map(item => `
+          <div class="lb-item ${item.isCurrent ? 'is-current' : ''}">
+            <div class="lb-rank">#${item.rank}</div>
+            <div class="lb-user-info">
+              <div class="lb-name">${item.name}</div>
+              <div class="lb-division">${item.division}</div>
+            </div>
+            <div class="lb-rp">⚡ ${item.rp} RP (${item.wins}V)</div>
+          </div>
+        `).join('');
+      }
+      lbModal.classList.add('active');
     }
   }
 
   setupAuthAndLeaderboardHandlers() {
+    // Live Realtime Chat Listener — updates chat-feed in real time
     if (typeof chatManager !== 'undefined') {
-      chatManager.onMessageCallback = msg => {
-        this.appendSafeChatMessage(msg);
-        if (this.chatFeed) this.chatFeed.scrollTop = this.chatFeed.scrollHeight;
+      chatManager.onMessageCallback = (msg) => {
+        if (this.chatFeed) {
+          const bubble = document.createElement('div');
+          bubble.className = 'chat-bubble';
+          bubble.innerHTML = `<span class="cb-user">${msg.user}</span><span class="cb-time">${msg.time}</span><br>${msg.text}`;
+          this.chatFeed.appendChild(bubble);
+          this.chatFeed.scrollTop = this.chatFeed.scrollHeight;
+        }
       };
     }
+    const authBtn = document.getElementById('auth-btn');
+    const authModal = document.getElementById('auth-modal');
+    const authCloseBtn = document.getElementById('auth-close-btn');
+    const authForm = document.getElementById('auth-form');
 
+    const bnavRanked = document.getElementById('bnav-ranked');
     const lbModal = document.getElementById('leaderboard-modal');
     const lbCloseBtn = document.getElementById('lb-close-btn');
+    const lbContainer = document.getElementById('lb-list-container');
 
-    lbCloseBtn?.addEventListener('click', () => {
-      lbModal?.classList.remove('active');
-    });
+    if (authModal) {
+      if (!authManager.isLoggedIn) {
+        authModal.classList.add('active');
+      }
+    }
 
-    window.addEventListener('dbclash-leaderboard-updated', () => {
-      if (lbModal?.classList.contains('active')) this.openLeaderboardModal();
-    });
+    if (authBtn && authModal) {
+      authBtn.addEventListener('click', () => {
+        authModal.classList.add('active');
+      });
+    }
+
+    if (authCloseBtn && authModal) {
+      authCloseBtn.addEventListener('click', () => {
+        if (!authManager.isLoggedIn) {
+          alert('Atenção: É necessário criar uma conta ou fazer login para acessar o jogo!');
+          authModal.classList.add('active');
+        } else {
+          authModal.classList.remove('active');
+        }
+      });
+    }
+
+    if (authForm) {
+      authForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const username = document.getElementById('auth-username')?.value || 'Guerreiro Z';
+        const email = document.getElementById('auth-email')?.value || 'guerreiro@dbtcg.com';
+        const pass = document.getElementById('auth-password')?.value || '123456';
+        authManager.signUp(username, email, pass);
+        const nameEl = document.getElementById('display-user-name');
+        if (nameEl) nameEl.textContent = authManager.user.displayName;
+        if (authModal) authModal.classList.remove('active');
+        this.triggerActionBanner(`CONTA SALVA: ${authManager.user.displayName}`, 'act-attack', 'ACCOUNT READY');
+      });
+    }
+
+    if (bnavRanked && lbModal) {
+      bnavRanked.addEventListener('click', () => {
+        const topList = leaderboardManager.getTopRankings();
+        if (lbContainer) {
+          lbContainer.innerHTML = topList.map(item => `
+            <div class="lb-item ${item.isCurrent ? 'is-current' : ''}">
+              <div class="lb-rank">#${item.rank}</div>
+              <div class="lb-user-info">
+                <div class="lb-name">${item.name}</div>
+                <div class="lb-division">${item.division}</div>
+              </div>
+              <div class="lb-rp">⚡ ${item.rp} RP (${item.wins}V)</div>
+            </div>
+          `).join('');
+        }
+        lbModal.classList.add('active');
+      });
+    }
+
+    if (lbCloseBtn && lbModal) {
+      lbCloseBtn.addEventListener('click', () => {
+        lbModal.classList.remove('active');
+      });
+    }
   }
 
 }
+
+export const uiManager = new UIManager();

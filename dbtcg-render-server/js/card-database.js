@@ -923,115 +923,132 @@ export const CARD_DATABASE = [
     descEn: '[Counter] Recharges 2 Ki while countering incoming strike for 26 HP.'
   },
 
-  // --- PURPLE TECHNIQUE CARDS (62 - 70) ---
+  // --- PURPLE SUPPORT & TECHNIQUE CARDS (62 - 70) ---
   {
     id: 'tch_01',
     name: 'Kaioken Boost',
-    type: 'tech',
+    type: 'support',
     cost: 1,
     power: 0,
+    selfHpCost: 30,
+    kiGain: 4,
+    drawCards: 1,
     rarity: 'rare',
     synergyGroup: 'tech',
     icon: '🔴',
-    descPt: '[Técnica] Sacrifica 30 HP para ganhar +4 de Ki e comprar 1 carta extra.',
-    descEn: 'Sacrifice 30 HP to gain +4 Ki and draw 1 extra card.'
+    descPt: '[Suporte] Sacrifica 30 HP para ganhar +4 de Ki e comprar 1 carta extra.',
+    descEn: '[Support] Sacrifice 30 HP to gain +4 Ki and draw 1 extra card.'
   },
   {
     id: 'tch_02',
-    name: 'Senzu Bean',
-    type: 'tech',
+    name: 'Senzu Bean (Semente dos Deuses)',
+    type: 'support',
     cost: 2,
     power: 0,
+    healHp: 80,
+    restoreShield: 1,
+    drawCards: 1,
     rarity: 'super-rare',
     synergyGroup: 'tech',
     icon: '🫘',
-    descPt: '[Técnica] Restaura 50 HP (1 Escudo de Vida) e compra 1 carta.',
-    descEn: 'Restores 50 HP (1 Life Shield) and draws 1 card.'
+    descPt: '[Suporte/Cura] Restaura 80 HP, recupera 1 Escudo de Vida e compra 1 carta. Não inicia ataque.',
+    descEn: '[Support/Heal] Restores 80 HP, recovers 1 Life Shield and draws 1 card.'
   },
   {
     id: 'tch_03',
     name: 'Spirit Bomb Charge',
-    type: 'tech',
+    type: 'attack',
     cost: 5,
     power: 90,
     isBeam: true,
     rarity: 'super-rare',
     synergyGroup: 'beam',
     icon: '🌕',
-    descPt: '[Técnica Ultimate] Carga da Genki Dama. Requer tempo mas causa massivo 90 HP de dano.',
-    descEn: 'Ultimate tech attack. Takes 1 extra reaction tick to execute but deals massive 90 HP damage.'
+    descPt: '[Ataque Ultimate] Carga da Genki Dama. Causa massivos 90 HP de dano.',
+    descEn: '[Ultimate Attack] Spirit bomb blast. Deals massive 90 HP damage.'
   },
   {
     id: 'tch_04',
     name: 'Saiyan Pride Surge',
-    type: 'tech',
+    type: 'support',
     cost: 2,
     power: 0,
+    buffAtk: 25,
+    kiGain: 2,
     rarity: 'rare',
     synergyGroup: 'tech',
     icon: '👑',
-    descPt: '[Técnica] Aumenta o dano da próxima carta de ataque em +25 HP e ganha +2 Ki.',
-    descEn: 'Boosts next Attack card damage by +25 HP and gains +2 Ki.'
+    descPt: '[Suporte] Aumenta o dano da próxima carta de ataque em +25 HP e ganha +2 Ki.',
+    descEn: '[Support] Boosts next Attack card damage by +25 HP and gains +2 Ki.'
   },
   {
     id: 'tch_05',
     name: 'Hidden Potential Unleashed',
-    type: 'tech',
+    type: 'support',
     cost: 2,
     power: 0,
+    drawCards: 3,
     rarity: 'rare',
     synergyGroup: 'tech',
     icon: '💥',
-    descPt: '[Técnica] Liberação de potencial. Compra 3 cartas imediatamente.',
-    descEn: 'Draw 3 cards immediately.'
+    descPt: '[Suporte] Liberação de potencial. Compra 3 cartas imediatamente.',
+    descEn: '[Support] Draw 3 cards immediately.'
   },
   {
     id: 'tch_06',
     name: 'Golden Transformation Boost',
-    type: 'tech',
+    type: 'support',
     cost: 3,
     power: 0,
+    kiGain: 5,
+    healHp: 40,
     rarity: 'super-rare',
     synergyGroup: 'tech',
     icon: '✨',
-    descPt: '[Técnica] Concede instantaneamente +5 Ki e cura 30 HP.',
-    descEn: 'Instantly grants +5 Ki and heals 30 HP.'
+    descPt: '[Suporte] Concede instantaneamente +5 Ki e cura 40 HP.',
+    descEn: '[Support] Instantly grants +5 Ki and heals 40 HP.'
   },
   {
     id: 'tch_07',
     name: 'Namekian Healing Technique',
-    type: 'tech',
+    type: 'support',
     cost: 3,
     power: 0,
+    healHp: 60,
+    restoreShield: 1,
     rarity: 'rare',
     synergyGroup: 'tech',
     icon: '🟢',
-    descPt: '[Técnica] Restaura 60 HP (1 Escudo).',
-    descEn: 'Restores 60 HP (1 Shield).'
+    descPt: '[Suporte/Cura] Restaura 60 HP e recupera 1 Escudo.',
+    descEn: '[Support/Heal] Restores 60 HP and recovers 1 Shield.'
   },
   {
     id: 'tch_08',
     name: 'Time Chamber Training',
-    type: 'tech',
+    type: 'support',
     cost: 1,
     power: 0,
+    drawCards: 2,
+    kiGain: 1,
     rarity: 'common',
     synergyGroup: 'tech',
     icon: '⏳',
-    descPt: '[Técnica] Treino na Sala do Tempo. Compra 2 cartas e ganha +1 Ki.',
-    descEn: 'Draw 2 cards and gain +1 Ki.'
+    descPt: '[Suporte] Treino na Sala do Tempo. Compra 2 cartas e ganha +1 Ki.',
+    descEn: '[Support] Draw 2 cards and gain +1 Ki.'
   },
   {
     id: 'tch_09',
     name: 'Overdrive Awakening Boost',
-    type: 'tech',
+    type: 'support',
     cost: 4,
     power: 0,
+    healHp: 40,
+    drawCards: 2,
     rarity: 'super-rare',
     synergyGroup: 'tech',
     icon: '💥',
-    descPt: '[Técnica] Surto de energia Despertada. Restaura 40 HP e compra 2 cartas.',
-    descEn: 'Surges awakening energy. Restores 40 HP and draws 2 cards.'
+    descPt: '[Suporte] Surto de energia Despertada. Restaura 40 HP e compra 2 cartas.',
+    descEn: '[Support] Surges awakening energy. Restores 40 HP and draws 2 cards.'
   }
 ];
 

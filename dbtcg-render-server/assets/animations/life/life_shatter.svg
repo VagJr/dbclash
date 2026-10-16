@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <radialGradient id="redFlash" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="40%" stop-color="#ff0033" stop-opacity="0.9"/>
+      <stop offset="80%" stop-color="#990011" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+  </defs>
+  <circle cx="150" cy="150" r="140" fill="url(#redFlash)"/>
+  <polygon points="150,20 180,120 280,150 180,180 150,280 120,180 20,150 120,120" fill="#ffffff" opacity="0.9"/>
+  <polygon points="150,50 170,130 250,150 170,170 150,250 130,170 50,150 130,130" fill="#ffdd22" opacity="0.8"/>
+</svg>

@@ -16,28 +16,47 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles/main.css?v=realtime_firebase_v3">
-  <link rel="stylesheet" href="styles/cards.css?v=realtime_firebase_v3">
-  <link rel="stylesheet" href="styles/arena.css?v=realtime_firebase_v3">
-  <link rel="stylesheet" href="styles/multiplayer.css?v=realtime_firebase_v3">
-  <link rel="stylesheet" href="styles/animations.css?v=realtime_firebase_v3">
-  <link rel="stylesheet" href="styles/atmosphere.css?v=realtime_firebase_v3">
-  <link rel="stylesheet" href="styles/rework.css?v=nexus-v1">
-  <link rel="stylesheet" href="styles/exchange.css?v=nexus-v1">
+  <link rel="stylesheet" href="styles/main.css?v=v111_supreme_anti_blur_engine">
+  <link rel="stylesheet" href="styles/cards.css?v=v111_supreme_anti_blur_engine">
+  <link rel="stylesheet" href="styles/arena.css?v=v111_supreme_anti_blur_engine">
+  <link rel="stylesheet" href="styles/multiplayer.css?v=v111_supreme_anti_blur_engine">
+  <link rel="stylesheet" href="styles/animations.css?v=v111_supreme_anti_blur_engine">
+  <link rel="stylesheet" href="styles/atmosphere.css?v=v111_supreme_anti_blur_engine">
   <script>
-    window.addEventListener('load', function () {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js').catch(function (err) {
-          console.warn('[PWA] Service worker registration failed:', err.message);
+    // Automatic Cache & Storage Purge Engine — Guarantees immediate delivery of code updates
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (let registration of registrations) {
+          registration.unregister();
+        }
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        for (let name of names) caches.delete(name);
+      });
+    }
+    try {
+      if (localStorage.getItem('dbtcg_version') !== 'v111_supreme_anti_blur_engine') {
+        Object.keys(localStorage).forEach(k => {
+          if (k.startsWith('dbtcg_custom_card_')) localStorage.removeItem(k);
         });
+        localStorage.setItem('dbtcg_version', 'v111_supreme_anti_blur_engine');
       }
-    });
+    } catch (e) {}
   </script>
 </head>
 <body class="aaa-game-body">
   <audio id="app-bgm" src="music/soundtrack.mp3" loop preload="auto" playsinline autoplay muted style="display:none;"></audio>
   <div id="impact-frame-overlay"></div>
-  <div id="scene-transition-overlay" class="scene-transition-curtain"></div>
+  <!-- ── 0. CINEMATIC AUTO-PLAY INTRO VIDEO OVERLAY ── -->
+  <div id="intro-video-overlay" class="intro-video-overlay active">
+    <video id="intro-video" class="intro-video-element" playsinline webkit-playsinline preload="auto" autoplay muted>
+      <source src="intro_video.mp4" type="video/mp4">
+    </video>
+    <button id="intro-video-skip-btn" class="intro-video-skip-btn">PULAR INTRO ▶</button>
+    <button id="intro-video-unmute-btn" class="intro-video-unmute-btn">🔊 ATIVAR SOM</button>
+  </div>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <!-- AAA CONSOLE SCENE SYSTEM (No Website Navigation / No Web Headers)       -->
@@ -372,7 +391,7 @@
       <h2 style="color: #ffd700; font-size: 1.4rem; font-weight: 900; margin-bottom: 12px;">💬 Chat Global dos Guerreiros</h2>
       <div id="chat-feed" class="chat-feed" style="flex: 1; overflow-y: auto; background: rgba(0,0,0,0.35); border-radius: 8px; padding: 14px; margin-bottom: 12px;"></div>
       <div class="chat-input-row" style="display: flex; gap: 8px;">
-        <input type="text" id="chat-input" placeholder="Digite sua mensagem..." class="modal-input" style="font-size:1.1rem;padding:12px;background:rgba(0,0,0,.6);border:2px solid #ffd700;color:#fff;text-align:center;margin:0;flex:1;">
+        <input type="text" id="chat-input" placeholder="Digite sua mensagem..." class="modal-input" style="font-size: 1.1rem; padding: 12px; background: rgba(0,0,0,0.6); border: 2px solid #ffd700; color: #fff; text-align: center;" style="margin: 0; flex: 1;">
         <button id="send-chat-btn" class="btn-ki">Enviar</button>
       </div>
       <button id="chat-back-btn" class="btn-ghost" style="margin-top: 12px;">VOLTAR AO MENU</button>
@@ -386,7 +405,7 @@
       <p style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 24px;">Dispute pontos de Rank e suba do Prata ao Rank Deus da Destruição!</p>
       <div id="ranked-view-content" style="display: flex; flex-direction: column; gap: 12px; font-size: 0.95rem; color: #fff;">
         <div style="padding: 16px; background: rgba(255,215,0,0.08); border-radius: 8px; border: 1px solid rgba(255,215,0,0.3);">
-          <span id="ranked-current-summary">Carregando perfil ranqueado...</span>
+          🥇 <strong>Seu Rank Atual:</strong> Guerreiro Prata (1250 RP)
         </div>
       </div>
       <button id="ranked-back-btn" class="btn-ghost" style="margin-top: 24px;">VOLTAR AO MENU</button>
@@ -446,7 +465,7 @@
       <div style="font-size: 2.5rem; animation: pulse 1s infinite; margin-bottom: 10px;">⚡</div>
       <div style="font-size: 1.5rem; font-weight: 900; color: #ffd700; text-shadow: 0 0 10px #ff8c00;">BUSCANDO GUERREIRO Z...</div>
       <div id="mm-timer" style="font-size: 2.2rem; font-weight: 900; color: #fff; margin: 15px 0;">00:00</div>
-      <div style="color: #cbd5e1; font-size: 0.85rem; margin-bottom: 20px;">Conectando ao servidor competitivo do Torneio do Poder...</div>
+      <div style="color: #cbd5e1; font-size: 0.85rem; margin-bottom: 20px;">Conectando ao Realtime Database do Torneio do Poder...</div>
       <button id="mm-cancel-btn" class="btn-ghost" style="width: 100%;">CANCELAR BUSCA</button>
     </div>
   </div>
@@ -469,6 +488,16 @@
       </div>
 
       <div id="dev-card-list-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px;"></div>
+    </div>
+  </div>
+
+  <!-- ═══ CARD INSPECT MODAL ═══ -->
+  <div id="card-inspect-modal" class="modal-overlay">
+    <div class="glass modal-box" style="max-width: 440px; text-align: center; padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px;">
+      <div style="font-size: 1.2rem; font-weight: 900; color: #ffd700; font-family: var(--font-title, sans-serif);">🎴 INSPEÇÃO DE CARTA TCG</div>
+      <div id="card-inspect-container" style="width: 330px; height: 460px; display: flex; justify-content: center; align-items: center;"></div>
+      <div id="card-inspect-info" style="color: #cbd5e1; font-size: 0.85rem; line-height: 1.4; text-align: left; width: 100%; background: rgba(0,0,0,0.6); padding: 12px; border-radius: 6px; border: 1px solid rgba(255,215,0,0.25);"></div>
+      <button id="close-card-inspect-btn" class="btn-ki" style="width: 100%;">FECHAR</button>
     </div>
   </div>
 
@@ -504,12 +533,8 @@
     </div>
   </div>
 
-  <script type="module" src="./js/runtime-guard.js"></script>
-
-<script type="module">
-    import { UIManager } from './js/ui-manager.js';
-    import './js/rework-presentation.js';
-    import './js/exchange-manager.js';
+  <script type="module">
+    import { UIManager } from './js/ui-manager.js?v=v111_supreme_anti_blur_engine';
     function boot() { window.uiManager = new UIManager(); }
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', boot);
@@ -517,15 +542,92 @@
       boot();
     }
   </script>
+
+  <!-- Auto fullscreen on first tap/click (mobile) -->
   <script>
-    window.dbclashRequestFullscreen = function () {
-      var el = document.documentElement;
-      var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-      if (fn && !document.fullscreenElement && !document.webkitFullscreenElement) {
-        try { return fn.call(el); } catch (e) {}
+    (function() {
+      function goFS() {
+        var el = document.documentElement;
+        var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+        if (fn && !document.fullscreenElement && !document.webkitFullscreenElement) {
+          try { fn.call(el); } catch(e) {}
+        }
       }
-      return null;
-    };
+      document.addEventListener('click', goFS, { once: true });
+      document.addEventListener('touchstart', goFS, { once: true });
+      // Retry when arena becomes active
+      document.addEventListener('dbtcg:sceneChange', function onScene(e) {
+        if (e.detail && e.detail.sceneId === 'scene-arena') {
+          setTimeout(goFS, 500);
+          setTimeout(goFS, 1500);
+        }
+      });
+      // Also retry on any user gesture after page loads
+      document.addEventListener('click', goFS);
+      document.addEventListener('touchstart', goFS);
+    })();
+  </script>
+
+  <!-- Intro Video Auto-Play Controller -->
+  <script>
+    (function() {
+      var overlay = document.getElementById('intro-video-overlay');
+      var video = document.getElementById('intro-video');
+      var skipBtn = document.getElementById('intro-video-skip-btn');
+      var unmuteBtn = document.getElementById('intro-video-unmute-btn');
+
+      if (!video || !overlay) return;
+
+      function closeIntro() {
+        try { video.pause(); } catch(e) {}
+        overlay.classList.remove('active');
+        setTimeout(function() { overlay.style.display = 'none'; }, 500);
+      }
+
+      // Try autoplaying muted first (works 100% on iOS & Android & Chrome)
+      var playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(function() {
+          function playOnUserGesture() {
+            video.play();
+          }
+          document.addEventListener('click', playOnUserGesture, { once: true });
+          document.addEventListener('touchstart', playOnUserGesture, { once: true });
+        });
+      }
+
+      // Unmute on tap of unmute button
+      if (unmuteBtn) {
+        unmuteBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          video.muted = false;
+          video.currentTime = video.currentTime;
+          video.play();
+          unmuteBtn.style.display = 'none';
+        });
+      }
+
+      // Unmute on first screen interaction if still muted
+      function enableAudioOnFirstGesture() {
+        if (video.muted) {
+          video.muted = false;
+          if (unmuteBtn) unmuteBtn.style.display = 'none';
+        }
+      }
+      document.addEventListener('click', enableAudioOnFirstGesture, { once: true });
+      document.addEventListener('touchstart', enableAudioOnFirstGesture, { once: true });
+
+      // Automatically close when video reaches end
+      video.addEventListener('ended', closeIntro);
+
+      // Skip button
+      if (skipBtn) {
+        skipBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          closeIntro();
+        });
+      }
+    })();
   </script>
 </body>
 </html>

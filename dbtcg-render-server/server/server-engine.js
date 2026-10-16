@@ -28,25 +28,8 @@ export class GameEngine {
 
     if (winner) {
       this.state = 'GAME_OVER';
-      this.log(`🔥 K.O.! ${winner === 'player' ? 'VOCÊ VENCEU!' : 'VOCÊ FOI DERROTADO!'} 🔥`, 'info');
-      
-      const isPlayerWinner = winner === 'player';
-      
-      if (typeof authManager !== 'undefined' && authManager.isLoggedIn && !authManager.user.isGuest) {
-        authManager.recordMatchResult(isPlayerWinner, 25);
-      }
-
-      if (typeof uiManager !== 'undefined') {
-        const bannerClass = isPlayerWinner ? 'act-attack' : 'act-charge';
-        const bannerTitle = isPlayerWinner ? 'K.O.! VITÓRIA' : 'K.O.! DERROTA';
-        const bannerSub = isPlayerWinner ? 'K.O. - YOU WIN' : 'K.O. - YOU LOSE';
-        
-        uiManager.triggerActionBanner(bannerTitle, bannerClass, bannerSub);
-        
-        setTimeout(() => {
-          uiManager.showGameResult(isPlayerWinner);
-        }, 1800);
-      }
+      this.winner = winner;
+      this.log(`🔥 K.O.! Match Finished. Winner: ${winner} 🔥`, 'info');
       return true;
     }
     return false;
@@ -321,8 +304,14 @@ export class GameEngine {
     actor.hand.splice(actualIndex, 1);
     actor.discard.push(card.id);
 
+    if (card.type === 'support') {
+      this.resolveSupportCard(actorKey, card);
+      this.notifyState();
+      return;
+    }
+
     if (this.state === 'FREE_ACTION' && this.initiative === actorKey) {
-      if (card.type === 'attack' || card.type === 'tech') {
+      if (card.type === 'attack' || card.type === 'tech' || card.type === 'ki_blast') {
         this.pendingAttack = { attackerKey: actorKey, card };
         this.state = 'ATTACK_PENDING';
         this.attackResolved = false;
@@ -350,6 +339,44 @@ export class GameEngine {
       this.resolveReaction(actorKey, card);
     }
     this.notifyState();
+  }
+
+  resolveSupportCard(actorKey, card) {
+    const actor = actorKey === 'player' ? this.player : this.opponent;
+    this.log(`✨ ${actor.name} usou a carta de Suporte: ${card.name}!`, 'info');
+
+    if (card.selfHpCost) {
+      actor.hp = Math.max(1, actor.hp - card.selfHpCost);
+      actor.shields = Math.ceil(actor.hp / 50);
+      this.log(`🔴 ${actor.name} sacrificou ${card.selfHpCost} HP!`, 'damage');
+    }
+
+    if (card.healHp) {
+      actor.hp = Math.min(actor.maxHp, actor.hp + card.healHp);
+      actor.shields = Math.ceil(actor.hp / 50);
+      this.log(`💚 ${actor.name} restaurou +${card.healHp} HP! (HP Atual: ${actor.hp}/${actor.maxHp})`, 'info');
+    }
+
+    if (card.restoreShield) {
+      actor.shields = Math.min(8, Math.ceil(actor.hp / 50));
+    }
+
+    if (card.kiGain) {
+      actor.ki = Math.min(10, actor.ki + card.kiGain);
+      this.log(`⚡ ${actor.name} recebeu +${card.kiGain} Ki!`, 'info');
+    }
+
+    if (card.drawCards) {
+      this.drawCard(actor, card.drawCards);
+      this.log(`🃏 ${actor.name} comprou ${card.drawCards} carta(s)!`, 'info');
+    }
+
+    if (card.buffAtk) {
+      actor.nextAttackBuff = (actor.nextAttackBuff || 0) + card.buffAtk;
+      this.log(`👑 Próximo ataque de ${actor.name} causará +${card.buffAtk} HP de dano bônus!`, 'info');
+    }
+
+    this.fx('healSupport', { actorKey, card });
   }
 
   startReactionTimer() {
@@ -602,6 +629,7 @@ export class GameEngine {
   getFullSyncState() {
     return {
       state: this.state,
+      winner: this.winner,
       initiative: this.initiative,
       pendingAttack: this.pendingAttack,
       beamClashData: this.beamClashData,

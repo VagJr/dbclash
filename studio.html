@@ -1,0 +1,1987 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dragon Ball Clash TCG — Capsule Corp Card Crafting Sandbox 4K</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #050811;
+      --bg-panel: #0a0f1d;
+      --bg-active: #141c33;
+      --accent-gold: #ffd700;
+      --accent-cyan: #38bdf8;
+      --accent-orange: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-purple: #a855f7;
+      --accent-green: #10b981;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-title: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      background-image: 
+        radial-gradient(ellipse at 50% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 70%),
+        radial-gradient(ellipse at 80% 100%, rgba(255, 215, 0, 0.05) 0%, transparent 60%);
+    }
+
+    header {
+      height: 48px;
+      background: rgba(9, 14, 27, 0.95);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 6px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-family: var(--font-title);
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: var(--accent-gold);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+    }
+
+    .scouter-power-badge {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid #10b981;
+      color: #10b981;
+      font-family: var(--font-title);
+      font-size: 0.70rem;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      text-transform: uppercase;
+    }
+
+    .btn {
+      font-family: var(--font-title);
+      font-weight: 800;
+      font-size: 0.76rem;
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #000;
+      border: 1px solid #ffd700;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6); }
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #fff;
+      border: 1px solid #f87171;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    .btn-danger:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(239, 68, 68, 0.5); }
+    .btn-ghost {
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); }
+
+    /* Photoshop 3-Column Zero-Scroll Layout */
+    .photoshop-workspace {
+      display: grid;
+      grid-template-columns: 310px 1fr 340px;
+      flex: 1;
+      height: calc(100vh - 48px);
+      overflow: hidden;
+    }
+
+    .toolbar-sidebar, .properties-sidebar {
+      background: rgba(10, 15, 29, 0.95);
+      border-right: 1px solid rgba(255,255,255,0.08);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+    }
+
+    .properties-sidebar {
+      border-right: none;
+      border-left: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .canvas-viewport {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #020408;
+      position: relative;
+      overflow: hidden;
+      padding: 10px;
+    }
+
+    #card-canvas {
+      width: 350px;
+      height: 490px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 215, 0, 0.2);
+      border-radius: 12px;
+      border: 2px solid rgba(255, 215, 0, 0.5);
+      background: #000;
+      cursor: crosshair;
+    }
+
+    .tool-group-title {
+      font-family: var(--font-title);
+      font-size: 0.72rem;
+      font-weight: 900;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 6px;
+    }
+
+    .form-label {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .form-control {
+      background: #090d16;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 0.76rem;
+      font-family: var(--font-body);
+      outline: none;
+    }
+
+    .form-control:focus {
+      border-color: var(--accent-gold);
+      box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
+
+    .layer-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .layer-item.active {
+      background: rgba(255, 215, 0, 0.15);
+      border-color: var(--accent-gold);
+      color: var(--accent-gold);
+      font-weight: 800;
+    }
+
+    .badge-btn {
+      background: rgba(255, 215, 0, 0.1);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      color: var(--accent-gold);
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 0.70rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .badge-btn:hover { background: rgba(255, 215, 0, 0.25); border-color: var(--accent-gold); }
+
+    #studio-toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(16, 185, 129, 0.95);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 900;
+      font-size: 0.85rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+      display: none;
+      z-index: 99999;
+      border: 1px solid #34d399;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP HEADER TOOLBAR -->
+  <header>
+    <div class="brand-title">
+      <span>🎨 Estúdio Maker 4K Vector</span>
+      <span class="scouter-power-badge">⚡ ONLINE</span>
+    </div>
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+      <button id="btn-undo" class="btn btn-ghost" title="Desfazer (Ctrl+Z)">↩️ Undo</button>
+      <button id="btn-redo" class="btn btn-ghost" title="Refazer (Ctrl+Y)">↪️ Redo</button>
+      <button id="btn-inject-batch-all" class="btn btn-primary" style="background:linear-gradient(135deg,#10b981,#059669); border:1px solid #34d399; font-weight:900; box-shadow:0 0 16px rgba(16,185,129,0.4);">
+        🚀 INJETAR TODAS AS CARTAS NO JOGO
+      </button>
+      <button id="btn-inject-db" class="btn btn-primary">🔥 Salvar Esta Carta</button>
+    </div>
+  </header>
+
+  <!-- WORKSTATION 3 COLUMNS -->
+  <div class="photoshop-workspace">
+    
+    <!-- LEFT SIDEBAR: Text Adjustments, Universal Magic Wand & Layer Properties -->
+    <div class="toolbar-sidebar">
+      <div style="background:rgba(56,189,248,0.08); padding:8px; border-radius:6px; border:1px solid rgba(56,189,248,0.3); display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div class="tool-group-title" style="color:var(--accent-cyan); margin:0;">🎯 Edição Direta</div>
+          <div style="font-size:0.78rem; font-weight:900; color:#fff;" id="editing-layer-name">Selecione uma camada...</div>
+        </div>
+        <button id="btn-delete-active-layer" class="btn btn-danger" style="font-size:0.68rem; padding:3px 6px;" title="Deletar camada selecionada (Teclas Delete/Backspace)">🗑️ Deletar</button>
+      </div>
+
+      <!-- UNIVERSAL MAGIC WAND & BACKGROUND REMOVER -->
+      <div style="background:rgba(168,85,247,0.06); border:1px solid rgba(168,85,247,0.25); padding:8px; border-radius:6px;">
+        <div class="tool-group-title" style="color:var(--accent-purple);">
+          <span>🪄 Varinha Mágica & Remover Fundo</span>
+        </div>
+        <div style="font-size:0.65rem; color:var(--text-muted); margin-bottom:4px;">Aplica na camada: <b id="wand-active-layer-name" style="color:var(--accent-cyan);">Nenhuma</b></div>
+        
+        <div class="form-group">
+          <label class="form-label">Tolerância de Cor: <span id="val-wand-tol">35</span></label>
+          <input type="range" id="wand-tolerance" min="1" max="100" value="35" class="form-control">
+        </div>
+
+        <div style="display:flex; gap:4px; margin-bottom:6px;">
+          <button id="btn-toggle-wand" class="btn btn-ghost" style="font-size:0.68rem; flex:1;">🪄 Clique no Canvas (Ativar)</button>
+          <button id="btn-reset-art" class="btn btn-ghost" style="font-size:0.68rem; color:var(--accent-cyan);" title="Restaurar imagem original da camada">↺ Reset</button>
+        </div>
+
+        <div class="grid-3">
+          <button id="btn-remove-white" class="badge-btn" style="font-size:0.65rem;">🤍 Fundo Branco</button>
+          <button id="btn-remove-green" class="badge-btn" style="font-size:0.65rem;">💚 Fundo Verde</button>
+          <button id="btn-remove-black" class="badge-btn" style="font-size:0.65rem;">🖤 Fundo Preto</button>
+        </div>
+      </div>
+
+      <!-- Layer Properties (X, Y, Width, Height) -->
+      <div style="background:rgba(255,255,255,0.03); padding:8px; border-radius:6px;">
+        <div class="tool-group-title">📐 Tamanho & Posição da Camada</div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Posição X (px):</label>
+            <input type="number" id="prop-x" value="0" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Posição Y (px):</label>
+            <input type="number" id="prop-y" value="0" class="form-control">
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Largura W (px):</label>
+            <input type="number" id="prop-w" value="100" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Altura H (px):</label>
+            <input type="number" id="prop-h" value="100" class="form-control">
+          </div>
+        </div>
+      </div>
+
+      <!-- Expanded Text Formatting Controls -->
+      <div style="background:rgba(255,255,255,0.03); padding:8px; border-radius:6px;">
+        <div class="tool-group-title">✍️ Formatação de Texto da Camada</div>
+        
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Tamanho Fonte: <span id="val-font-size">12</span>px</label>
+            <input type="range" id="text-font-size" min="6" max="48" value="12" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Altura Linha: <span id="val-line-height">14</span>px</label>
+            <input type="range" id="text-line-height" min="8" max="52" value="14" class="form-control">
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Alinhamento:</label>
+            <select id="text-align" class="form-control">
+              <option value="left">Esquerda</option>
+              <option value="center">Centro</option>
+              <option value="right">Direita</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cor Texto:</label>
+            <input type="color" id="text-color" value="#ffffff" class="form-control" style="height:26px; padding:1px;">
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Contorno / Glow:</label>
+            <select id="text-stroke" class="form-control">
+              <option value="none">Nenhum</option>
+              <option value="stroke-black">Contorno Preto</option>
+              <option value="shadow-glow">Glow Dourado</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Transp. Fundo:</label>
+            <input type="range" id="desc-bg-opacity" min="0" max="100" value="92" class="form-control">
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CENTER VIEWPORT: Interactive Canvas (Scales to Fit Screen) -->
+    <div class="canvas-viewport">
+      <canvas id="card-canvas" width="350" height="490"></canvas>
+      
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button id="btn-toggle-grid" class="btn btn-ghost" style="font-size:0.72rem;">📏 Grid Scouter</button>
+        <button id="btn-export-png" class="btn btn-ghost" style="font-size:0.72rem;">💾 Exportar PNG 4K Vector</button>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR: Layers Stack Manager, Presets & Master Layout Preset ID Engine -->
+    <div class="properties-sidebar">
+
+      <!-- NAMED MASTER TEMPLATE PRESET ENGINE -->
+      <div style="background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.3); padding:8px; border-radius:6px;">
+        <div class="tool-group-title" style="color:var(--accent-green);">📌 ID de Template Mestre</div>
+        
+        <div class="form-group">
+          <label class="form-label">Criar/Salvar Novo ID Mestre:</label>
+          <div style="display:flex; gap:4px;">
+            <input type="text" id="master-preset-id-input" placeholder="Ex: Layout_Mestre_v1" class="form-control" style="font-size:0.72rem;">
+            <button id="btn-save-master-preset" class="btn btn-ghost" style="font-size:0.68rem; color:var(--accent-gold); white-space:nowrap;">💾 Salvar ID</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">IDs Mestres Salvos:</label>
+          <div style="display:flex; gap:4px;">
+            <select id="select-master-preset-id" class="form-control" style="font-size:0.72rem;">
+              <option value="default_master">⭐ Layout Mestre Padrão (default_master)</option>
+            </select>
+            <button id="btn-apply-master-preset" class="btn btn-ghost" style="font-size:0.68rem; color:var(--accent-green); white-space:nowrap;">📋 Aplicar</button>
+            <button id="btn-delete-master-preset" class="btn btn-danger" style="font-size:0.68rem; padding:2px 5px;" title="Deletar este ID Mestre">🗑️</button>
+          </div>
+        </div>
+
+        <label style="display:flex; align-items:center; gap:5px; font-size:0.68rem; color:#fff; cursor:pointer;">
+          <input type="checkbox" id="chk-auto-master-layout">
+          <span>Auto-aplicar este ID Mestre em novas cartas</span>
+        </label>
+      </div>
+
+      <!-- Card Database & Template Color Switcher -->
+      <div style="background:rgba(255,255,255,0.03); padding:8px; border-radius:6px;">
+        <div class="tool-group-title">🖼️ Moldes & Imagens do Jogo</div>
+        
+        <div class="form-group">
+          <label class="form-label">Trocar Carta do Jogo:</label>
+          <select id="select-card-id" class="form-control"></select>
+        </div>
+
+        <!-- TEMPLATE COLOR / TYPE SELECTOR -->
+        <div class="form-group">
+          <label class="form-label">Molde Template PNG (Cores / Tipos):</label>
+          <select id="select-template-file" class="form-control">
+            <option value="template_red.png">🔴 Ataque Físico (Vermelho - template_red.png)</option>
+            <option value="template_beam.png">🟡 Feixe de Ki / Beam Clash (Amarelo - template_beam.png)</option>
+            <option value="template_blue.png">🔵 Defesa de Barreira (Azul Ki - template_blue.png)</option>
+            <option value="template_green.png">🟢 Suporte / Técnica (Verde - template_green.png)</option>
+            <option value="template_roxo.png">🟣 Esquiva / Anulação (Roxo - template_roxo.png)</option>
+            <option value="template_leader.png">👑 Lutador Líder (Dourado Imperial - template_leader.png)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Upload Molde Customizado (PNG):</label>
+          <input type="file" id="file-template-upload" accept="image/png" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Upload Foto do Personagem (Arte):</label>
+          <input type="file" id="file-art-upload" accept="image/*" class="form-control">
+        </div>
+      </div>
+
+      <!-- Interactive Layer Manager Stack List -->
+      <div style="background:rgba(255,255,255,0.03); padding:8px; border-radius:6px;">
+        <div class="tool-group-title">
+          <span>📚 Lista de Camadas (Topo -> Fundo)</span>
+          <button id="btn-reset-default-layers" class="btn btn-ghost" style="font-size:0.62rem; padding:1px 4px;" title="Restaurar padrão de camadas">↺ Reset</button>
+        </div>
+        
+        <div id="layers-stack-list">
+          <!-- Dynamically populated -->
+        </div>
+
+        <div class="grid-2" style="margin-top:6px;">
+          <button id="btn-layer-up" class="btn btn-ghost" style="font-size:0.68rem; color:var(--accent-cyan);">⬆️ Trazer p/ Cima</button>
+          <button id="btn-layer-down" class="btn btn-ghost" style="font-size:0.68rem; color:var(--accent-orange);">⬇️ Enviar p/ Trás</button>
+        </div>
+
+        <div class="grid-2" style="margin-top:4px;">
+          <button id="btn-add-stamp" class="btn btn-ghost" style="font-size:0.68rem; color:var(--accent-gold);">+ Add Selo Text</button>
+          <button id="btn-delete-stack-layer" class="btn btn-danger" style="font-size:0.68rem;">🗑️ Deletar Seleção</button>
+        </div>
+      </div>
+
+      <!-- Text Content Inputs -->
+      <div style="background:rgba(255,255,255,0.03); padding:8px; border-radius:6px;">
+        <div class="tool-group-title">✍️ Conteúdo do Texto</div>
+        <div class="form-group">
+          <label class="form-label">Nome do Guerreiro:</label>
+          <input type="text" id="stat-name" value="KAMEHAMEHA GOKU" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição da Carta (Sem Custo/Tipo):</label>
+          <textarea id="stat-desc" class="form-control" rows="2">Causa 40 HP de dano ao oponente.</textarea>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div id="studio-toast">🔥 Estado Único 4K Vector Capturado & Injetado no Jogo com Sucesso!</div>
+
+  <!-- MULTI-LAYER OBJECT ENGINE & INDEXEDDB SAFE SNAPSHOT EXPORTER WITH WORD-WRAP & MASTER PRESET AUTO-CLEANING -->
+  <script type="module">
+    import { CARD_DATABASE, getCardById } from './js/card-database.js';
+
+    let currentCardId = 'atk_01';
+    let canvas = document.getElementById('card-canvas');
+    let ctx = canvas.getContext('2d');
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    // HELPER: CLEAN CARD DESCRIPTION (REMOVE [SOCO - 2 Ki], [FEIXE DE KI - 4 Ki] BRACKET TAGS)
+    function cleanCardDescription(text) {
+      if (!text) return '';
+      return text.replace(/^\[[^\]]+\]\s*/gi, '').trim();
+    }
+
+    // HELPER: DYNAMIC WORD WRAPPING ENGINE FOR CANVAS TEXT
+    function getWrappedLines(targetCtx, text, maxWidth) {
+      if (!text) return [];
+      const clean = cleanCardDescription(text);
+      const paragraphs = clean.split('\n');
+      const lines = [];
+
+      paragraphs.forEach(paragraph => {
+        if (!paragraph.trim()) {
+          lines.push('');
+          return;
+        }
+        const words = paragraph.split(' ');
+        let currentLine = '';
+
+        for (let i = 0; i < words.length; i++) {
+          const word = words[i];
+          const testLine = currentLine ? currentLine + ' ' + word : word;
+          const metrics = targetCtx.measureText(testLine);
+          if (metrics.width > maxWidth && currentLine) {
+            lines.push(currentLine);
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+      });
+
+      return lines;
+    }
+
+    // UNDO & REDO ENGINE
+    let undoStack = [];
+    let redoStack = [];
+    const MAX_UNDO_STATES = 40;
+
+    function pushUndoState() {
+      try {
+        const artDataUrl = artOffCanvas.width > 0 ? artOffCanvas.toDataURL() : null;
+        const stateObj = {
+          layers: layers.map(l => ({
+            id: l.id, name: l.name, type: l.type, x: l.x, y: l.y, w: l.w, h: l.h, visible: l.visible,
+            fontSize: l.fontSize, lineHeight: l.lineHeight, align: l.align, color: l.color, stroke: l.stroke, bgOpacity: l.bgOpacity,
+            text: l.text, imgSrc: l.imgSrc
+          })),
+          selectedLayerId: selectedLayerId,
+          nameVal: document.getElementById('stat-name')?.value || '',
+          descVal: cleanCardDescription(document.getElementById('stat-desc')?.value || ''),
+          templateSrc: document.getElementById('select-template-file')?.value || 'template_red.png',
+          artDataUrl: artDataUrl
+        };
+
+        undoStack.push(JSON.stringify(stateObj));
+        if (undoStack.length > MAX_UNDO_STATES) undoStack.shift();
+        redoStack = [];
+        updateUndoRedoButtons();
+      } catch (e) {}
+    }
+
+    function restoreState(stateJson) {
+      try {
+        const state = JSON.parse(stateJson);
+        selectedLayerId = state.selectedLayerId;
+        if (document.getElementById('stat-name')) document.getElementById('stat-name').value = state.nameVal || '';
+        if (document.getElementById('stat-desc')) document.getElementById('stat-desc').value = cleanCardDescription(state.descVal || '');
+        if (document.getElementById('select-template-file')) document.getElementById('select-template-file').value = state.templateSrc || 'template_red.png';
+
+        layers = state.layers.map(sl => {
+          const def = layers.find(d => d.id === sl.id) || sl;
+          const imgInst = new Image();
+          if (sl.imgSrc) imgInst.src = sl.imgSrc;
+          return { ...def, ...sl, img: imgInst };
+        });
+
+        const tplLayer = layers.find(l => l.id === 'template');
+        if (tplLayer) {
+          tplLayer.img.onload = () => render();
+          tplLayer.img.src = state.templateSrc || 'template_red.png';
+        }
+
+        if (state.artDataUrl) {
+          const artImg = new Image();
+          artImg.onload = () => {
+            artOffCanvas.width = artImg.naturalWidth;
+            artOffCanvas.height = artImg.naturalHeight;
+            artOffCtx.imageSmoothingEnabled = true;
+            artOffCtx.imageSmoothingQuality = 'high';
+            artOffCtx.drawImage(artImg, 0, 0);
+            render();
+          };
+          artImg.src = state.artDataUrl;
+        }
+
+        renderLayersUI();
+        updatePropertiesForm();
+        render();
+        saveStudioState();
+        updateUndoRedoButtons();
+      } catch (e) {}
+    }
+
+    function undo() {
+      if (undoStack.length === 0) return;
+      const artDataUrl = artOffCanvas.width > 0 ? artOffCanvas.toDataURL() : null;
+      const currentObj = {
+        layers: layers.map(l => ({
+          id: l.id, name: l.name, type: l.type, x: l.x, y: l.y, w: l.w, h: l.h, visible: l.visible,
+          fontSize: l.fontSize, lineHeight: l.lineHeight, align: l.align, color: l.color, stroke: l.stroke, bgOpacity: l.bgOpacity,
+          text: l.text, imgSrc: l.imgSrc
+        })),
+        selectedLayerId: selectedLayerId,
+        nameVal: document.getElementById('stat-name')?.value || '',
+        descVal: cleanCardDescription(document.getElementById('stat-desc')?.value || ''),
+        templateSrc: document.getElementById('select-template-file')?.value || 'template_red.png',
+        artDataUrl: artDataUrl
+      };
+      redoStack.push(JSON.stringify(currentObj));
+
+      const prevState = undoStack.pop();
+      restoreState(prevState);
+    }
+
+    function redo() {
+      if (redoStack.length === 0) return;
+      const artDataUrl = artOffCanvas.width > 0 ? artOffCanvas.toDataURL() : null;
+      const currentObj = {
+        layers: layers.map(l => ({
+          id: l.id, name: l.name, type: l.type, x: l.x, y: l.y, w: l.w, h: l.h, visible: l.visible,
+          fontSize: l.fontSize, lineHeight: l.lineHeight, align: l.align, color: l.color, stroke: l.stroke, bgOpacity: l.bgOpacity,
+          text: l.text, imgSrc: l.imgSrc
+        })),
+        selectedLayerId: selectedLayerId,
+        nameVal: document.getElementById('stat-name')?.value || '',
+        descVal: cleanCardDescription(document.getElementById('stat-desc')?.value || ''),
+        templateSrc: document.getElementById('select-template-file')?.value || 'template_red.png',
+        artDataUrl: artDataUrl
+      };
+      undoStack.push(JSON.stringify(currentObj));
+
+      const nextState = redoStack.pop();
+      restoreState(nextState);
+    }
+
+    function updateUndoRedoButtons() {
+      const btnUndo = document.getElementById('btn-undo');
+      const btnRedo = document.getElementById('btn-redo');
+      if (btnUndo) btnUndo.style.opacity = undoStack.length > 0 ? '1' : '0.4';
+      if (btnRedo) btnRedo.style.opacity = redoStack.length > 0 ? '1' : '0.4';
+    }
+
+    // Universal IndexedDB Card Storage
+    const CardDB = {
+      dbName: 'DBTCG_Card_Storage',
+      storeName: 'custom_cards',
+      open() {
+        return new Promise((resolve) => {
+          try {
+            const req = indexedDB.open(this.dbName, 1);
+            req.onupgradeneeded = (e) => {
+              const db = e.target.result;
+              if (!db.objectStoreNames.contains(this.storeName)) {
+                db.createObjectStore(this.storeName);
+              }
+            };
+            req.onsuccess = (e) => resolve(e.target.result);
+            req.onerror = () => resolve(null);
+          } catch (e) { resolve(null); }
+        });
+      },
+      async setCard(cardId, dataUrl) {
+        try {
+          const db = await this.open();
+          if (!db) return false;
+          return new Promise((resolve) => {
+            const tx = db.transaction(this.storeName, 'readwrite');
+            tx.objectStore(this.storeName).put(dataUrl, cardId);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => resolve(false);
+          });
+        } catch (e) { return false; }
+      }
+    };
+
+    function getDefaultLayers() {
+      return [
+        { id: 'art', name: '🎨 Arte do Personagem', type: 'art', x: 15, y: 52, w: 320, h: 244, visible: true, img: new Image() },
+        { id: 'template', name: '🖼️ Molde Template PNG', type: 'template', x: 0, y: 0, w: 350, h: 490, visible: true, img: new Image() },
+        { id: 'ki_badge_png', name: '🔮 Esfera de Custo PNG', type: 'stamp', x: 14, y: 14, w: 48, h: 48, visible: true, img: new Image(), imgSrc: 'assets/badges/ki_cost_3.png' },
+        { id: 'power_badge_png', name: '⚡ Badge de Poder PNG', type: 'stamp', x: 230, y: 436, w: 100, h: 34, visible: true, img: new Image(), imgSrc: 'assets/badges/power_30_atk.png' },
+        { id: 'title', name: '🏷️ Título do Guerreiro', type: 'title', x: 68, y: 14, w: 260, h: 22, visible: true, fontSize: 13, color: '#ffffff', stroke: 'none' },
+        { id: 'desc', name: '📜 Painel de Descrição', type: 'desc', x: 20, y: 366, w: 310, h: 62, visible: true, fontSize: 11, lineHeight: 15, align: 'left', color: '#e2e8f0', stroke: 'none', bgOpacity: 92 }
+      ];
+    }
+
+    let layers = getDefaultLayers();
+    let selectedLayerId = 'title';
+    let isMouseDown = false;
+    let isResizing = false;
+    let dragOffsetX = 0, dragOffsetY = 0;
+    let showGrid = true;
+    let stampCounter = 1;
+    let isMagicWandActive = false;
+
+    let artOffCanvas = document.createElement('canvas');
+    let artOffCtx = artOffCanvas.getContext('2d');
+
+    function init() {
+      const selectCard = document.getElementById('select-card-id');
+      if (selectCard) {
+        selectCard.innerHTML = CARD_DATABASE.map(c => `<option value="${c.id}">${c.id.toUpperCase()} - ${c.name} (${c.type.toUpperCase()})</option>`).join('');
+      }
+
+      loadMasterPresetsList();
+      loadCard(currentCardId);
+      bindEvents();
+    }
+
+    function saveStudioState() {
+      if (!currentCardId) return;
+      try {
+        const stateObj = {
+          cardId: currentCardId,
+          layerOrder: layers.map(l => l.id),
+          layers: layers.map(l => ({
+            id: l.id, name: l.name, type: l.type, x: l.x, y: l.y, w: l.w, h: l.h, visible: l.visible,
+            fontSize: l.fontSize, lineHeight: l.lineHeight, align: l.align, color: l.color, stroke: l.stroke, bgOpacity: l.bgOpacity,
+            text: l.text, imgSrc: l.imgSrc
+          })),
+          name: document.getElementById('stat-name')?.value || '',
+          desc: cleanCardDescription(document.getElementById('stat-desc')?.value || ''),
+          templateSrc: document.getElementById('select-template-file')?.value || 'template_red.png'
+        };
+        localStorage.setItem(`dbtcg_studio_state_${currentCardId}`, JSON.stringify(stateObj));
+      } catch (e) {}
+    }
+
+    function saveMasterPreset(presetId) {
+      if (!presetId || !presetId.trim()) {
+        alert("Por favor, digite um ID para o Template Mestre!");
+        return;
+      }
+      const cleanId = presetId.trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+      try {
+        const masterObj = {
+          presetId: cleanId,
+          layerOrder: layers.map(l => l.id),
+          layers: layers.map(l => ({
+            id: l.id, name: l.name, type: l.type, x: l.x, y: l.y, w: l.w, h: l.h, visible: l.visible,
+            fontSize: l.fontSize, lineHeight: l.lineHeight, align: l.align, color: l.color, stroke: l.stroke, bgOpacity: l.bgOpacity
+          }))
+        };
+        localStorage.setItem(`dbtcg_master_preset_${cleanId}`, JSON.stringify(masterObj));
+
+        let presetList = getSavedPresetIds();
+        if (!presetList.includes(cleanId)) presetList.push(cleanId);
+        localStorage.setItem('dbtcg_master_preset_list', JSON.stringify(presetList));
+
+        loadMasterPresetsList();
+        const selectPreset = document.getElementById('select-master-preset-id');
+        if (selectPreset) selectPreset.value = cleanId;
+
+        const toast = document.getElementById('studio-toast');
+        if (toast) {
+          toast.textContent = `📌 ID Mestre "${cleanId}" Salvo com Sucesso!`;
+          toast.style.display = 'block';
+          setTimeout(() => { toast.style.display = 'none'; }, 3500);
+        }
+      } catch (e) {}
+    }
+
+    function getSavedPresetIds() {
+      try {
+        const raw = localStorage.getItem('dbtcg_master_preset_list');
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+      return ['default_master'];
+    }
+
+    function loadMasterPresetsList() {
+      const select = document.getElementById('select-master-preset-id');
+      if (!select) return;
+      const ids = getSavedPresetIds();
+      select.innerHTML = ids.map(id => `<option value="${id}">⭐ ${id}</option>`).join('');
+    }
+
+    function applyMasterPreset(presetId) {
+      if (!presetId) return false;
+      try {
+        let masterRaw = localStorage.getItem(`dbtcg_master_preset_${presetId}`);
+        if (!masterRaw && presetId === 'default_master') {
+          masterRaw = localStorage.getItem('dbtcg_master_layout_template');
+        }
+        if (!masterRaw) return false;
+
+        const masterData = JSON.parse(masterRaw);
+        const masterLayers = masterData.layers || masterData;
+        const savedOrder = masterData.layerOrder;
+
+        if (Array.isArray(masterLayers)) {
+          pushUndoState();
+          masterLayers.forEach(ml => {
+            const cur = layers.find(l => l.id === ml.id);
+            if (cur) {
+              cur.x = ml.x; cur.y = ml.y; cur.w = ml.w; cur.h = ml.h;
+              if (ml.fontSize !== undefined) cur.fontSize = ml.fontSize;
+              if (ml.lineHeight !== undefined) cur.lineHeight = ml.lineHeight;
+              if (ml.align) cur.align = ml.align;
+              if (ml.color) cur.color = ml.color;
+              if (ml.stroke) cur.stroke = ml.stroke;
+              if (ml.bgOpacity !== undefined) cur.bgOpacity = ml.bgOpacity;
+            }
+          });
+
+          if (Array.isArray(savedOrder) && savedOrder.length > 0) {
+            const newOrderedLayers = [];
+            savedOrder.forEach(id => {
+              const matching = layers.find(l => l.id === id);
+              if (matching) newOrderedLayers.push(matching);
+            });
+            layers.forEach(l => {
+              if (!newOrderedLayers.includes(l)) newOrderedLayers.push(l);
+            });
+            layers = newOrderedLayers;
+          }
+
+          // Automatically clean description input when applying master preset
+          const descEl = document.getElementById('stat-desc');
+          if (descEl) descEl.value = cleanCardDescription(descEl.value);
+
+          renderLayersUI();
+          updatePropertiesForm();
+          render();
+          saveStudioState();
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+
+    function deleteMasterPreset(presetId) {
+      if (presetId === 'default_master') {
+        alert("O ID Mestre padrão não pode ser excluído.");
+        return;
+      }
+      if (confirm(`Deseja excluir o ID Mestre "${presetId}"?`)) {
+        localStorage.removeItem(`dbtcg_master_preset_${presetId}`);
+        let presetList = getSavedPresetIds().filter(id => id !== presetId);
+        localStorage.setItem('dbtcg_master_preset_list', JSON.stringify(presetList));
+        loadMasterPresetsList();
+      }
+    }
+
+    function switchCard(newCardId) {
+      if (currentCardId) {
+        saveStudioState();
+      }
+      currentCardId = newCardId;
+      loadCard(currentCardId);
+    }
+
+    function loadCard(id) {
+      currentCardId = id;
+      const card = getCardById(id) || CARD_DATABASE[0];
+
+      layers = getDefaultLayers();
+
+      let tplSrc = 'template_red.png';
+      if (card.isBeam || card.actionCategory === 'ki_blast') {
+        tplSrc = 'template_beam.png';
+      } else if (card.type === 'defense' || card.type === 'block' || card.actionCategory === 'defesa') {
+        tplSrc = 'template_blue.png';
+      } else if (card.type === 'evade' || card.type === 'counter') {
+        tplSrc = 'template_roxo.png';
+      } else if (card.type === 'support' || card.type === 'tech' || card.actionCategory === 'efeito') {
+        tplSrc = 'template_green.png';
+      } else if (card.type === 'leader') {
+        tplSrc = 'template_leader.png';
+      } else if (card.type === 'attack' || card.actionCategory === 'soco') {
+        tplSrc = 'template_red.png';
+      }
+
+      const selectTpl = document.getElementById('select-template-file');
+      if (selectTpl) selectTpl.value = tplSrc;
+
+      try {
+        const savedRaw = localStorage.getItem(`dbtcg_studio_state_${id}`);
+        if (savedRaw) {
+          const saved = JSON.parse(savedRaw);
+          if (saved.layers && Array.isArray(saved.layers)) {
+            layers = saved.layers.map(sl => {
+              const def = layers.find(d => d.id === sl.id) || sl;
+              const imgInst = new Image();
+              if (sl.imgSrc) imgInst.src = sl.imgSrc;
+              return { ...def, ...sl, img: imgInst };
+            });
+          }
+          if (saved.layerOrder && Array.isArray(saved.layerOrder)) {
+            const reordered = [];
+            saved.layerOrder.forEach(lid => {
+              const item = layers.find(l => l.id === lid);
+              if (item) reordered.push(item);
+            });
+            layers.forEach(l => { if (!reordered.includes(l)) reordered.push(l); });
+            layers = reordered;
+          }
+          if (saved.name && document.getElementById('stat-name')) document.getElementById('stat-name').value = saved.name;
+          if (saved.desc && document.getElementById('stat-desc')) document.getElementById('stat-desc').value = cleanCardDescription(saved.desc);
+        } else {
+          const nameEl = document.getElementById('stat-name');
+          if (nameEl) nameEl.value = card.name || '';
+          
+          const descEl = document.getElementById('stat-desc');
+          if (descEl) descEl.value = cleanCardDescription(card.descPt || card.description || '').replace(/\\n/g, '\n');
+        }
+      } catch (e) {}
+
+      if (document.getElementById('chk-auto-master-layout')?.checked) {
+        const selPreset = document.getElementById('select-master-preset-id')?.value || 'default_master';
+        applyMasterPreset(selPreset);
+      }
+
+      const tplLayer = layers.find(l => l.id === 'template');
+      if (tplLayer) {
+        tplLayer.img.onload = () => render();
+        tplLayer.img.src = tplSrc;
+      }
+
+      const kiBadgeSrc = `assets/badges/ki_cost_${card.cost || 0}.png`;
+      let kiLayer = layers.find(l => l.id === 'ki_badge_png');
+      if (!kiLayer) {
+        kiLayer = { id: 'ki_badge_png', name: '🔮 Esfera de Custo PNG', type: 'stamp', x: 14, y: 14, w: 48, h: 48, visible: true };
+        layers.push(kiLayer);
+      }
+      kiLayer.imgSrc = kiBadgeSrc;
+      kiLayer.img = new Image();
+      kiLayer.img.onload = () => render();
+      kiLayer.img.src = kiBadgeSrc;
+
+      const pVal = card.power || card.block || 0;
+      const pSuffix = card.power ? 'atk' : (card.block ? 'def' : 'atk');
+      const powerBadgeSrc = `assets/badges/power_${pVal}_${pSuffix}.png`;
+      let pLayer = layers.find(l => l.id === 'power_badge_png');
+      if (!pLayer) {
+        pLayer = { id: 'power_badge_png', name: '⚡ Badge de Poder PNG', type: 'stamp', x: 230, y: 436, w: 100, h: 34, visible: true };
+        layers.push(pLayer);
+      }
+      pLayer.imgSrc = powerBadgeSrc;
+      pLayer.img = new Image();
+      pLayer.img.onload = () => render();
+      pLayer.img.src = powerBadgeSrc;
+
+      // Clear artOffCanvas so no stale pixels carry over from previous card
+      artOffCanvas.width = 0;
+      artOffCanvas.height = 0;
+
+      const artLayer = layers.find(l => l.id === 'art');
+      if (artLayer) {
+        const artTargetSrc = (artLayer.imgSrc && !artLayer.imgSrc.includes('assets/cards/'))
+          ? artLayer.imgSrc
+          : `assets/cards/${card.id}.png`;
+
+        artLayer.imgSrc = artTargetSrc;
+        artLayer.img = new Image();
+        artLayer.img.onload = () => {
+          artOffCanvas.width = artLayer.img.naturalWidth || 320;
+          artOffCanvas.height = artLayer.img.naturalHeight || 244;
+          artOffCtx.imageSmoothingEnabled = true;
+          artOffCtx.imageSmoothingQuality = 'high';
+          artOffCtx.clearRect(0, 0, artOffCanvas.width, artOffCanvas.height);
+          artOffCtx.drawImage(artLayer.img, 0, 0);
+          render();
+        };
+        artLayer.img.src = artTargetSrc;
+      }
+
+      renderLayersUI();
+      updatePropertiesForm();
+      render();
+    }
+
+    function removeBackgroundForSelectedLayer(targetR, targetG, targetB, tolerance = 35) {
+      const sel = layers.find(l => l.id === selectedLayerId);
+      if (!sel) return;
+
+      pushUndoState();
+
+      if (sel.type === 'art') {
+        if (artOffCanvas.width === 0) return;
+        const imgData = artOffCtx.getImageData(0, 0, artOffCanvas.width, artOffCanvas.height);
+        const data = imgData.data;
+        const tolSq = tolerance * tolerance;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i+1], b = data[i+2];
+          const distSq = (r - targetR)*(r - targetR) + (g - targetG)*(g - targetG) + (b - targetB)*(b - targetB);
+          if (distSq <= tolSq) {
+            data[i+3] = 0;
+          }
+        }
+
+        artOffCtx.putImageData(imgData, 0, 0);
+        sel.imgSrc = artOffCanvas.toDataURL();
+        sel.img.src = sel.imgSrc;
+        render();
+        saveStudioState();
+      } else if (sel.type === 'template' || sel.type === 'stamp') {
+        if (!sel.img || sel.img.naturalWidth === 0) return;
+        if (!sel.offCanvas) {
+          sel.offCanvas = document.createElement('canvas');
+          sel.offCtx = sel.offCanvas.getContext('2d');
+        }
+        if (sel.offCanvas.width !== sel.img.naturalWidth) {
+          sel.offCanvas.width = sel.img.naturalWidth;
+          sel.offCanvas.height = sel.img.naturalHeight;
+          sel.offCtx.drawImage(sel.img, 0, 0);
+        }
+
+        const imgData = sel.offCtx.getImageData(0, 0, sel.offCanvas.width, sel.offCanvas.height);
+        const data = imgData.data;
+        const tolSq = tolerance * tolerance;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i+1], b = data[i+2];
+          const distSq = (r - targetR)*(r - targetR) + (g - targetG)*(g - targetG) + (b - targetB)*(b - targetB);
+          if (distSq <= tolSq) {
+            data[i+3] = 0;
+          }
+        }
+
+        sel.offCtx.putImageData(imgData, 0, 0);
+        sel.imgSrc = sel.offCanvas.toDataURL();
+        sel.img.src = sel.imgSrc;
+        render();
+        saveStudioState();
+      }
+    }
+
+    function renderLayersUI() {
+      const container = document.getElementById('layers-stack-list');
+      const wandLayerName = document.getElementById('wand-active-layer-name');
+      const editLayerName = document.getElementById('editing-layer-name');
+      if (!container) return;
+
+      const selLayer = layers.find(l => l.id === selectedLayerId);
+      if (wandLayerName) wandLayerName.textContent = selLayer ? selLayer.name : 'Nenhuma';
+      if (editLayerName) editLayerName.textContent = selLayer ? selLayer.name : 'Selecione uma camada...';
+
+      container.innerHTML = layers.slice().reverse().map(l => `
+        <div class="layer-item ${l.id === selectedLayerId ? 'active' : ''}" onclick="selectLayer('${l.id}')">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <input type="checkbox" ${l.visible ? 'checked' : ''} onclick="event.stopPropagation(); toggleLayerVisibility('${l.id}')">
+            <span>${l.name}</span>
+          </div>
+          <span style="opacity:0.5; font-size:0.65rem;">#${l.id}</span>
+        </div>
+      `).join('');
+    }
+
+    window.selectLayer = function(id) {
+      selectedLayerId = id;
+      renderLayersUI();
+      updatePropertiesForm();
+      render();
+    };
+
+    window.toggleLayerVisibility = function(id) {
+      pushUndoState();
+      const l = layers.find(item => item.id === id);
+      if (l) {
+        l.visible = !l.visible;
+        render();
+        saveStudioState();
+      }
+    };
+
+    function updatePropertiesForm() {
+      const sel = layers.find(l => l.id === selectedLayerId);
+      if (!sel) return;
+
+      const px = document.getElementById('prop-x');
+      const py = document.getElementById('prop-y');
+      const pw = document.getElementById('prop-w');
+      const ph = document.getElementById('prop-h');
+
+      if (px) px.value = Math.round(sel.x);
+      if (py) py.value = Math.round(sel.y);
+      if (pw) pw.value = Math.round(sel.w);
+      if (ph) ph.value = Math.round(sel.h);
+
+      const fSz = sel.fontSize || 12;
+      const lH = sel.lineHeight || 14;
+      const fontEl = document.getElementById('text-font-size');
+      const lineEl = document.getElementById('text-line-height');
+      const valFontEl = document.getElementById('val-font-size');
+      const valLineEl = document.getElementById('val-line-height');
+
+      if (fontEl) fontEl.value = fSz;
+      if (valFontEl) valFontEl.textContent = fSz;
+
+      if (lineEl) lineEl.value = lH;
+      if (valLineEl) valLineEl.textContent = lH;
+
+      if (sel.align && document.getElementById('text-align')) document.getElementById('text-align').value = sel.align;
+      if (sel.color && document.getElementById('text-color')) document.getElementById('text-color').value = sel.color;
+      if (sel.stroke && document.getElementById('text-stroke')) document.getElementById('text-stroke').value = sel.stroke;
+      if (sel.bgOpacity !== undefined && document.getElementById('desc-bg-opacity')) document.getElementById('desc-bg-opacity').value = sel.bgOpacity;
+    }
+
+    function bindPropertyInputs() {
+      const getSel = () => layers.find(l => l.id === selectedLayerId);
+
+      ['prop-x', 'prop-y', 'prop-w', 'prop-h'].forEach(id => {
+        document.getElementById(id)?.addEventListener('input', (e) => {
+          const sel = getSel();
+          if (!sel) return;
+          const val = parseFloat(e.target.value) || 0;
+          if (id === 'prop-x') sel.x = val;
+          if (id === 'prop-y') sel.y = val;
+          if (id === 'prop-w') sel.w = val;
+          if (id === 'prop-h') sel.h = val;
+          render();
+          saveStudioState();
+        });
+      });
+
+      document.getElementById('text-font-size')?.addEventListener('input', (e) => {
+        const sel = getSel();
+        const val = parseInt(e.target.value, 10);
+        const lbl = document.getElementById('val-font-size');
+        if (lbl) lbl.textContent = val;
+        if (sel) sel.fontSize = val;
+        render();
+        saveStudioState();
+      });
+
+      document.getElementById('text-line-height')?.addEventListener('input', (e) => {
+        const sel = getSel();
+        const val = parseInt(e.target.value, 10);
+        const lbl = document.getElementById('val-line-height');
+        if (lbl) lbl.textContent = val;
+        if (sel) sel.lineHeight = val;
+        render();
+        saveStudioState();
+      });
+
+      document.getElementById('text-align')?.addEventListener('change', (e) => {
+        const sel = getSel();
+        if (sel) sel.align = e.target.value;
+        render();
+        saveStudioState();
+      });
+
+      document.getElementById('text-color')?.addEventListener('input', (e) => {
+        const sel = getSel();
+        if (sel) sel.color = e.target.value;
+        render();
+        saveStudioState();
+      });
+
+      document.getElementById('text-stroke')?.addEventListener('change', (e) => {
+        const sel = getSel();
+        if (sel) sel.stroke = e.target.value;
+        render();
+        saveStudioState();
+      });
+
+      document.getElementById('desc-bg-opacity')?.addEventListener('input', (e) => {
+        const sel = getSel();
+        if (sel) sel.bgOpacity = parseInt(e.target.value, 10);
+        render();
+        saveStudioState();
+      });
+    }
+
+    function moveLayerUp(id) {
+      const idx = layers.findIndex(l => l.id === id);
+      if (idx >= 0 && idx < layers.length - 1) {
+        pushUndoState();
+        const temp = layers[idx];
+        layers[idx] = layers[idx + 1];
+        layers[idx + 1] = temp;
+        renderLayersUI();
+        render();
+        saveStudioState();
+      }
+    }
+
+    function moveLayerDown(id) {
+      const idx = layers.findIndex(l => l.id === id);
+      if (idx > 0) {
+        pushUndoState();
+        const temp = layers[idx];
+        layers[idx] = layers[idx - 1];
+        layers[idx - 1] = temp;
+        renderLayersUI();
+        render();
+        saveStudioState();
+      }
+    }
+
+    function deleteSelectedLayer() {
+      if (selectedLayerId === 'art' || selectedLayerId === 'template') {
+        alert("As camadas de Arte e Molde Template são fundamentais e não podem ser excluídas.");
+        return;
+      }
+      pushUndoState();
+      layers = layers.filter(l => l.id !== selectedLayerId);
+      selectedLayerId = 'title';
+      renderLayersUI();
+      updatePropertiesForm();
+      render();
+      saveStudioState();
+    }
+
+    function resetDefaultLayers() {
+      if (confirm("Restaurar o padrão inicial de todas as camadas para a carta atual?")) {
+        pushUndoState();
+        localStorage.removeItem(`dbtcg_studio_state_${currentCardId}`);
+        loadCard(currentCardId);
+      }
+    }
+
+    // MAIN RENDER LOOP WITH AUTOMATIC WORD-WRAPPING & DYNAMIC SELECTION BOUNDS
+    function render(drawGrid = true) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const nameVal = (document.getElementById('stat-name')?.value || '').toUpperCase();
+      const descVal = cleanCardDescription(document.getElementById('stat-desc')?.value || '');
+      const card = getCardById(currentCardId) || CARD_DATABASE[0];
+
+      // Draw Layers Bottom-to-Top
+      layers.forEach(layer => {
+        if (!layer.visible) return;
+
+        ctx.save();
+
+        if (layer.type === 'art') {
+          ctx.beginPath();
+          ctx.roundRect(layer.x, layer.y, layer.w, layer.h, 6);
+          ctx.clip();
+
+          if (artOffCanvas.width > 0) {
+            ctx.drawImage(artOffCanvas, layer.x, layer.y, layer.w, layer.h);
+          } else if (layer.img && layer.img.complete && layer.img.naturalWidth > 0) {
+            ctx.drawImage(layer.img, layer.x, layer.y, layer.w, layer.h);
+          }
+        } else if (layer.type === 'template' || layer.type === 'stamp') {
+          if (layer.offCanvas && layer.offCanvas.width > 0) {
+            ctx.drawImage(layer.offCanvas, layer.x, layer.y, layer.w, layer.h);
+          } else if (layer.img && layer.img.complete && layer.img.naturalWidth > 0) {
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.drawImage(layer.img, layer.x, layer.y, layer.w, layer.h);
+          } else if (layer.id === 'ki_badge_png') {
+            const r = layer.w / 2;
+            const cx = layer.x + r, cy = layer.y + r;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fillStyle = '#f59e0b'; ctx.fill();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5; ctx.stroke();
+            ctx.fillStyle = '#000000'; ctx.font = '900 20px "Outfit", sans-serif';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(`${card.cost || 0}`, cx, cy + 1);
+          } else if (layer.id === 'power_badge_png') {
+            const val = card.power || card.block || 0;
+            const isAtk = !!card.power;
+            ctx.beginPath();
+            ctx.roundRect(layer.x, layer.y, layer.w, layer.h, 8);
+            ctx.fillStyle = isAtk ? '#ef4444' : '#38bdf8'; ctx.fill();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = '#ffffff'; ctx.font = '900 13px "Outfit", sans-serif';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(`${val} ${isAtk ? 'ATK' : 'DEF'}`, layer.x + layer.w / 2, layer.y + layer.h / 2);
+          }
+        } else if (layer.type === 'title') {
+          const fontSz = layer.fontSize || 13;
+          ctx.font = `900 ${fontSz}px "Outfit", sans-serif`;
+          ctx.fillStyle = layer.color || '#ffffff';
+          ctx.textAlign = layer.align || 'left';
+
+          const textContent = layer.text || nameVal;
+
+          if (layer.stroke === 'stroke-black') {
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3;
+            ctx.strokeText(textContent, layer.x, layer.y + fontSz);
+          } else if (layer.stroke === 'shadow-glow') {
+            ctx.shadowColor = '#ffd700';
+            ctx.shadowBlur = 10;
+          } else {
+            ctx.shadowColor = '#000000';
+            ctx.shadowBlur = 6;
+          }
+
+          ctx.fillText(textContent, layer.x, layer.y + fontSz);
+        } else if (layer.type === 'desc') {
+          const descText = cleanCardDescription(layer.text || descVal);
+          const fontSz = layer.fontSize || 11;
+          const lineH = layer.lineHeight || (fontSz + 4);
+
+          ctx.font = `700 ${fontSz}px "Inter", sans-serif`;
+          const maxW = Math.max(20, layer.w - 16);
+          const lines = getWrappedLines(ctx, descText, maxW);
+          const totalTextHeight = Math.max(30, lines.length * lineH + 14);
+          const boxH = Math.max(layer.h, totalTextHeight);
+
+          // Draw Rounded Background Box
+          const bgOpacity = (layer.bgOpacity !== undefined ? layer.bgOpacity : 92) / 100;
+          ctx.fillStyle = `rgba(8, 12, 24, ${bgOpacity})`;
+          ctx.strokeStyle = 'rgba(255, 215, 0, 0.35)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.roundRect(layer.x, layer.y, layer.w, boxH, 6);
+          ctx.fill();
+          ctx.stroke();
+
+          // Render Wrapped Text Lines
+          ctx.fillStyle = layer.color || '#cbd5e1';
+          ctx.textAlign = layer.align || 'left';
+
+          let currentY = layer.y + fontSz + 4;
+          lines.forEach(l => {
+            const startX = layer.align === 'center'
+              ? layer.x + layer.w / 2
+              : (layer.align === 'right' ? layer.x + layer.w - 8 : layer.x + 8);
+
+            if (layer.stroke === 'stroke-black') {
+              ctx.strokeStyle = '#000000';
+              ctx.lineWidth = 2.5;
+              ctx.strokeText(l, startX, currentY);
+            }
+            ctx.fillText(l, startX, currentY);
+            currentY += lineH;
+          });
+        }
+
+        ctx.restore();
+      });
+
+      // Draw Selected Layer Bounding Box with Automatic Multi-Line Text Bounds
+      const selLayer = layers.find(l => l.id === selectedLayerId);
+      if (selLayer && selLayer.visible) {
+        let drawW = selLayer.w;
+        let drawH = selLayer.h;
+
+        if (selLayer.type === 'desc') {
+          const descText = cleanCardDescription(descVal);
+          const fontSz = selLayer.fontSize || 11;
+          const lineH = selLayer.lineHeight || (fontSz + 4);
+          ctx.font = `700 ${fontSz}px "Inter", sans-serif`;
+          const lines = getWrappedLines(ctx, descText, Math.max(20, selLayer.w - 16));
+          drawH = Math.max(selLayer.h, lines.length * lineH + 14);
+        }
+
+        ctx.save();
+        ctx.strokeStyle = isMagicWandActive ? '#a855f7' : '#38bdf8';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.strokeRect(selLayer.x, selLayer.y, drawW, drawH);
+
+        ctx.setLineDash([]);
+        ctx.fillStyle = isMagicWandActive ? '#a855f7' : '#ffd700';
+        ctx.fillRect(selLayer.x + drawW - 6, selLayer.y + drawH - 6, 12, 12);
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(selLayer.x + drawW - 6, selLayer.y + drawH - 6, 12, 12);
+        ctx.restore();
+      }
+
+      if (showGrid && drawGrid) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0, 255, 255, 0.18)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x <= canvas.width; x += 35) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height);
+          ctx.stroke();
+        }
+        for (let y = 0; y <= canvas.height; y += 35) {
+          ctx.beginPath();
+          ctx.moveTo(0, y); ctx.lineTo(canvas.width, y);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+    }
+
+    // HIGH-DPI SUPERSAMPLED 4K VECTOR SNAPSHOT CAPTURE ENGINE (1400x1960 NATIVE 4K)
+    function generate4KSupersampledDataUrl() {
+      const superCanvas = document.createElement('canvas');
+      superCanvas.width = 1400;
+      superCanvas.height = 1960;
+      const sCtx = superCanvas.getContext('2d');
+
+      sCtx.imageSmoothingEnabled = true;
+      sCtx.imageSmoothingQuality = 'high';
+
+      const scaleX = 1400 / 350;
+      const scaleY = 1960 / 490;
+
+      const nameVal = (document.getElementById('stat-name')?.value || '').toUpperCase();
+      const descVal = cleanCardDescription(document.getElementById('stat-desc')?.value || '');
+      const card = getCardById(currentCardId) || CARD_DATABASE[0];
+
+      layers.forEach(layer => {
+        if (!layer.visible) return;
+
+        sCtx.save();
+        const sx = layer.x * scaleX;
+        const sy = layer.y * scaleY;
+        const sw = layer.w * scaleX;
+        const sh = layer.h * scaleY;
+
+        if (layer.type === 'art') {
+          sCtx.beginPath();
+          sCtx.roundRect(sx, sy, sw, sh, 24);
+          sCtx.clip();
+
+          if (artOffCanvas.width > 0) {
+            sCtx.drawImage(artOffCanvas, sx, sy, sw, sh);
+          } else if (layer.img && layer.img.complete && layer.img.naturalWidth > 0) {
+            sCtx.drawImage(layer.img, sx, sy, sw, sh);
+          }
+        } else if (layer.type === 'template' || layer.type === 'stamp') {
+          if (layer.offCanvas && layer.offCanvas.width > 0) {
+            sCtx.drawImage(layer.offCanvas, sx, sy, sw, sh);
+          } else if (layer.img && layer.img.complete && layer.img.naturalWidth > 0) {
+            sCtx.shadowColor = 'transparent';
+            sCtx.shadowBlur = 0;
+            sCtx.drawImage(layer.img, sx, sy, sw, sh);
+          } else if (layer.id === 'ki_badge_png') {
+            const r = sw / 2;
+            const cx = sx + r, cy = sy + r;
+            sCtx.beginPath();
+            sCtx.arc(cx, cy, r, 0, Math.PI * 2);
+            sCtx.fillStyle = '#f59e0b'; sCtx.fill();
+            sCtx.strokeStyle = '#ffffff'; sCtx.lineWidth = 10; sCtx.stroke();
+            sCtx.fillStyle = '#000000'; sCtx.font = '900 80px "Outfit", sans-serif';
+            sCtx.textAlign = 'center'; sCtx.textBaseline = 'middle';
+            sCtx.fillText(`${card.cost || 0}`, cx, cy + 4);
+          } else if (layer.id === 'power_badge_png') {
+            const val = card.power || card.block || 0;
+            const isAtk = !!card.power;
+            sCtx.beginPath();
+            sCtx.roundRect(sx, sy, sw, sh, 32);
+            sCtx.fillStyle = isAtk ? '#ef4444' : '#38bdf8'; sCtx.fill();
+            sCtx.strokeStyle = '#ffffff'; sCtx.lineWidth = 8; sCtx.stroke();
+            sCtx.fillStyle = '#ffffff'; sCtx.font = '900 52px "Outfit", sans-serif';
+            sCtx.textAlign = 'center'; sCtx.textBaseline = 'middle';
+            sCtx.fillText(`${val} ${isAtk ? 'ATK' : 'DEF'}`, sx + sw / 2, sy + sh / 2);
+          }
+        } else if (layer.type === 'title') {
+          const fontSize = (layer.fontSize || 13) * scaleY;
+          sCtx.font = `900 ${fontSize}px "Outfit", sans-serif`;
+          sCtx.fillStyle = layer.color || '#ffffff';
+          sCtx.textAlign = layer.align || 'left';
+          const textContent = layer.text || nameVal;
+
+          if (layer.stroke === 'stroke-black') {
+            sCtx.strokeStyle = '#000000';
+            sCtx.lineWidth = 12;
+            sCtx.strokeText(textContent, sx, sy + fontSize);
+          } else if (layer.stroke === 'shadow-glow') {
+            sCtx.shadowColor = '#ffd700';
+            sCtx.shadowBlur = 40;
+          } else {
+            sCtx.shadowColor = '#000000';
+            sCtx.shadowBlur = 24;
+          }
+
+          sCtx.fillText(textContent, sx, sy + fontSize);
+        } else if (layer.type === 'desc') {
+          const descText = cleanCardDescription(descVal);
+          const fontSize = (layer.fontSize || 11) * scaleY;
+          const lineH = (layer.lineHeight || ((layer.fontSize || 11) + 4)) * scaleY;
+
+          sCtx.font = `700 ${fontSize}px "Inter", sans-serif`;
+          const maxTextW = Math.max(80, (layer.w - 16) * scaleX);
+          const lines = getWrappedLines(sCtx, descText, maxTextW);
+
+          const totalTextH = lines.length * lineH + 14 * scaleY;
+          const boxH = Math.max(sh, totalTextH);
+
+          const bgOpacity = (layer.bgOpacity !== undefined ? layer.bgOpacity : 92) / 100;
+          sCtx.fillStyle = `rgba(8, 12, 24, ${bgOpacity})`;
+          sCtx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
+          sCtx.lineWidth = 6;
+          sCtx.beginPath();
+          sCtx.roundRect(sx, sy, sw, boxH, 24);
+          sCtx.fill();
+          sCtx.stroke();
+
+          sCtx.fillStyle = layer.color || '#cbd5e1';
+          sCtx.textAlign = layer.align || 'left';
+
+          let currentY = sy + fontSize + 4 * scaleY;
+          lines.forEach(l => {
+            const startX = layer.align === 'center'
+              ? sx + sw / 2
+              : (layer.align === 'right' ? sx + sw - 32 : sx + 32);
+
+            if (layer.stroke === 'stroke-black') {
+              sCtx.strokeStyle = '#000000';
+              sCtx.lineWidth = 10;
+              sCtx.strokeText(l, startX, currentY);
+            }
+            sCtx.fillText(l, startX, currentY);
+            currentY += lineH;
+          });
+        }
+
+        sCtx.restore();
+      });
+
+      return superCanvas.toDataURL('image/png');
+    }
+
+    // GUARANTEED 4K SUPREME VECTOR SNAPSHOT FOR INJECTION & GAME DISPLAY
+    function generateGameOptimizedDataUrl() {
+      return generate4KSupersampledDataUrl();
+    }
+
+    function bindEvents() {
+      bindPropertyInputs();
+
+      document.getElementById('btn-layer-up')?.addEventListener('click', () => {
+        if (selectedLayerId) moveLayerUp(selectedLayerId);
+      });
+      document.getElementById('btn-layer-down')?.addEventListener('click', () => {
+        if (selectedLayerId) moveLayerDown(selectedLayerId);
+      });
+
+      document.getElementById('btn-undo')?.addEventListener('click', undo);
+      document.getElementById('btn-redo')?.addEventListener('click', redo);
+
+      window.addEventListener('keydown', (e) => {
+        const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+        if (isCtrlOrCmd && (e.key === 'z' || e.key === 'Z')) {
+          if (e.shiftKey) {
+            e.preventDefault();
+            redo();
+          } else {
+            e.preventDefault();
+            undo();
+          }
+        } else if (isCtrlOrCmd && (e.key === 'y' || e.key === 'Y')) {
+          e.preventDefault();
+          redo();
+        } else if (e.key === 'Delete' || e.key === 'Backspace') {
+          const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+          if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') return;
+          deleteSelectedLayer();
+        }
+      });
+
+      // INTERACTIVE CANVAS MOUSE EVENTS: CLICK & DRAG TO MOVE / RESIZE LAYERS
+      canvas.addEventListener('mousedown', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+        isMouseDown = true;
+        pushUndoState();
+
+        const selLayer = layers.find(l => l.id === selectedLayerId);
+
+        if (selLayer && Math.abs(mouseX - (selLayer.x + selLayer.w)) < 16 && Math.abs(mouseY - (selLayer.y + selLayer.h)) < 16) {
+          isResizing = true;
+        } else {
+          isResizing = false;
+
+          if (selLayer && mouseX >= selLayer.x && mouseX <= selLayer.x + selLayer.w && mouseY >= selLayer.y && mouseY <= selLayer.y + selLayer.h) {
+            dragOffsetX = mouseX - selLayer.x;
+            dragOffsetY = mouseY - selLayer.y;
+          } else {
+            let found = false;
+            for (let i = layers.length - 1; i >= 0; i--) {
+              const l = layers[i];
+              if (l.visible && mouseX >= l.x && mouseX <= l.x + l.w && mouseY >= l.y && mouseY <= l.y + l.h) {
+                selectedLayerId = l.id;
+                dragOffsetX = mouseX - l.x;
+                dragOffsetY = mouseY - l.y;
+                found = true;
+                break;
+              }
+            }
+          }
+        }
+
+        renderLayersUI();
+        updatePropertiesForm();
+        render();
+      });
+
+      canvas.addEventListener('mousemove', (e) => {
+        if (!isMouseDown) return;
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+        const selLayer = layers.find(l => l.id === selectedLayerId);
+        if (!selLayer) return;
+
+        if (isResizing) {
+          selLayer.w = Math.max(15, mouseX - selLayer.x);
+          selLayer.h = Math.max(15, mouseY - selLayer.y);
+        } else {
+          selLayer.x = mouseX - dragOffsetX;
+          selLayer.y = mouseY - dragOffsetY;
+        }
+
+        updatePropertiesForm();
+        render();
+        saveStudioState();
+      });
+
+      window.addEventListener('mouseup', () => {
+        isMouseDown = false;
+        isResizing = false;
+      });
+
+      document.getElementById('btn-delete-active-layer')?.addEventListener('click', deleteSelectedLayer);
+      document.getElementById('btn-delete-stack-layer')?.addEventListener('click', deleteSelectedLayer);
+      document.getElementById('btn-reset-default-layers')?.addEventListener('click', resetDefaultLayers);
+      
+      document.getElementById('btn-save-master-preset')?.addEventListener('click', () => {
+        const presetId = document.getElementById('master-preset-id-input')?.value || 'Mestre_Guerreiro';
+        saveMasterPreset(presetId);
+      });
+      document.getElementById('btn-apply-master-preset')?.addEventListener('click', () => {
+        const presetId = document.getElementById('select-master-preset-id')?.value || 'default_master';
+        applyMasterPreset(presetId);
+      });
+      document.getElementById('btn-delete-master-preset')?.addEventListener('click', () => {
+        const presetId = document.getElementById('select-master-preset-id')?.value;
+        if (presetId) deleteMasterPreset(presetId);
+      });
+
+      const wandTolInput = document.getElementById('wand-tolerance');
+      if (wandTolInput) {
+        wandTolInput.addEventListener('input', (e) => {
+          const lbl = document.getElementById('val-wand-tol');
+          if (lbl) lbl.textContent = e.target.value;
+        });
+      }
+
+      document.getElementById('btn-toggle-wand')?.addEventListener('click', (e) => {
+        isMagicWandActive = !isMagicWandActive;
+        const btn = e.target;
+        if (isMagicWandActive) {
+          btn.textContent = "🪄 Clique no Canvas (ATIVO!)";
+          btn.style.borderColor = "#a855f7";
+          btn.style.color = "#a855f7";
+        } else {
+          btn.textContent = "🪄 Clique no Canvas (Ativar)";
+          btn.style.borderColor = "";
+          btn.style.color = "";
+        }
+        render();
+      });
+
+      document.getElementById('btn-remove-white')?.addEventListener('click', () => {
+        const tol = parseInt(document.getElementById('wand-tolerance')?.value || '35', 10);
+        removeBackgroundForSelectedLayer(255, 255, 255, tol);
+      });
+      document.getElementById('btn-remove-green')?.addEventListener('click', () => {
+        const tol = parseInt(document.getElementById('wand-tolerance')?.value || '35', 10);
+        removeBackgroundForSelectedLayer(0, 255, 0, tol);
+      });
+      document.getElementById('btn-remove-black')?.addEventListener('click', () => {
+        const tol = parseInt(document.getElementById('wand-tolerance')?.value || '35', 10);
+        removeBackgroundForSelectedLayer(0, 0, 0, tol);
+      });
+
+      document.getElementById('btn-reset-art')?.addEventListener('click', () => {
+        pushUndoState();
+        loadCard(currentCardId);
+      });
+
+      document.getElementById('select-template-file')?.addEventListener('change', (e) => {
+        pushUndoState();
+        const newTplSrc = e.target.value;
+        const tplLayer = layers.find(l => l.id === 'template');
+        if (tplLayer) {
+          tplLayer.img.onload = () => { render(); saveStudioState(); };
+          tplLayer.img.src = newTplSrc;
+        }
+      });
+
+      document.getElementById('file-template-upload')?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        pushUndoState();
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const tplLayer = layers.find(l => l.id === 'template');
+          if (tplLayer) {
+            tplLayer.img.onload = () => { render(); saveStudioState(); };
+            tplLayer.img.src = evt.target.result;
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+
+      document.getElementById('file-art-upload')?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        pushUndoState();
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const artLayer = layers.find(l => l.id === 'art');
+          if (artLayer) {
+            artLayer.img.onload = () => {
+              artOffCanvas.width = artLayer.img.naturalWidth;
+              artOffCanvas.height = artLayer.img.naturalHeight;
+              artOffCtx.imageSmoothingEnabled = true;
+              artOffCtx.imageSmoothingQuality = 'high';
+              artOffCtx.drawImage(artLayer.img, 0, 0);
+              render();
+              saveStudioState();
+            };
+            artLayer.img.src = evt.target.result;
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+
+      document.getElementById('file-stamp-upload')?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        pushUndoState();
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const stampId = `stamp_png_${Date.now()}_${stampCounter++}`;
+          const stampImg = new Image();
+          stampImg.onload = () => {
+            const newLayer = {
+              id: stampId,
+              name: `✨ Selo PNG (${file.name.substring(0, 10)})`,
+              type: 'stamp',
+              img: stampImg,
+              imgSrc: evt.target.result,
+              x: 100, y: 100, w: 80, h: 80, visible: true
+            };
+            layers.push(newLayer);
+            selectedLayerId = stampId;
+            renderLayersUI();
+            render();
+            saveStudioState();
+          };
+          stampImg.src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      document.getElementById('btn-add-stamp')?.addEventListener('click', () => {
+        const stampId = `stamp_text_${Date.now()}_${stampCounter++}`;
+        const newLayer = {
+          id: stampId,
+          name: `⚡ Selo Texto`,
+          type: 'title',
+          text: '⚡ KI',
+          x: 20, y: 20, w: 80, h: 30, visible: true, fontSize: 16, color: '#ffd700'
+        };
+        layers.push(newLayer);
+        selectedLayerId = stampId;
+        renderLayersUI();
+        render();
+        saveStudioState();
+      });
+
+      // BATCH INJECTION IN STUDIO.HTML WITH AUTOMATIC WORD-WRAPPING & 4K SUPREME VECTOR SNAPSHOTS
+      document.getElementById('btn-inject-batch-all')?.addEventListener('click', async () => {
+        const toast = document.getElementById('studio-toast');
+        if (toast) {
+          toast.textContent = "🚀 Compilando e Injetando TODAS as 70 Cartas em 4K Supreme Vector no Jogo...";
+          toast.style.display = 'block';
+        }
+
+        try {
+          CARD_DATABASE.forEach(c => {
+            localStorage.removeItem(`dbtcg_custom_card_${c.id}`);
+          });
+        } catch(e) {}
+
+        function loadBatchImgAsync(src) {
+          return new Promise((resolve) => {
+            if (!src) return resolve(null);
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => resolve(null);
+            img.src = src;
+          });
+        }
+
+        let count = 0;
+        for (const card of CARD_DATABASE) {
+          let tplSrc = 'template_red.png';
+          if (card.isBeam || card.actionCategory === 'ki_blast') tplSrc = 'template_beam.png';
+          else if (card.type === 'defense' || card.type === 'block' || card.actionCategory === 'defesa') tplSrc = 'template_blue.png';
+          else if (card.type === 'evade' || card.type === 'counter') tplSrc = 'template_roxo.png';
+          else if (card.type === 'support' || card.type === 'tech' || card.actionCategory === 'efeito') tplSrc = 'template_green.png';
+          else if (card.type === 'leader') tplSrc = 'template_leader.png';
+
+          const kiBadgeSrc = `assets/badges/ki_cost_${card.cost || 0}.png`;
+          const pVal = card.power || card.block || 0;
+          const pSuffix = card.power ? 'atk' : (card.block ? 'def' : 'atk');
+          const powerBadgeSrc = `assets/badges/power_${pVal}_${pSuffix}.png`;
+
+          // Check if custom art is saved for this card or use base image
+          let artSrc = `assets/cards/${card.id}.png`;
+          const savedRaw = localStorage.getItem(`dbtcg_studio_state_${card.id}`);
+          if (savedRaw) {
+            try {
+              const saved = JSON.parse(savedRaw);
+              const savedArt = saved.layers?.find(l => l.id === 'art');
+              if (savedArt?.imgSrc) artSrc = savedArt.imgSrc;
+            } catch(e) {}
+          }
+
+          const [loadedArt, loadedTpl, loadedKi, loadedPower] = await Promise.all([
+            loadBatchImgAsync(artSrc),
+            loadBatchImgAsync(tplSrc),
+            loadBatchImgAsync(kiBadgeSrc),
+            loadBatchImgAsync(powerBadgeSrc)
+          ]);
+
+          if (loadedArt) {
+            artOffCanvas.width = loadedArt.naturalWidth || 320;
+            artOffCanvas.height = loadedArt.naturalHeight || 244;
+            artOffCtx.imageSmoothingEnabled = true;
+            artOffCtx.imageSmoothingQuality = 'high';
+            artOffCtx.drawImage(loadedArt, 0, 0);
+          } else {
+            artOffCanvas.width = 0;
+            artOffCanvas.height = 0;
+          }
+
+          const tplLayer = layers.find(l => l.id === 'template');
+          if (tplLayer && loadedTpl) { tplLayer.img = loadedTpl; tplLayer.imgSrc = tplSrc; }
+
+          const kiLayer = layers.find(l => l.id === 'ki_badge_png');
+          if (kiLayer && loadedKi) { kiLayer.img = loadedKi; kiLayer.imgSrc = kiBadgeSrc; }
+
+          const pLayer = layers.find(l => l.id === 'power_badge_png');
+          if (pLayer && loadedPower) { pLayer.img = loadedPower; pLayer.imgSrc = powerBadgeSrc; }
+
+          const artLayer = layers.find(l => l.id === 'art');
+          if (artLayer && loadedArt) { artLayer.img = loadedArt; artLayer.imgSrc = artSrc; }
+
+          const nameEl = document.getElementById('stat-name');
+          if (nameEl) nameEl.value = card.name || '';
+
+          const descEl = document.getElementById('stat-desc');
+          if (descEl) descEl.value = cleanCardDescription(card.descPt || card.description || '').replace(/\\n/g, '\n');
+
+          render(false);
+          const snapshot4K = generate4KSupersampledDataUrl();
+
+          try { await CardDB.setCard(`dbtcg_custom_card_${card.id}`, snapshot4K); } catch(e){}
+          try { localStorage.setItem(`dbtcg_custom_card_${card.id}`, snapshot4K); } catch(e){}
+          if (typeof window !== 'undefined') {
+            window.GLOBAL_CUSTOM_CARDS = window.GLOBAL_CUSTOM_CARDS || {};
+            window.GLOBAL_CUSTOM_CARDS[card.id] = snapshot4K;
+          }
+
+          fetch('/api/inject-card', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cardId: card.id, dataUrl: snapshot4K })
+          }).catch(e => {});
+
+          count++;
+        }
+
+        loadCard(currentCardId);
+
+        if (toast) {
+          toast.textContent = `🔥 SUCESSO SUPREMO! ${count} Cartas Compiladas em 4K Vector e Injetadas no Jogo!`;
+          setTimeout(() => { toast.style.display = 'none'; }, 4000);
+        }
+      });
+
+      // INJECT SINGLE CARD
+      document.getElementById('btn-inject-db')?.addEventListener('click', async () => {
+        const artLayer = layers.find(l => l.id === 'art');
+        if (artLayer && artLayer.imgSrc) {
+          await new Promise(resolve => {
+            const img = new Image();
+            img.onload = () => {
+              artOffCanvas.width = img.naturalWidth || 320;
+              artOffCanvas.height = img.naturalHeight || 244;
+              artOffCtx.imageSmoothingEnabled = true;
+              artOffCtx.imageSmoothingQuality = 'high';
+              artOffCtx.clearRect(0, 0, artOffCanvas.width, artOffCanvas.height);
+              artOffCtx.drawImage(img, 0, 0);
+              resolve();
+            };
+            img.onerror = () => resolve();
+            img.src = artLayer.imgSrc;
+          });
+        }
+
+        render(false);
+        const snapshot4K = generate4KSupersampledDataUrl();
+        
+        window.GLOBAL_CUSTOM_CARDS = window.GLOBAL_CUSTOM_CARDS || {};
+        window.GLOBAL_CUSTOM_CARDS[currentCardId] = snapshot4K;
+
+        try {
+          await CardDB.setCard(`dbtcg_custom_card_${currentCardId}`, snapshot4K);
+        } catch (e) {}
+
+        try {
+          localStorage.setItem(`dbtcg_custom_card_${currentCardId}`, snapshot4K);
+        } catch (e) {}
+
+        fetch('/api/inject-card', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cardId: currentCardId, dataUrl: snapshot4K })
+        }).catch(e => {});
+
+        render(true);
+
+        const toast = document.getElementById('studio-toast');
+        if (toast) {
+          toast.textContent = "🔥 Carta Capturada & Injetada em 4K no Jogo com Sucesso!";
+          toast.style.display = 'block';
+          setTimeout(() => { toast.style.display = 'none'; }, 3500);
+        }
+      });
+
+      document.querySelectorAll('input, select, textarea').forEach(el => {
+        el.addEventListener('input', () => {
+          render();
+          saveStudioState();
+        });
+      });
+
+      document.getElementById('select-card-id')?.addEventListener('change', (e) => {
+        switchCard(e.target.value);
+      });
+
+      document.getElementById('btn-toggle-grid')?.addEventListener('click', () => {
+        showGrid = !showGrid;
+        render();
+      });
+
+      document.getElementById('btn-export-png')?.addEventListener('click', () => {
+        const compiledSnapshot4K = generate4KSupersampledDataUrl();
+        const link = document.createElement('a');
+        link.download = `DBZ_TCG_Photoshop_${currentCardId}_4K.png`;
+        link.href = compiledSnapshot4K;
+        link.click();
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>

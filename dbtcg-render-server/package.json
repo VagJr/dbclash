@@ -1,7 +1,7 @@
 {
-  "name": "dbtcg-render-server",
+  "name": "dragonball-clash-server",
   "version": "1.0.0",
-  "description": "Dragon Ball Clash Action TCG - Dedicated Socket.io Server for Render Deployment",
+  "description": "Dragon Ball Clash Action TCG - Socket.io Dedicated Backend Server for Render Deployment",
   "main": "server.js",
   "type": "module",
   "scripts": {

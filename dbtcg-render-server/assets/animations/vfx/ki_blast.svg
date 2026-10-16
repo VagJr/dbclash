@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <radialGradient id="kiGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="25%" stop-color="#00ffff" stop-opacity="0.95"/>
+      <stop offset="60%" stop-color="#0066ff" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#000033" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="150" cy="150" r="130" fill="url(#kiGrad)" />
+  <circle cx="150" cy="150" r="60" fill="#ffffff" filter="blur(2px)"/>
+  <!-- Energy Rays -->
+  <g stroke="#88ffff" stroke-width="3" opacity="0.8">
+    <line x1="150" y1="10" x2="150" y2="290"/>
+    <line x1="10" y1="150" x2="290" y2="150"/>
+    <line x1="51" y1="51" x2="249" y2="249"/>
+    <line x1="51" y1="249" x2="249" y2="51"/>
+  </g>
+</svg>

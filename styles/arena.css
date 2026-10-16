@@ -1988,460 +1988,445 @@
   .result-btn { font-size: 0.85rem; padding: 12px 30px; }
 }
 
-
 /* ==========================================================================
-   2v2 REALTIME — Official Arena Integration
-   Extends the existing arena language instead of drawing a second game screen.
+   2v2 RANKED & RAID CO-OP MULTIPLAYER MODE LAYOUTS
    ========================================================================== */
 
-#scene-arena.squad-realtime-mode .arena-zone-top {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-rows: auto auto;
-  gap: 7px 12px;
-  align-items: start;
-}
-
-#scene-arena.squad-realtime-mode #turn-phase-bar {
-  grid-column: 1 / -1;
-  grid-row: 1;
-}
-
-#scene-arena.squad-realtime-mode #p2-leader-box {
-  grid-column: 1;
-  grid-row: 2;
-  margin: 0 0 0 auto;
-}
-
-#scene-arena.squad-realtime-mode #squad-enemy-secondary-hud {
-  grid-column: 2;
-  grid-row: 2;
-  margin: 0 auto 0 0;
-}
-
-#scene-arena.squad-realtime-mode .arena-zone-bot {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-areas:
-    "player ally"
-    "actions actions"
-    "hand hand";
-  gap: 7px 12px;
-  align-items: end;
-}
-
-#scene-arena.squad-realtime-mode #p1-leader-box {
-  grid-area: player;
-  margin: 0 0 0 auto;
-}
-
-#scene-arena.squad-realtime-mode #squad-ally-secondary-hud {
-  grid-area: ally;
-  margin: 0 auto 0 0;
-}
-
-#scene-arena.squad-realtime-mode .arena-zone-bot > .action-row {
-  grid-area: actions;
-}
-
-#scene-arena.squad-realtime-mode #p1-hand {
-  grid-area: hand;
-}
-
-#scene-arena.squad-realtime-mode .fighter-hud {
-  max-width: 480px;
-}
-
-.squad-secondary-hud {
-  appearance: none;
-  text-align: left;
-  color: inherit;
-  font: inherit;
-  cursor: default;
-}
-
-.squad-secondary-hud.hud-opponent:not(:disabled),
-#scene-arena.squad-realtime-mode #p2-leader-box {
-  cursor: crosshair;
-}
-
-.squad-secondary-hud:disabled {
-  opacity: 1;
-}
-
-.squad-target-selected {
-  border-color: #ffd700 !important;
-  box-shadow:
-    0 0 22px rgba(255, 215, 0, 0.65),
-    inset 0 1px 0 rgba(255,255,255,.18) !important;
-}
-
-.squad-target-selected::after {
-  content: 'TARGET';
-  position: absolute;
-  top: -8px;
-  right: 18px;
-  z-index: 12;
-  padding: 2px 9px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #ffd700, #ff8c00);
-  color: #090909;
-  font-size: .56rem;
-  font-weight: 1000;
-  letter-spacing: .08em;
-  box-shadow: 0 0 12px rgba(255,215,0,.65);
-}
-
-.squad-ko {
-  opacity: .52 !important;
-  filter: grayscale(.75);
-}
-
-.squad-cpu-badge {
-  display: inline-flex;
-  align-items: center;
-  margin-left: 5px;
-  padding: 1px 5px;
-  border-radius: 999px;
-  background: rgba(34,211,238,.14);
-  border: 1px solid rgba(34,211,238,.55);
-  color: #67e8f9;
-  font-size: .5rem;
-  font-weight: 1000;
-  vertical-align: middle;
-}
-
-.squad-name {
-  display: flex !important;
-  gap: 5px;
-  align-items: center;
-  min-width: 0;
-}
-
-.squad-player-label,
-.squad-user-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.squad-user-label {
-  color: rgba(255,255,255,.62);
-  font-size: .62rem;
-}
-
-.squad-state-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: rgba(16,185,129,.14);
-  border: 1px solid rgba(52,211,153,.38);
-  color: #86efac;
-  font-size: .55rem;
-  font-weight: 1000;
-  white-space: nowrap;
-}
-
-.squad-state-pill.ko {
-  background: rgba(239,68,68,.16);
-  border-color: rgba(248,113,113,.45);
-  color: #fca5a5;
-}
-
-#scene-arena.squad-realtime-mode .squad-phase {
-  max-width: 760px;
-}
-
-#scene-arena.squad-realtime-mode .squad-target-indicator {
-  pointer-events: none;
-  min-width: 270px;
-  justify-content: center;
-}
-
-.squad-partner-status {
-  padding-left: 10px;
-  margin-left: 3px;
-  border-left: 1px solid rgba(255,255,255,.18);
-  color: #7dd3fc;
-  font-size: .64rem;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-#scene-arena.squad-realtime-mode .card.card-phase-disabled {
-  pointer-events: none !important;
-}
-
-#scene-arena.squad-realtime-mode .battle-log {
-  z-index: 65;
-}
-
-.squad-hit-flash {
-  animation: squadHitFlash .42s ease-out !important;
-}
-
-@keyframes squadHitFlash {
-  0% {
-    transform: scale(1);
-    filter: brightness(1);
-  }
-  30% {
-    transform: scale(1.035);
-    filter: brightness(2.2) saturate(1.4);
-    box-shadow: 0 0 38px rgba(255,70,70,.9);
-  }
-  100% {
-    transform: scale(1);
-    filter: brightness(1);
-  }
-}
-
-@media (max-width: 900px) {
-  #scene-arena.squad-realtime-mode .arena-zone-top,
-  #scene-arena.squad-realtime-mode .arena-zone-bot {
-    gap: 5px 7px;
-  }
-
-  #scene-arena.squad-realtime-mode .fighter-hud {
-    padding: 7px 8px;
-    gap: 7px;
-  }
-
-  #scene-arena.squad-realtime-mode .hud-portrait {
-    width: 42px;
-    height: 42px;
-  }
-
-  #scene-arena.squad-realtime-mode .hud-name {
-    font-size: .72rem;
-  }
-
-  #scene-arena.squad-realtime-mode .ki-pip {
-    width: 7px;
-    height: 14px;
-  }
-
-  .squad-user-label,
-  .squad-partner-status {
-    display: none;
-  }
-}
-
-@media (max-width: 640px) {
-  #scene-arena.squad-realtime-mode .arena-zone-top {
-    grid-template-columns: 1fr 1fr;
-    padding-left: 5px !important;
-    padding-right: 5px !important;
-  }
-
-  #scene-arena.squad-realtime-mode .arena-zone-bot {
-    grid-template-columns: 1fr 1fr;
-    padding-left: 5px !important;
-    padding-right: 5px !important;
-  }
-
-  #scene-arena.squad-realtime-mode .fighter-hud {
-    min-width: 0;
-    padding: 5px 6px;
-    border-width: 1px;
-  }
-
-  #scene-arena.squad-realtime-mode .hud-portrait {
-    width: 34px;
-    height: 34px;
-  }
-
-  #scene-arena.squad-realtime-mode .hp-text,
-  #scene-arena.squad-realtime-mode .ki-label {
-    font-size: .53rem;
-  }
-
-  #scene-arena.squad-realtime-mode .ki-pips {
-    gap: 1px;
-  }
-
-  #scene-arena.squad-realtime-mode .ki-pip {
-    width: 5px;
-    height: 10px;
-  }
-
-  #scene-arena.squad-realtime-mode .shields-row {
-    display: none;
-  }
-
-  #scene-arena.squad-realtime-mode .squad-target-indicator {
-    min-width: 0;
-    max-width: 92vw;
-    padding: 5px 9px;
-  }
-}
-
-
-
-/* ==========================================================================
-   2v2 Combat Presentation — attack/response cards + Beam Clash
-   ========================================================================== */
-
-#scene-arena.squad-realtime-mode #drop-zone {
-  width: min(520px, 92vw);
-  height: 292px;
-  justify-content: center;
-  overflow: visible;
-}
-
-.squad-combat-center {
-  position: relative;
+/* ── 2v2 Side-by-Side Reduced Fighter HUDs ── */
+.team-row-2v2 {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
   width: 100%;
-  min-height: 272px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.hud-compact-2v2 {
+  flex: 1;
+  min-width: 0;
+  height: 84px;
+  padding: 6px 10px;
+  border-radius: var(--r-md);
+  background: rgba(12, 18, 32, 0.92);
+  border: 1.5px solid rgba(255, 215, 0, 0.3);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  transition: all var(--t-fast);
+  cursor: pointer;
+}
+
+.hud-compact-2v2:hover {
+  border-color: var(--arcade-gold);
+  transform: translateY(-2px);
+}
+
+.hud-compact-2v2.is-targeted {
+  border-color: #ff0055 !important;
+  box-shadow: 0 0 25px rgba(255, 0, 85, 0.6), inset 0 0 15px rgba(255, 0, 85, 0.2) !important;
+  animation: pulseTarget 1.2s infinite;
+}
+
+.hud-compact-2v2.active-turn-glow {
+  border-color: #00ff41 !important;
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.5) !important;
+}
+
+.hud-compact-portrait {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid var(--arcade-gold);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.hud-compact-info {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  gap: 3px;
+}
+
+.hud-compact-name {
+  font-family: var(--font-header);
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.target-badge-indicator {
+  position: absolute;
+  top: -8px;
+  right: 10px;
+  background: #ff0055;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: var(--r-full);
+  letter-spacing: 1px;
+  box-shadow: 0 0 8px rgba(255, 0, 85, 0.8);
+}
+
+/* ── Raid Co-Op Boss HUD & 2x2 Players Grid ── */
+.boss-hud-frame {
+  width: 100%;
+  max-width: 650px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  border-radius: var(--r-lg);
+  background: linear-gradient(135deg, rgba(30, 5, 10, 0.95), rgba(10, 4, 15, 0.95));
+  border: 2px solid #ff0055;
+  box-shadow: 0 0 30px rgba(255, 0, 85, 0.4), inset 0 0 20px rgba(255, 0, 85, 0.15);
+  display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 14px;
+  position: relative;
+}
+
+.boss-hud-frame.enraged {
+  border-color: #ff3300 !important;
+  box-shadow: 0 0 45px rgba(255, 51, 0, 0.8), inset 0 0 30px rgba(255, 51, 0, 0.3) !important;
+  animation: bossEnragePulse 1s infinite alternate;
+}
+
+.boss-portrait-box {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid #ff0055;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.boss-info-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.boss-name-title {
+  font-family: var(--font-header);
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #ff0055;
+  letter-spacing: 1px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.boss-hp-bar {
+  height: 16px;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 0, 85, 0.4);
+  overflow: hidden;
+}
+
+.boss-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff0055, #ff5500, #ffd700);
+  transition: width var(--t-med);
+}
+
+.players-grid-2x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+.mini-player-hud {
+  height: 62px;
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  background: rgba(8, 14, 26, 0.9);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mini-player-hud.active-turn {
+  border-color: #00ff41;
+  box-shadow: 0 0 12px rgba(0, 255, 65, 0.5);
+}
+
+@keyframes pulseTarget {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+@keyframes bossEnragePulse {
+  0% { box-shadow: 0 0 25px rgba(255, 51, 0, 0.5); }
+  100% { box-shadow: 0 0 50px rgba(255, 51, 0, 0.9); }
+}
+
+/* ── Hand Action Lock & Heal Aura Pulse ─────────────────────────────────── */
+.hand-locked {
+  pointer-events: none !important;
+  opacity: 0.65 !important;
+  filter: grayscale(0.4) !important;
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.heal-aura-pulse {
+  animation: healPulseAura 1.4s ease-in-out infinite alternate !important;
+}
+
+@keyframes healPulseAura {
+  0% {
+    box-shadow: 0 0 15px #00ff88, inset 0 0 10px #00ff88;
+    border-color: #00ff88 !important;
+  }
+  100% {
+    box-shadow: 0 0 35px #00f2fe, inset 0 0 20px #00f2fe;
+    border-color: #00f2fe !important;
+  }
+}
+
+/* ── Fullscreen Beam Clash Modal Overlay ─────────────────────────────────── */
+.beam-clash-overlay {
+  display: none !important;
+}
+
+.beam-clash-overlay.active {
+  display: flex !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  background: rgba(0, 0, 0, 0.88) !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: auto !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* ── UNIFIED CARD COMPONENT SYSTEM (SURGICAL ALIGNMENT FOR USER TEMPLATES) ── */
+.card {
+  position: relative;
+  width: 160px;
+  height: 224px;
+  border-radius: 10px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
+  user-select: none;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.card:hover {
+  transform: translateY(-6px) scale(1.05);
+  z-index: 50;
+}
+
+/* Layer 1: Character Artwork (Fitted inside the central cutout window of the user's template) */
+.card .card-art-img {
+  position: absolute;
+  top: 21px;
+  left: 7px;
+  width: 126px;
+  height: 98px;
+  object-fit: cover;
+  border-radius: 4px;
+  z-index: 1;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  transform: translateZ(0);
+}
+
+/* Layer 2: Ultra-Premium RGBA Transparent PNG Card Template Skeleton Overlay (Full Card Container Fit) */
+.card .card-template-overlay-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
   pointer-events: none;
-  z-index: 45;
+  z-index: 2;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.85));
+  display: block !important;
 }
 
-.squad-center-banner {
-  margin-bottom: 8px;
-  max-width: 430px;
+/* Holographic Foil Animated Sheen */
+.card.is-foil::after,
+.card.super-rare::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: linear-gradient(
+    115deg,
+    transparent 20%,
+    rgba(255, 0, 128, 0.25) 35%,
+    rgba(0, 255, 255, 0.35) 50%,
+    rgba(255, 215, 0, 0.35) 65%,
+    transparent 80%
+  );
+  background-size: 200% 200%;
+  animation: holoFoilShimmer 3s ease-in-out infinite alternate;
+  mix-blend-mode: color-dodge;
+  pointer-events: none;
+  z-index: 4;
 }
 
-.squad-center-cards {
+@keyframes holoFoilShimmer {
+  0% { background-position: 0% 0%; opacity: 0.35; }
+  50% { background-position: 100% 100%; opacity: 0.75; }
+  100% { background-position: 0% 0%; opacity: 0.35; }
+}
+
+/* Layer 3: Surgically Aligned In-Game Data HUD Overlay */
+.card .card-hud-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  font-family: var(--font-title, 'Outfit', 'Arial Black', sans-serif);
+}
+
+/* Authentic 4-Star Dragon Ball Ki Sphere (Top-Left Ki Slot) */
+.card .card-ki-pip {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff7ed 0%, #fbbf24 35%, #f59e0b 65%, #d97706 90%, #92400e 100%);
+  border: 1.5px solid #ffffff;
+  color: #000000;
+  font-weight: 900;
+  font-size: 0.80rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  min-height: 205px;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.9), 0 2px 5px rgba(0, 0, 0, 0.85);
+  z-index: 5;
+  text-shadow: 0 0 2px #fff;
 }
 
-.squad-center-card {
-  position: relative;
-  animation: squadCardEnter .26s cubic-bezier(.2,.9,.3,1.2) both;
-}
-
-.squad-center-card.response {
-  animation-name: squadResponseEnter;
-}
-
-.squad-center-card .card {
-  width: 128px !important;
-  height: auto !important;
-  aspect-ratio: 5 / 7;
-  transform: none !important;
-  pointer-events: none !important;
-  box-shadow:
-    0 14px 35px rgba(0,0,0,.88),
-    0 0 24px rgba(255,215,0,.25) !important;
-}
-
-.squad-center-card.response .card {
-  box-shadow:
-    0 14px 35px rgba(0,0,0,.88),
-    0 0 28px rgba(34,211,238,.4) !important;
-}
-
-.squad-center-label {
+.card .card-ki-pip::before {
+  content: '';
   position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 20;
-  border-radius: 999px;
-  padding: 2px 8px;
-  background: rgba(3,7,18,.94);
-  border: 1px solid #ffd700;
-  color: #ffd700;
-  font-size: .52rem;
-  font-weight: 1000;
-  letter-spacing: .08em;
+  top: 2px;
+  left: 3px;
+  width: 8px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  transform: rotate(-30deg);
+  pointer-events: none;
 }
 
-.squad-center-card.response .squad-center-label {
-  color: #67e8f9;
-  border-color: #22d3ee;
-}
-
-.squad-center-card-name {
+/* Top Character Title Bar Capsule (Top-Center Slot) */
+.card .card-title-bar {
   position: absolute;
-  top: 5%;
-  left: 20%;
-  right: 5%;
-  z-index: 12;
+  top: 4px;
+  left: 29px;
+  width: 58px;
+  height: 16px;
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 0.52rem;
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-shadow: 0 1px 3px #000;
+}
+
+/* Top-Right Power Capsule Badge (Top-Right ATK/DEF Slot) */
+.card .card-top-stat-badge {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  height: 16px;
+  color: #ffd700;
+  font-weight: 900;
+  font-size: 0.58rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 0 4px #000, 0 1px 2px #000;
   white-space: nowrap;
 }
 
-.squad-vs-mark {
-  font-family: var(--font-header);
-  font-size: 1.55rem;
-  font-weight: 1000;
-  font-style: italic;
-  color: #fff;
-  text-shadow:
-    0 0 10px #ff3d6e,
-    0 0 20px #ffd700;
-  animation: reactionPulse .7s infinite alternate;
+/* Middle Type Badge Tag (Middle Type Slot) */
+.card .card-mid-type-tag {
+  position: absolute;
+  top: 120px;
+  left: 7px;
+  height: 14px;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: rgba(5, 8, 18, 0.94);
+  border: 1px solid rgba(255, 215, 0, 0.8);
+  color: #ffd700;
+  font-weight: 900;
+  font-size: 0.44rem;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px #000;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  z-index: 4;
 }
 
-.squad-combat-center.clash .squad-center-cards {
-  filter: brightness(1.13) saturate(1.16);
+/* Bottom Effect Description Box Panel (Fits in bottom area of user template) */
+.card .card-desc-box {
+  position: absolute;
+  top: 136px;
+  left: 7px;
+  right: 7px;
+  height: 54px;
+  background: rgba(8, 12, 24, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 3px 5px;
+  color: #e2e8f0;
+  font-size: 0.46rem;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  z-index: 3;
 }
 
-#beam-clash-overlay.active {
-  z-index: 15000 !important;
+/* Foil Badge Star */
+.card-foil-badge {
+  position: absolute;
+  top: 22px;
+  right: 8px;
+  font-size: 0.44rem;
+  font-weight: 900;
+  color: #ffd700;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 1px solid #ffd700;
+  text-shadow: 0 0 4px #ffd700;
+  z-index: 5;
 }
 
-#scene-arena.squad-realtime-mode #reaction-banner.active {
-  opacity: 1;
-}
-
-@keyframes squadCardEnter {
-  from {
-    opacity: 0;
-    transform: translateX(-90px) rotate(-8deg) scale(.72);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) rotate(0) scale(1);
-  }
-}
-
-@keyframes squadResponseEnter {
-  from {
-    opacity: 0;
-    transform: translateX(90px) rotate(8deg) scale(.72);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) rotate(0) scale(1);
-  }
-}
-
-@media (max-width: 640px) {
-  #scene-arena.squad-realtime-mode #drop-zone {
-    width: 96vw;
-    height: 230px;
-  }
-
-  .squad-center-cards {
-    gap: 9px;
-    min-height: 170px;
-  }
-
-  .squad-center-card .card {
-    width: 94px !important;
-  }
-
-  .squad-vs-mark {
-    font-size: 1.05rem;
-  }
-
-  .squad-center-banner {
-    transform: scale(.86);
-    transform-origin: center;
-    margin-bottom: 2px;
-  }
-}
 

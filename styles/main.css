@@ -3464,3 +3464,455 @@ body.arena-active #bottom-bar {
   #btn-install-pwa { font-size: 0.72rem !important; padding: 6px 14px !important; min-width: 90px; }
 }
 
+/* ── DBZ UI UNIFIED BUTTON & SELECTION STYLES ─────────────────────────────────────── */
+
+/* Toast Notification (Zero Browser Alerts) */
+.dbz-toast-notification {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px) scale(0.9);
+  background: linear-gradient(135deg, rgba(20, 26, 44, 0.98), rgba(8, 12, 22, 0.99));
+  border: 2px solid #ffd700;
+  border-radius: 12px;
+  padding: 12px 24px;
+  color: #ffffff;
+  font-family: var(--font-header);
+  font-weight: 800;
+  font-size: 0.95rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.85), 0 0 20px rgba(255, 215, 0, 0.5);
+  z-index: 10000;
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.dbz-toast-notification.active {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+/* 1. Loja de Ki / Booster Store Button (Pure Vector CSS - No PNG distortion) */
+#buy-pack-btn {
+  background: linear-gradient(135deg, #ff8c00 0%, #ffd700 50%, #ff4500 100%) !important;
+  border: 2px solid #ffe600 !important;
+  color: #1a0b00 !important;
+  font-family: var(--font-header) !important;
+  font-weight: 900 !important;
+  font-size: 1.05rem !important;
+  padding: 16px 36px !important;
+  border-radius: 14px !important;
+  cursor: pointer !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.8px !important;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8) !important;
+  box-shadow: 0 6px 20px rgba(255, 140, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.6) !important;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+#buy-pack-btn:hover {
+  transform: translateY(-3px) scale(1.03) !important;
+  filter: brightness(1.1) drop-shadow(0 0 16px rgba(255, 215, 0, 0.8)) !important;
+  box-shadow: 0 10px 28px rgba(255, 140, 0, 0.7), inset 0 2px 4px rgba(255, 255, 255, 0.8) !important;
+}
+
+#buy-pack-btn:active {
+  transform: translateY(1px) scale(0.97) !important;
+}
+
+/* Mode Cards Clean Cut Design - Goku Royal Blue Style */
+.aaa-mode-card {
+  background: linear-gradient(135deg, #0252ad 0%, #003780 100%) !important;
+  border: 2px solid #22d3ee !important;
+  border-radius: 14px !important;
+  padding: 14px 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  cursor: pointer !important;
+  text-align: left !important;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7), inset 0 1px 2px rgba(255, 255, 255, 0.25) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.aaa-mode-card:hover,
+.aaa-mode-card.active {
+  background: linear-gradient(135deg, #ff8c00 0%, #d96d00 100%) !important;
+  border: 2px solid #ffd700 !important;
+  transform: translateY(-3px) scale(1.02) !important;
+  box-shadow: 0 10px 28px rgba(255, 140, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.35) !important;
+}
+
+/* 2. Seleção de Lutador (Leader / Fighter Cards) */
+.leader-pick {
+  background: linear-gradient(145deg, rgba(20, 24, 40, 0.95), rgba(10, 12, 22, 0.98)) !important;
+  border: 2px solid rgba(255, 215, 0, 0.35) !important;
+  border-radius: 16px !important;
+  padding: 20px 14px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.15) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.leader-pick::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 140, 0, 0.12) 0%, transparent 60%);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.leader-pick:hover {
+  border-color: #ffd700 !important;
+  transform: translateY(-6px) scale(1.03) !important;
+  box-shadow: 0 12px 30px rgba(255, 140, 0, 0.4), 0 0 20px rgba(255, 215, 0, 0.25) !important;
+}
+
+.leader-pick.selected {
+  border-color: #ffe600 !important;
+  background: linear-gradient(145deg, rgba(45, 30, 0, 0.95), rgba(20, 10, 0, 0.98)) !important;
+  box-shadow: 0 0 30px rgba(255, 140, 0, 0.7), inset 0 0 20px rgba(255, 215, 0, 0.3) !important;
+}
+
+#fs-confirm-btn {
+  background: url('../UI_PACK/Buttons/button_yellow.png') center/100% 100% no-repeat !important;
+  border: none !important;
+  color: #000000 !important;
+  font-weight: 900 !important;
+  font-size: 1.05rem !important;
+  padding: 16px 42px !important;
+  box-shadow: 0 6px 18px rgba(255, 140, 0, 0.5) !important;
+}
+
+/* 3. Modal de Login & Cadastro (Identidade Guerreiro Z) */
+#auth-modal .modal-content {
+  background: linear-gradient(135deg, rgba(15, 18, 30, 0.95), rgba(5, 7, 15, 0.98)) !important;
+  border: 3px solid #ffd700 !important;
+  box-shadow: 0 0 40px rgba(255, 140, 0, 0.5), inset 0 0 30px rgba(255, 215, 0, 0.15) !important;
+  border-radius: 20px !important;
+  padding: 32px !important;
+}
+
+#auth-user-input, #auth-pass-input {
+  background: rgba(10, 14, 26, 0.9) !important;
+  border: 2px solid #22d3ee !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 10px rgba(34, 211, 238, 0.2) !important;
+  transition: all 0.2s ease !important;
+}
+
+#auth-user-input:focus, #auth-pass-input:focus {
+  border-color: #ffd700 !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 16px rgba(255, 215, 0, 0.6) !important;
+  outline: none !important;
+}
+
+#auth-login-submit {
+  background: url('../UI_PACK/Buttons/button_yellow.png') center/100% 100% no-repeat !important;
+  border: none !important;
+  color: #000000 !important;
+  font-weight: 900 !important;
+  font-size: 1.05rem !important;
+  padding: 16px 36px !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4) !important;
+  transition: transform 0.15s ease, filter 0.15s ease !important;
+}
+
+#auth-login-submit:hover {
+  transform: translateY(-2px) scale(1.04) !important;
+  filter: brightness(1.15) drop-shadow(0 6px 18px rgba(255, 215, 0, 0.7)) !important;
+}
+
+#auth-register-submit {
+  background: url('../UI_PACK/Buttons/button_blue.png') center/100% 100% no-repeat !important;
+  border: none !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  font-size: 1rem !important;
+  padding: 14px 32px !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 15px rgba(0, 150, 255, 0.4) !important;
+  transition: transform 0.15s ease, filter 0.15s ease !important;
+}
+
+#auth-register-submit:hover {
+  transform: translateY(-2px) scale(1.04) !important;
+  filter: brightness(1.15) drop-shadow(0 6px 18px rgba(0, 150, 255, 0.7)) !important;
+}
+
+#auth-close-btn {
+  background: url('../UI_PACK/Buttons/button_red.png') center/100% 100% no-repeat !important;
+  border: none !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  font-size: 0.9rem !important;
+  padding: 12px 28px !important;
+  cursor: pointer !important;
+}
+
+/* 4. MOBILE SPECIFIC MENU & HEADER LAYOUT OVERRIDES */
+@media (max-width: 768px) {
+  /* Universal Touchscreen Scrolling Fix for Deck Lab */
+  .collection-panel,
+  .deck-sidebar,
+  .collection-scroll-area,
+  .deck-list-scroll,
+  #deck-list-container,
+  #collection-grid,
+  .collection-grid .card,
+  .deck-entry-capsule {
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain !important;
+    pointer-events: auto !important;
+  }
+
+  .collection-scroll-area,
+  .deck-list-scroll {
+    overflow-y: auto !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+  }
+
+  .deck-layout {
+    min-height: 0 !important;
+    flex: 1 !important;
+  }
+
+  /* Header Top Bar Mobile Fix */
+  .game-hud-top {
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    padding: 0 12px !important;
+    flex-wrap: nowrap !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    background: linear-gradient(180deg, rgba(14, 18, 30, 0.98) 0%, rgba(6, 8, 16, 0.98) 100%) !important;
+    border-bottom: 2px solid #ffd700 !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7) !important;
+    overflow: hidden !important;
+  }
+
+  .ghud-profile {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    max-width: 45% !important;
+  }
+
+  .ghud-logo-mini {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .ghud-username {
+    font-size: 0.82rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .ghud-currencies {
+    width: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .currency-pill, .auth-pill {
+    padding: 3px 8px !important;
+    font-size: 0.72rem !important;
+    border-radius: 8px !important;
+    white-space: nowrap !important;
+  }
+
+  /* 2 Top Mode Buttons - Larger Center Hero Card - 2 Bottom Mode Buttons Layout */
+  .menu-hub-arc-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 12px 14px !important;
+    gap: 12px !important;
+    height: auto !important;
+    min-height: calc(100dvh - 50px - 60px) !important;
+    overflow-y: auto !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Top 2 Buttons Side-by-Side */
+  .menu-arc-left {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+    width: 100% !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Center Hero Card - LARGER TCG CARD SIZE (245px x 350px) */
+  .menu-hero-card-container {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin: 4px 0 !important;
+    flex: 0 0 auto !important;
+  }
+
+  .leader-official-card-frame {
+    width: 245px !important;
+    height: 350px !important;
+    max-width: 85vw !important;
+    max-height: 48vh !important;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.95), 0 0 30px rgba(255, 215, 0, 0.75) !important;
+    border: 3px solid #ffd700 !important;
+    border-radius: 18px !important;
+  }
+
+  /* Bottom 2 Buttons Side-by-Side */
+  .menu-arc-right {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+    width: 100% !important;
+    flex-shrink: 0 !important;
+  }
+
+  .aaa-mode-card {
+    padding: 12px 10px !important;
+    min-height: 64px !important;
+    justify-content: center !important;
+    border-radius: 14px !important;
+  }
+
+  .amc-badge {
+    font-size: 0.62rem !important;
+    letter-spacing: 1px !important;
+    color: #ffd700 !important;
+    font-weight: 900 !important;
+  }
+
+  .amc-title {
+    font-size: 0.82rem !important;
+    color: #ffffff !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .amc-sub {
+    font-size: 0.65rem !important;
+    color: #93c5fd !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 1 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+}
+
+/* ── AUTO-PLAY INTRO VIDEO OVERLAY ─────────────────────────────────────────────── */
+.intro-video-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000000;
+  z-index: 9999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.intro-video-overlay:not(.active) {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.intro-video-element {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.intro-video-skip-btn {
+  position: absolute;
+  bottom: 28px;
+  right: 24px;
+  background: linear-gradient(135deg, rgba(20, 26, 44, 0.95), rgba(5, 8, 18, 0.98));
+  border: 2px solid #ffd700;
+  color: #ffd700;
+  font-family: var(--font-header);
+  font-weight: 900;
+  font-size: 0.95rem;
+  padding: 12px 24px;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 215, 0, 0.5);
+  z-index: 10000000;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  letter-spacing: 1px;
+}
+
+.intro-video-skip-btn:hover {
+  transform: scale(1.06);
+  filter: brightness(1.2);
+}
+
+.intro-video-unmute-btn {
+  position: absolute;
+  bottom: 28px;
+  left: 24px;
+  background: linear-gradient(135deg, #0252ad 0%, #003780 100%);
+  border: 2px solid #22d3ee;
+  color: #ffffff;
+  font-family: var(--font-header);
+  font-weight: 900;
+  font-size: 0.88rem;
+  padding: 10px 20px;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 15px rgba(34, 211, 238, 0.4);
+  z-index: 10000000;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.intro-video-unmute-btn:hover {
+  transform: scale(1.05);
+  filter: brightness(1.15);
+}
+
+@media (max-width: 768px) {
+  .intro-video-skip-btn {
+    bottom: 20px;
+    right: 16px;
+    padding: 10px 18px;
+    font-size: 0.82rem;
+  }
+  .intro-video-unmute-btn {
+    bottom: 20px;
+    left: 16px;
+    padding: 8px 14px;
+    font-size: 0.78rem;
+  }
+}
+
