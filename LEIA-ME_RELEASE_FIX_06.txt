@@ -1,0 +1,83 @@
+DBCLASH RELEASE FIX 06
+======================
+
+PRE-REQUISITO
+-------------
+Fixes 01 a 05 validados.
+
+APLICACAO
+---------
+Na raiz C:\dbclash:
+
+  .\PATCH_RELEASE_FIX_06.ps1
+
+O QUE ESTE CICLO FECHA
+----------------------
+1) RANKED 2V2 TAG TEAM
+- quatro contas reais;
+- dois times com 2 jogadores;
+- um lutador ativo e um reserva por time;
+- cada jogador preserva seu proprio lider, deck, mao, HP e Ki;
+- todas as regras continuam usando o ServerGameEngine ja validado;
+- reactions, Beam Clash, passivas e as 70 cartas continuam no mesmo motor;
+- troca voluntaria consome o turno;
+- KO troca automaticamente para o reserva;
+- time perde somente quando os dois lutadores caem;
+- resultado ranked server-side para os quatro jogadores;
+- reconexao com grace period;
+- anti-replay por sequencia de comando;
+- projecao privada de maos.
+
+2) SALAS PRIVADAS
+- codigo de convite de 6 caracteres;
+- sala privada 1v1;
+- sala privada 2v2 Tag Team;
+- nao altera RP;
+- reconexao;
+- chat de sala reaproveita membership real.
+
+3) DOJOS
+- remove DOJO_RANKINGS mock;
+- Dojo persistido no Mongo;
+- nome e TAG unicos;
+- criacao, entrada e saida;
+- dono transferido automaticamente se sair;
+- ate 30 membros;
+- power calculado pela soma do RP dos membros;
+- ranking real de Dojos.
+
+4) MISSOES DIARIAS
+- remove missao estatica da interface;
+- reset diario por data UTC;
+- lutar em 2 partidas online;
+- vencer 1 partida online;
+- concluir 1 Raid;
+- abrir 1 Booster;
+- progresso vem somente de eventos server-authoritative;
+- claim server-side;
+- rewards em Zeni, Dust e Gems;
+- claim unico por dia.
+
+5) PERFIL / CLIENTE
+- dojoId e dailyQuests persistidos;
+- AuthManager preserva os novos campos publicos;
+- tela de Dojos ligada ao backend;
+- tela de Quests ligada ao backend;
+- botao de sala privada injetado no menu;
+- antigo stub "2v2 em breve" removido.
+
+GATE ESPERADO
+-------------
+CORE RELEASE TESTS: 7 PASS / 0 FAIL
+CONTENT RELEASE TESTS: 24 PASS / 0 FAIL
+ACCOUNT RELEASE TESTS: 16 PASS / 0 FAIL
+MULTIPLAYER RELEASE TESTS: 16 PASS / 0 FAIL
+RAID RELEASE TESTS: 18 PASS / 0 FAIL
+SOCIAL MODES RELEASE TESTS: 18 PASS / 0 FAIL
+
+Total acumulado: 99 verificacoes.
+
+Depois deste ciclo resta:
+- RELEASE FIX 07: seguranca, rate limiting, XSS, CORS, performance,
+  PWA/cache/service worker, navegacao/handlers duplicados, dead code e QoL.
+- RELEASE CANDIDATE: smoke tests reais, deploy checks e auditoria final.

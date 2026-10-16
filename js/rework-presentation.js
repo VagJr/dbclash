@@ -274,7 +274,7 @@ class NexusPresentation {
     const element = document.createElement('div');
     element.className = `card type-${card.type}${card.rarity === 'super-rare' ? ' super-rare' : ''}`;
     element.dataset.cardId = card.id;
-    element.innerHTML = `${assetLoader.renderCardArtHTML(card)}<div class="card-header"><div class="card-ki-cost" aria-label="Custo ${Number(card.cost)} Ki">${Number(card.cost)}</div></div><div class="card-type-tag tag-${card.type}">${TYPES[card.type] || escapeHtml(card.type)}</div>${card.power > 0 ? `<div class="card-power-badge">${Number(card.power)} ATK</div>` : ''}`;
+    element.innerHTML = assetLoader.renderCardArtHTML(card);
     return element;
   }
 
@@ -433,7 +433,7 @@ class NexusPresentation {
       $('inspect-card-cost').textContent = `${card.cost} KI`;
       $('inspect-card-power').textContent = card.type === 'defense' ? `${card.block || 0} DEF` : `${card.power || 0} ATK`;
       const meta = card.art || card.artwork || {};
-      $('nexus-inspect-image').src = meta.cropPath || assetLoader.getCardImagePath(card.id);
+      $('nexus-inspect-image').src = assetLoader.getCardImagePath(card.id);
       $('nexus-inspect-image').alt = `Arte completa de ${card.name}`;
       $('nexus-inspect-full-art').hidden = true;
       $('card-inspect-preview').hidden = false;

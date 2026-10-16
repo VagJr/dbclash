@@ -16,10 +16,11 @@ const TEMPORARY_CHAR_ART = {
 };
 
 export function temporaryCardArt(card) {
-  if (card.set === 'LEGACY' || !card.id.startsWith('nxs_')) return `assets/cards/${card.id}.png`;
+  const legacy = `assets/rework/temporary-art/${card.set === 'LEGACY' || !card.id.startsWith('nxs_') ? card.id : ''}.png`;
+  if (card.set === 'LEGACY' || !card.id.startsWith('nxs_')) return legacy;
   const category = card.isBeam ? 'beam' : card.type;
   const id = TEMPORARY_CHAR_ART[card.characterId]?.[category];
-  if (id) return `assets/cards/${id}.png`;
+  if (id) return `assets/rework/temporary-art/${id}.png`;
   if (TEMPORARY_CHAR_ART[card.characterId]) return `assets/leaders/${card.characterId}.png`;
   return 'assets/rework/ui/portal.png';
 }
@@ -70,7 +71,10 @@ export class AssetLoader {
       ? (card.descPt || card.description || '') 
       : (card.descEn || card.description || '');
 
-    const artPath = this.getCardImagePath(card.id);
+    const rawArtPath = this.getCardImagePath(card.id);
+    const artPath = rawArtPath.startsWith('assets/cards/')
+      ? rawArtPath.replace('assets/cards/', 'assets/rework/temporary-art/')
+      : rawArtPath;
     const fallback = temporaryCardArt(card);
     const labels = { attack: 'ATAQUE', defense: 'DEFESA', counter: 'COUNTER', evade: 'ESQUIVA', tech: 'TÉCNICA' };
     const rarity = { common: 'C', rare: 'R', 'super-rare': 'SR' };
@@ -83,7 +87,7 @@ export class AssetLoader {
         <img src="${escapeHtml(artPath)}" alt="" aria-hidden="true" loading="lazy" decoding="async" class="nexus-art-backdrop" onerror="this.onerror=null;this.src='${escapeHtml(fallback)}';">
         <img src="${escapeHtml(artPath)}" alt="" aria-hidden="true" loading="lazy" decoding="async" class="card-full-art-img" onerror="this.onerror=null;this.src='${escapeHtml(fallback)}';">
       </div>
-      <div class="nexus-card-topline"><span class="nexus-card-cost" aria-label="Custo ${cost} Ki">${cost}<small>KI</small></span><span class="nexus-card-power"><small>${card.type === 'defense' ? 'DEF' : 'ATK'}</small>${value.toLocaleString('pt-BR')}</span></div>
+      <div class="nexus-card-topline"><span class="nexus-card-cost" aria-label="Custo ${cost} Ki">${cost}<small>KI</small></span><span class="nexus-card-power"><small>${card.type === 'defense' ? 'DEF' : 'ATK'}</small><strong>${value.toLocaleString('pt-BR')}</strong></span></div>
       <span class="nexus-card-kind">${escapeHtml(kind)}</span>
       <div class="card-desc-overlay">
         <span class="nexus-card-effect-type">${escapeHtml(kind)} · ${escapeHtml(card.archetypes?.[0] || card.archetype || card.synergyGroup || '')}</span><span class="card-desc-text">${escapeHtml(descText)}</span>

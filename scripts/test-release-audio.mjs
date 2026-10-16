@@ -95,7 +95,7 @@ test('service worker ignora Range e arquivos de audio', () => {
 
 test('cache version foi atualizada para limpar runtime antigo', () => {
   const src = fs.readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
-  assert.ok(src.includes("dbclash-release-v3-nexus-audio"));
+  assert.ok(src.includes("dbclash-release-v3-nexus-imported-art"));
 });
 
 test('BGM respeita unlock de autoplay e preferencias persistentes', () => {

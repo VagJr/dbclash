@@ -1,0 +1,38 @@
+DBCLASH RELEASE CANDIDATE 01
+============================
+
+Este ciclo nao adiciona features.
+
+Ele:
+- congela a versao como 1.0.0-rc.1;
+- preserva o release:check dos Fixes 01-07;
+- adiciona verificacao estrutural de RC;
+- adiciona verificacao de ambiente de producao;
+- gera RELEASE_CANDIDATE_REPORT.md;
+- adiciona RELEASE_CANDIDATE_SMOKE_TESTS.md.
+
+APLICAR
+-------
+Na raiz C:\dbclash:
+
+  .\PATCH_RELEASE_CANDIDATE_01.ps1
+
+GATE AUTOMATICO
+---------------
+npm run rc:check
+
+GATE DE PRODUCAO
+----------------
+No ambiente com as variaveis reais:
+
+  npm run rc:verify:prod
+
+PROMOCAO PARA 1.0.0
+-------------------
+Somente depois de:
+- rc:check verde;
+- smoke matrix P0/P1 totalmente verde;
+- zero release blockers;
+- zero erros de console nos fluxos principais.
+
+Durante o RC nao adicionar novas features.

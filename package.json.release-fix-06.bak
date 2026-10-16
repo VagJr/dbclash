@@ -1,0 +1,28 @@
+{
+  "name": "dragonball-clash-server",
+  "version": "1.0.0",
+  "description": "Dragon Ball Clash Action TCG - Socket.io Dedicated Backend Server for Render Deployment",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test:core": "node scripts/test-release-core.mjs",
+    "test": "npm run test:core && npm run test:content && npm run test:account && npm run test:multiplayer && npm run test:raid",
+    "check": "npm test",
+    "test:content": "node scripts/test-release-content.mjs",
+    "test:account": "node scripts/test-release-account.mjs",
+    "test:multiplayer": "node scripts/test-release-multiplayer.mjs",
+    "test:raid": "node scripts/test-release-raid.mjs"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mongoose": "^9.8.1",
+    "socket.io": "^4.7.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

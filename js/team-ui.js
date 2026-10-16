@@ -816,7 +816,7 @@ export class TeamBattleUI {
       el.setAttribute('aria-label', safeCardName);
 
       el.innerHTML = `
-        ${assetLoader.renderCardArtHTML(card)}
+        ${assetLoader.renderCardArtHTML(card, { cost: effectiveCost })}
         <div class="card-header">
           <div class="card-ki-cost">${effectiveCost}</div>
         </div>

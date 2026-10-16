@@ -1,0 +1,21 @@
+{
+  "name": "dragonball-clash-server",
+  "version": "1.0.0",
+  "description": "Dragon Ball Clash Action TCG - Socket.io Dedicated Backend Server for Render Deployment",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mongoose": "^9.8.1",
+    "socket.io": "^4.7.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,49 @@
+DBCLASH - RELEASE FIX 02
+==========================
+
+OBJETIVO
+--------
+Fechar regras de gameplay/conteudo antes de tocar em conta/economia/ranked.
+
+PRE-REQUISITO
+-------------
+RELEASE FIX 01 precisa estar aplicado e validado.
+
+COMO APLICAR
+------------
+1. Extraia TODOS os arquivos deste ZIP na raiz C:\dbclash.
+2. Abra PowerShell nessa pasta.
+3. Execute:
+
+   .\PATCH_RELEASE_FIX_02.ps1
+
+O QUE ESTE PATCH FECHA
+----------------------
+- resolver compartilhado de regras entre cliente e servidor;
+- custos dinamicos de Goku e Trunks;
+- todas as passivas dos 6 lideres;
+- carga/supressao de Ki do Frieza;
+- Open Guard de 5s contra Vegeta desperto;
+- mash de Gohan desperto;
+- cura/pierce/defesa de Piccolo;
+- Techniques deixam de ser ataques falsos;
+- 9 Techniques com efeitos reais;
+- efeitos especiais dos ataques;
+- efeitos secundarios das 15 defesas;
+- efeitos/restricoes das 9 esquivas;
+- dano/restricoes dos 9 counters;
+- Beam Clash usa poder real do feixe vencedor;
+- UI usa custo efetivo real;
+- getCardById invalido retorna null;
+- IA usa as mesmas regras do jogador;
+- sync inclui reactionMaxSeconds e nextAttackBonus;
+- suite test:content cobrindo banco e regras.
+
+GATE
+----
+O comando executa:
+- node --check nos arquivos alterados;
+- npm run test:core;
+- npm run test:content.
+
+Somente prossiga ao RELEASE FIX 03 se tudo terminar em PASS / 0 FAIL.

@@ -30,10 +30,15 @@
     "test:team-ui": "node scripts/test-release-team-arena-ui.mjs",
     "test:team-sync": "node scripts/test-release-team-combat-sync.mjs",
     "preview": "node scripts/preview-game.mjs",
+    "art:import:dry-run": "python scripts/import-nexus-card-sequence.py --dry-run",
+    "art:import": "python scripts/import-nexus-card-sequence.py",
+    "art:import:hq:dry-run": "python scripts/import-nexus-card-hq.py --dry-run",
+    "art:import:hq": "python scripts/import-nexus-card-hq.py",
     "test:nexus-collection": "node scripts/test-nexus-collection.mjs",
     "test:nexus-exchange": "node scripts/test-nexus-exchange.mjs",
     "test:nexus-combat": "node scripts/test-nexus-combat.mjs",
-    "test:nexus": "npm run test:nexus-collection && npm run test:nexus-combat && npm run test:nexus-exchange"
+    "test:nexus-rewards": "node scripts/test-nexus-rewards.mjs",
+    "test:nexus": "npm run test:nexus-collection && npm run test:nexus-combat && npm run test:nexus-exchange && npm run test:nexus-rewards"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

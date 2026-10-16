@@ -1,0 +1,36 @@
+/* Premium full-art TCG card face shared by collection, deck, hand and combat. */
+.nexus-ui .card:has(.nexus-card-art) { --card-accent:#f2ae5f; isolation:isolate; overflow:hidden; border:1px solid color-mix(in srgb,var(--card-accent) 76%,#dfefff 24%) !important; border-radius:9px; background:#09101b; box-shadow:inset 0 0 0 2px #040911, inset 0 0 0 3px #c5d5e52c, 0 7px 20px #0009; }
+.nexus-ui .card.type-defense:has(.nexus-card-art) { --card-accent:#62c7ff; }
+.nexus-ui .card.type-evade:has(.nexus-card-art) { --card-accent:#4cdbab; }
+.nexus-ui .card.type-counter:has(.nexus-card-art) { --card-accent:#b69aff; }
+.nexus-ui .card.type-tech:has(.nexus-card-art) { --card-accent:#f5d36a; }
+.nexus-ui .card:has(.nexus-card-art)::before { content:""; position:absolute; inset:2px; z-index:4; pointer-events:none; border:1px solid #ffffff20; border-radius:7px; }
+.nexus-ui .card:has(.nexus-card-art)::after { z-index:7; opacity:0; background:linear-gradient(125deg,transparent 30%,#ffffff12 47%,#8ae8ff2c 50%,#ffe2b229 53%,transparent 70%); }
+.nexus-ui .card:has(.nexus-card-art):hover::after { opacity:1; }
+.nexus-ui .card:has(.nexus-card-art) :is(.card-header,.card-type-tag,.card-power-badge,.card-header-banner,.nexus-card-archetype) { display:none !important; }
+.nexus-ui .card .nexus-card-art { position:absolute; inset:0; z-index:0; width:100%; height:100%; overflow:hidden; background:#0b1521; }
+.nexus-ui .card .nexus-art-backdrop { position:absolute; inset:-8%; width:116%; height:116%; object-fit:cover !important; object-position:center 38%; filter:blur(12px) brightness(.48) saturate(1.25); transform:scale(1.04); }
+.nexus-ui .card .nexus-card-art .card-full-art-img { position:absolute; inset:-1% -3% 8%; width:106%; height:93%; object-fit:cover !important; object-position:center center; border:0; border-radius:0; filter:drop-shadow(0 3px 4px #0008); }
+.nexus-ui .card .nexus-card-art[data-art-status="imported"] .card-full-art-img { inset:0 0 8%; width:100%; height:92%; object-fit:contain !important; object-position:center center; }
+.nexus-ui .nexus-card-topline { position:absolute; inset:3.2% 4% auto; height:18%; z-index:5; display:flex; align-items:flex-start; justify-content:space-between; pointer-events:none; }
+.nexus-ui .nexus-card-cost { width:19%; aspect-ratio:1; display:flex; flex-direction:column; justify-content:center; align-items:center; border-radius:50%; border:1px solid #fff2d4; outline:2px solid #311b14cc; background:radial-gradient(circle at 32% 24%,#fff2bf 0,#f9bf67 51%,#bb642b 100%); color:#28190f; box-shadow:0 2px 7px #000b,inset 0 0 0 1px #fff8; font:900 clamp(10px,10cqw,27px)/.84 'Outfit',sans-serif; text-shadow:0 1px #fff7; }
+.nexus-ui .nexus-card-cost small { font:900 clamp(4px,2.5cqw,7px)/1 'Inter',sans-serif; letter-spacing:.08em; margin-top:3px; }
+.nexus-ui .nexus-card-power { position:absolute; top:4%; right:4.5%; z-index:6; display:flex; flex-direction:column; align-items:flex-end; color:#fff; padding:0; border:0; border-radius:0; box-shadow:none; background:none; text-align:right; font:italic 900 clamp(12px,12cqw,32px)/.86 'Outfit',sans-serif; letter-spacing:-.065em; text-shadow:0 2px 2px #050a12,0 0 5px #050a12,0 0 10px #050a12; }
+.nexus-ui .nexus-card-power small { color:#f3dfc6; font:900 clamp(4px,3cqw,8px)/1 'Inter',sans-serif; letter-spacing:.19em; margin:0 1px 2px 0; text-shadow:0 1px 3px #000; }
+.nexus-ui .nexus-card-power strong { font:inherit; color:#fff; letter-spacing:-.065em; -webkit-text-stroke:.3px #172433; }
+.nexus-ui .nexus-card-power::after { content:""; display:block; width:88%; height:1px; margin-top:2px; background:linear-gradient(90deg,transparent,var(--card-accent)); box-shadow:0 1px 4px #000; }
+.nexus-ui .nexus-card-kind { position:absolute; z-index:5; right:0; top:29%; writing-mode:vertical-rl; transform:rotate(180deg); padding:7px 2px 7px 3px; color:#f8fbff; background:linear-gradient(90deg,#07101bcc,#07101fee); border-left:2px solid var(--card-accent); font:900 clamp(4px,3.1cqw,8px)/1 'Inter',sans-serif; letter-spacing:.1em; text-shadow:0 1px 3px #000; }
+.nexus-ui .card .card-desc-overlay { position:absolute; inset:auto 3.2% 15.5%; z-index:5; display:flex; flex-direction:column; justify-content:flex-start; gap:3px; box-sizing:border-box; padding:5% 5% 4.5%; border:1px solid #d7f1ff45; border-left:2px solid var(--card-accent); border-radius:4px; background:linear-gradient(105deg,#071320df,#0b1729bf 80%,#071320dd); box-shadow:0 4px 12px #0007,inset 0 1px #ffffff12; overflow:hidden; pointer-events:none; }
+.nexus-ui .nexus-card-effect-type { color:var(--card-accent); font:900 clamp(4px,3.4cqw,9px)/1.15 'Inter',sans-serif; letter-spacing:.045em; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.nexus-ui .card .card-desc-text { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:4; overflow:hidden; color:#f2f6fa; font:500 clamp(5px,4cqw,10px)/1.22 'Inter',sans-serif; text-shadow:0 1px 2px #000; }
+.nexus-ui .nexus-card-name { position:absolute; z-index:5; left:3%; right:3%; bottom:8%; min-height:7%; display:flex; align-items:center; justify-content:center; gap:3px; padding:1.7% 5% 1.3%; border-top:1px solid color-mix(in srgb,var(--card-accent) 75%,transparent); border-bottom:1px solid #ffffff25; background:linear-gradient(90deg,#091522ed,#182638f5 48%,#091522ed); color:#fff; text-align:center; font:900 clamp(6px,5cqw,13px)/1.02 'Outfit',sans-serif; letter-spacing:.005em; text-shadow:0 2px 4px #000; }
+.nexus-ui .nexus-card-name > span { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+.nexus-ui .nexus-card-name > b { flex:none; color:var(--card-accent); font:900 clamp(4px,3cqw,8px)/1 'Inter',sans-serif; }
+.nexus-ui .nexus-card-meta { position:absolute; z-index:5; inset:auto 5% 2.5%; display:flex; justify-content:space-between; gap:3px; overflow:hidden; color:#c2d5e4; font:700 clamp(3.4px,2.65cqw,7px)/1 'Inter',sans-serif; letter-spacing:.015em; text-shadow:0 1px 2px #000; }
+.nexus-ui .nexus-card-meta > span { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.nexus-ui .nexus-card-meta > span:last-child { flex:none; }
+.nexus-ui .card.super-rare:has(.nexus-card-art) { border-width:2px !important; box-shadow:inset 0 0 0 2px #120c17,inset 0 0 0 3px #ffe5a955,0 0 13px #edc16e61,0 7px 20px #000a; }
+.nexus-ui #card-inspect-preview .card { width:270px; }
+.nexus-ui .hand-zone .card { width:clamp(92px,10vw,136px); }
+@media (max-width:760px) { .nexus-ui .card .card-desc-overlay { bottom:16%; padding:4.5% 4% 4%; } .nexus-ui .card .card-desc-text { -webkit-line-clamp:3; } }
+

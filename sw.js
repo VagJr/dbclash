@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'dbclash-release-v3-nexus-audio';
+const CACHE_VERSION = 'dbclash-release-v3-nexus-imported-art';
 const CORE_CACHE = `${CACHE_VERSION}-core`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -13,7 +13,8 @@ const CORE_ASSETS = [
   './styles/animations.css',
   './styles/atmosphere.css',
   './styles/rework.css',
-  './styles/exchange.css'
+  './styles/exchange.css',
+  './styles/nexus-cards.css'
 ];
 
 self.addEventListener('install', event => {

@@ -1,0 +1,42 @@
+DBCLASH — RELEASE FIX 01
+==========================
+
+Objetivo:
+Fechar os bugs P0 de máquina de estados e sincronização antes de avançar para
+regras completas das 70 cartas.
+
+COMO APLICAR (Windows PowerShell)
+---------------------------------
+1. Extraia os dois arquivos do ZIP na raiz do projeto dbclash.
+2. Abra PowerShell na raiz do projeto.
+3. Execute:
+
+   Set-ExecutionPolicy -Scope Process Bypass
+   .\PATCH_RELEASE_FIX_01.ps1
+
+O patch cria backups *.release-fix-01.bak antes de alterar arquivos.
+
+O QUE ESTE PATCH CORRIGE
+------------------------
+- ação inválida não pode mais gastar Ki ou consumir carta;
+- chargeKi só funciona em FREE_ACTION e com a iniciativa correta;
+- somente o defensor pode responder a ATTACK_PENDING;
+- resposta inválida não cancela ataque;
+- KO após block/defesa encerra corretamente a partida;
+- Open Guard passa a vir do Charge Ki e expira em 3,5 s;
+- Beam Clash usa eixo P1/P2 consistente e possui rate limit de mash;
+- cliente multiplayer permanece thin-client;
+- winner, isAwakened, isOpenGuard e deckCount entram no full sync;
+- mão adversária deixa de ser enviada em claro para o outro cliente;
+- deck do adversário deixa de ser enviado em match_found;
+- FX duplicado do servidor é removido;
+- disconnect duplicado é consolidado;
+- Frieza passa a iniciar com 6 Ki conforme o próprio banco de regras;
+- cria npm run test:core e npm test.
+
+RESULTADO ESPERADO
+------------------
+CORE RELEASE TESTS: 7 PASS / 0 FAIL
+
+Depois, copie e envie a saída completa do PowerShell para validar o gate antes
+do RELEASE FIX 02 (70 cartas + 6 líderes).

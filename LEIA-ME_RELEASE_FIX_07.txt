@@ -1,0 +1,127 @@
+DBCLASH RELEASE FIX 07
+======================
+
+OBJETIVO
+--------
+Fechamento de produto antes do Release Candidate.
+Nenhum modo novo: este ciclo trata seguranca, performance, UX e higiene de release.
+
+PRE-REQUISITO
+-------------
+Fixes 01 a 06 validados.
+
+APLICACAO
+---------
+Na raiz C:\dbclash:
+
+  .\PATCH_RELEASE_FIX_07.ps1
+
+O QUE FECHA
+-----------
+SEGURANCA HTTP / SOCKET
+- remove CORS wildcard;
+- allowlist por CLIENT_URL / PUBLIC_APP_URL / ALLOWED_ORIGINS / VERCEL_URL;
+- localhost liberado em desenvolvimento;
+- headers X-Content-Type-Options, X-Frame-Options, Referrer-Policy,
+  Permissions-Policy e frame-ancestors;
+- API auth rate limit;
+- API geral rate limit;
+- Socket.io packet throttling;
+- Beam Mash possui budget proprio para nao quebrar gameplay;
+- chat possui rate limit proprio;
+- limite de payload Socket.io = 64 KiB;
+- JSON HTTP limitado a 64 KiB;
+- perMessageDeflate desligado;
+- ambiente de producao falha cedo se MONGODB_URI, AUTH_SECRET ou origem
+  do cliente estiverem ausentes;
+- MongoDB indisponivel em producao encerra o servidor em vez de iniciar um
+  produto online quebrado.
+
+XSS / DADOS DE USUARIO
+- chat deixa de interpolar username/texto via innerHTML;
+- callback realtime do chat usa DOM seguro;
+- leaderboard usa textContent;
+- HUD do 2v2 nao injeta username em HTML;
+- HUD de Raid escapa usernames/logs;
+- UI principal deixa de depender do AuthDatabase legado.
+
+PERFORMANCE / ESTADOS
+- reaction window online deixa de fazer broadcast a cada 100 ms;
+- servidor envia reactionDeadline uma unica vez;
+- cliente anima o contador localmente a 50 ms;
+- reduz drasticamente state_update durante cada ataque;
+- loop de sprites troca setInterval eterno por requestAnimationFrame;
+- sprites pausam quando a arena nao esta ativa ou a aba esta oculta.
+
+PWA / CACHE
+- remove rotina que desregistrava Service Worker a cada boot;
+- remove rotina que apagava todos os caches;
+- adiciona sw.js versionado;
+- navegacao usa network-first;
+- assets usam stale-while-revalidate;
+- /api e /socket.io nunca entram no cache;
+- manifest deixa de forcar portrait;
+- scope/id PWA normalizados.
+
+UX / QOL
+- fullscreen automatico em todo clique/touch removido;
+- fullscreen continua disponivel por window.dbclashRequestFullscreen();
+- login nao e forçado novamente para sessao autenticada;
+- usuario sem login pode escolher jogar como convidado;
+- rank scene usa RP/divisao/vitorias/derrotas reais;
+- texto legado "Realtime Database" removido;
+- handler duplicado do modal de KO removido;
+- handlers antigos duplicados de auth/leaderboard removidos;
+- painel DEV so funciona em localhost, 127.0.0.1 ou DBCLASH_DEV_MODE=true;
+- runtime guard informa queda/restauracao de conexao e rejeicoes async.
+
+GATE DE RELEASE
+---------------
+npm run release:check
+
+Executa:
+- test:core
+- test:content
+- test:account
+- test:multiplayer
+- test:raid
+- test:social
+- test:polish
+- audit:release
+
+Esperado:
+CORE RELEASE TESTS: 7 PASS / 0 FAIL
+CONTENT RELEASE TESTS: 24 PASS / 0 FAIL
+ACCOUNT RELEASE TESTS: 16 PASS / 0 FAIL
+MULTIPLAYER RELEASE TESTS: 16 PASS / 0 FAIL
+RAID RELEASE TESTS: 18 PASS / 0 FAIL
+SOCIAL MODES RELEASE TESTS: 18 PASS / 0 FAIL
+POLISH RELEASE TESTS: 24 PASS / 0 FAIL
+RELEASE STATIC AUDIT: PASS / 0 BLOCKERS
+
+Total: 123 testes + auditoria estatica.
+
+VARIAVEIS OBRIGATORIAS NO DEPLOY
+---------------------------------
+NODE_ENV=production
+MONGODB_URI=<MongoDB Atlas>
+AUTH_SECRET=<segredo aleatorio com pelo menos 32 caracteres>
+CLIENT_URL=https://seu-frontend
+
+Alternativamente:
+ALLOWED_ORIGINS=https://frontend1,https://frontend2
+
+PROXIMO CICLO
+-------------
+RELEASE CANDIDATE:
+- smoke tests reais no navegador;
+- duas sessoes para Ranked 1v1;
+- quatro sessoes para Ranked 2v2;
+- reconexao/W.O.;
+- Raid 3-4 jogadores;
+- sala privada 1v1/2v2;
+- economia/pack/crafting;
+- Dojo/quests;
+- PWA/offline shell;
+- auditoria de deploy;
+- versionamento e checklist de lancamento.

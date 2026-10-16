@@ -1,0 +1,35 @@
+DBCLASH RELEASE FIX 04
+======================
+
+Pre-requisito: Fixes 01, 02 e 03 verdes.
+
+Execute em C:\dbclash:
+  .\PATCH_RELEASE_FIX_04.ps1
+
+Este ciclo fecha:
+- Socket.io autenticado por token de sessao;
+- matchmaking ranked sem confiar em uid/username/deck do cliente;
+- deck ranked carregado e validado no servidor;
+- comandos com sequencia anti-replay;
+- stateVersion e descarte de estado antigo no cliente;
+- resultado ranked originado exclusivamente do GAME_OVER autoritativo;
+- +25 RP / -15 RP;
+- +150 XP / +50 XP;
+- level a cada 500 XP;
+- divisao recalculada no servidor;
+- grace period de 30s para reconexao;
+- resume da mesma partida pelo uid autenticado;
+- W.O. somente depois do grace period;
+- double disconnect = partida sem resultado;
+- leaderboard real Top 100, sem mock;
+- chat de sala exige membership, nome vem da conta e texto limitado a 300 chars;
+- SocketManager preserva listeners atraves de reautenticacao/reconexao.
+
+DEPLOY:
+AUTH_SECRET continua obrigatorio em producao.
+
+Gate esperado:
+CORE RELEASE TESTS: 7 PASS / 0 FAIL
+CONTENT RELEASE TESTS: 24 PASS / 0 FAIL
+ACCOUNT RELEASE TESTS: 16 PASS / 0 FAIL
+MULTIPLAYER RELEASE TESTS: 16 PASS / 0 FAIL

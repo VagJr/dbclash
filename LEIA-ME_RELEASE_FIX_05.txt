@@ -1,0 +1,34 @@
+DBCLASH RELEASE FIX 05
+======================
+
+Pre-requisito: Fixes 01-04 verdes.
+
+Execute:
+  .\PATCH_RELEASE_FIX_05.ps1
+
+O que fecha:
+- Raid deixa de ser luta fake local contra Frieza;
+- matchmaking Raid server-authoritative para 3-4 jogadores;
+- 3 jogadores iniciam apos janela de 5s para o quarto entrar;
+- Cell Max, Broly e Jiren com HP/fases/enrage/rewards proprios;
+- cada jogador usa seu deck validado e sua propria mao/Ki;
+- Attack, Techniques, Defense, Evade e Counter funcionam no Raid;
+- cartas defensivas preparam protecao para o proximo turno do boss;
+- round completo: jogadores -> boss -> proximo round;
+- ultimate a cada terceiro round;
+- timeout de 30s por turno com auto-pass;
+- jogador derrubado nao trava a ordem;
+- abandono/desconexao nao trava o Raid;
+- reconexao de 30s;
+- estado privado: companheiros veem handSize, nao a sua mao;
+- vitoria/derrota reais;
+- recompensas server-side: Zeni, XP, Trofeus e Gems;
+- progresso atualizado na conta ao concluir;
+- HUD proprio de Raid criado dinamicamente.
+
+Gate esperado:
+CORE RELEASE TESTS: 7 PASS / 0 FAIL
+CONTENT RELEASE TESTS: 24 PASS / 0 FAIL
+ACCOUNT RELEASE TESTS: 16 PASS / 0 FAIL
+MULTIPLAYER RELEASE TESTS: 16 PASS / 0 FAIL
+RAID RELEASE TESTS: 18 PASS / 0 FAIL

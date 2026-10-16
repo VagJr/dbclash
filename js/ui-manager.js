@@ -1519,7 +1519,7 @@ this.renderDeckBuilder();
         el.className = `card type-${card.type}${card.rarity === 'super-rare' ? ' super-rare' : ''} ${isPlayable ? 'playable' : 'unplayable'}`;
         el.title = isPlayable ? '' : reasonText;
         el.innerHTML = `
-          ${assetLoader.renderCardArtHTML(card)}
+          ${assetLoader.renderCardArtHTML(card, { cost: effectiveCost })}
           <div class="card-header"><div class="card-ki-cost">${effectiveCost}</div></div>
           <div class="card-type-tag tag-${card.type}">${card.type.toUpperCase()}</div>
           ${card.power > 0 ? `<div class="card-power-badge">${card.power} ATK</div>` : ''}

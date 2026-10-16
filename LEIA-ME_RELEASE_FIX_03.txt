@@ -1,0 +1,34 @@
+DBCLASH RELEASE FIX 03
+======================
+
+Pre-requisito: Fix 01 e Fix 02 verdes.
+
+Execute na raiz C:\dbclash:
+  .\PATCH_RELEASE_FIX_03.ps1
+
+Este ciclo fecha:
+- uma unica autoridade de conta (AuthManager);
+- banco local de senha legado aposentado;
+- login/cadastro sem fallback falso offline;
+- sessao assinada HMAC;
+- /api/user/sync irrestrito removido;
+- Zeni/Dust/Gems/inventario server-owned em contas online;
+- cardInventory com quantidade de copias;
+- maximo 3 copias;
+- deck 10-20, max 3 por carta, ownership validado;
+- booster online sorteado no servidor;
+- booster nao injeta cartas automaticamente no deck;
+- excesso acima de 3 copias converte para Dust;
+- crafting autenticado;
+- unlock de lider autenticado e concede starter correspondente;
+- decks salvos por conta;
+- UI de auth agora aguarda Promises corretamente.
+
+DEPLOY:
+Configure uma variavel AUTH_SECRET longa e aleatoria no servidor.
+Em NODE_ENV=production, o servidor recusa criar/verificar sessoes sem AUTH_SECRET.
+
+Gate esperado:
+CORE RELEASE TESTS: 7 PASS / 0 FAIL
+CONTENT RELEASE TESTS: 24 PASS / 0 FAIL
+ACCOUNT RELEASE TESTS: 16 PASS / 0 FAIL
